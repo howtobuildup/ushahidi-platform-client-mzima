@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { CollectionsComponent } from '../../shared/components';
@@ -6,13 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { BreakpointService, EventBusService, EventType, SessionService } from '@services';
 import { BaseComponent } from '../../base.component';
 import { ShareModalComponent } from '../../shared/components';
-import {
-  PostPropertiesInterface,
-  PostResult,
-  PostsService,
-  PostStatus,
-  postHelpers,
-} from '@mzima-client/sdk';
+import { PostResult, PostsService, PostStatus, postHelpers } from '@mzima-client/sdk';
 import { ConfirmModalService } from '../../core/services/confirm-modal.service';
 
 @Component({
@@ -20,9 +14,9 @@ import { ConfirmModalService } from '../../core/services/confirm-modal.service';
   templateUrl: './post-head.component.html',
   styleUrls: ['./post-head.component.scss'],
 })
-export class PostHeadComponent extends BaseComponent {
+export class PostHeadComponent extends BaseComponent implements OnInit {
   PostStatus = PostStatus;
-  @Input() public post: PostResult | PostPropertiesInterface;
+  @Input() public post: PostResult;
   @Input() public editable: boolean;
   @Input() public feedView: boolean;
   @Input() public deleteable: boolean;
@@ -30,6 +24,7 @@ export class PostHeadComponent extends BaseComponent {
   @Output() refresh = new EventEmitter();
   @Output() deleted = new EventEmitter();
   @Output() statusChanged = new EventEmitter();
+  public isLocked: boolean;
 
   constructor(
     protected override sessionService: SessionService,
@@ -46,9 +41,18 @@ export class PostHeadComponent extends BaseComponent {
     this.getUserData();
   }
 
+  ngOnInit(): void {
+    this.checkLock();
+  }
+
   loadData(): void {}
 
+  checkLock() {
+    this.isLocked = this.postsService.isPostLockedForCurrentUser(this.post);
+  }
+
   addToCollection() {
+    this.postsService.lockPost(this.post.id).subscribe();
     const dialogRef = this.dialog.open(CollectionsComponent, {
       width: '100%',
       maxWidth: '768px',
@@ -58,6 +62,7 @@ export class PostHeadComponent extends BaseComponent {
 
     dialogRef.afterClosed().subscribe({
       next: (response) => {
+        this.postsService.unlockPost(this.post.id).subscribe();
         this.refresh.emit();
         response ? console.log(response) : null;
       },
@@ -72,13 +77,23 @@ export class PostHeadComponent extends BaseComponent {
   }
 
   publish() {
-    if (postHelpers.isAllRequiredCompleted(this.post)) {
-      this.postsService.updateStatus(this.post.id, PostStatus.Published).subscribe((res) => {
-        this.post = res.result;
-        this.statusChanged.emit();
-      });
+    const publishPostCode = (post: PostResult) => {
+      if (postHelpers.isAllRequiredCompleted(post)) {
+        this.postsService.updateStatus(this.post.id, PostStatus.Published).subscribe((res) => {
+          this.post = res.result;
+          this.statusChanged.emit();
+        });
+      } else {
+        this.showMessage(this.translate.instant('notify.post.unfinished_post_task'), 'error', 5000);
+      }
+    };
+
+    if (this.post.post_content) {
+      publishPostCode(this.post);
     } else {
-      this.showMessage(this.translate.instant('notify.post.unfinished_post_task'), 'error', 5000);
+      this.postsService.getById(this.post.id).subscribe((post) => {
+        publishPostCode(post);
+      });
     }
   }
 

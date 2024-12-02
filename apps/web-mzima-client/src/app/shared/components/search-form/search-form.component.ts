@@ -36,6 +36,7 @@ import {
   SurveyItem,
   AccountNotificationsInterface,
   GeoJsonFilter,
+  apiHelpers,
 } from '@mzima-client/sdk';
 import dayjs from 'dayjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -224,6 +225,7 @@ export class SearchFormComponent extends BaseComponent implements OnInit {
   }
 
   private initFilters() {
+    this.clearPostsResults();
     if (this.filters) {
       const filters = JSON.parse(this.filters!);
       if (!this.router.url.includes('collection')) {
@@ -465,7 +467,10 @@ export class SearchFormComponent extends BaseComponent implements OnInit {
     this.surveysLoaded = false;
 
     forkJoin([
-      this.surveysService.get('', { show_unknown_form: true }),
+      this.surveysService.getSurveys('', {
+        only: apiHelpers.ONLY.NAME_ID_COLOR,
+        show_unknown_form: true,
+      }),
       this.getPostsStatistic(),
     ]).subscribe({
       next: (responses) => {
@@ -632,6 +637,10 @@ export class SearchFormComponent extends BaseComponent implements OnInit {
       this.activeSavedSearch = activeSavedSearch.result;
       this.checkSavedSearchNotifications();
     }
+    localStorage.setItem(
+      this.session.getLocalStorageNameMapper('filters'),
+      JSON.stringify(this.activeSavedSearch!.filter),
+    );
   }
 
   async applySavedFilter(value: number | null) {
@@ -689,6 +698,8 @@ export class SearchFormComponent extends BaseComponent implements OnInit {
         this.activeSavedSearch.filter.source = [this.activeSavedSearch.filter.source];
       }
 
+      this.activeSavedSearch.filter.currentView = this.activeSavedSearch.view;
+
       this.resetForm(this.activeSavedSearch.filter);
     } else {
       this.resetForm();
@@ -696,6 +707,8 @@ export class SearchFormComponent extends BaseComponent implements OnInit {
   }
 
   public resetSavedFilter(): void {
+    localStorage.removeItem(this.session.getLocalStorageNameMapper('filters'));
+    localStorage.removeItem(this.session.getLocalStorageNameMapper('activeSavedSearch'));
     this.clearSavedFilter();
     this.resetForm();
     this.defaultFormValue = this.formBuilder.group(searchFormHelper.DEFAULT_FILTERS).value;
@@ -783,6 +796,10 @@ export class SearchFormComponent extends BaseComponent implements OnInit {
 
   public searchPosts(): void {
     this.searchSubject.next(this.searchQuery);
+    //------------------------
+    // Save to localstorage: Needed for "search + filter" detection for posts ("no posts" message display particularly)
+    localStorage.setItem('USH_searchPostByKeyword', this.searchQuery);
+    //------------------------
   }
 
   public displayFn(city: SearchResponse): string {

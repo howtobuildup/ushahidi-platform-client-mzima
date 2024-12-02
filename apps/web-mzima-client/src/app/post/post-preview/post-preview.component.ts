@@ -43,13 +43,9 @@ export class PostPreviewComponent implements OnInit, OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['post']) {
       this.allowed_privileges = this.post?.allowed_privileges ?? '';
-      const mediaField = this.post.post_content?.flatMap((post_content) => {
-        return post_content.fields.filter((field) => {
-          return field.type === 'media' && field.value?.id;
-        });
-      })[0];
-      if (mediaField?.value?.id) {
-        this.mediaService.getById(mediaField.value.value).subscribe({
+
+      if (this.post.post_media && this.post.post_media.value.value) {
+        this.mediaService.getById(this.post.post_media.value.value).subscribe({
           next: (media) => {
             this.media = media.result;
             this.mediaLoaded.emit();

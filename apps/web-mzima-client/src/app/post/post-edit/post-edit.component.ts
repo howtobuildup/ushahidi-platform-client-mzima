@@ -40,6 +40,8 @@ import {
   MediaService,
   postHelpers,
   SurveyItem,
+  MediaFile,
+  MediaFileStatus,
 } from '@mzima-client/sdk';
 import { BaseComponent } from '../../base.component';
 import { preparingVideoUrl } from '../../core/helpers/validators';
@@ -119,6 +121,7 @@ export class PostEditComponent extends BaseComponent implements OnInit, OnChange
   ) {
     super(sessionService, breakpointService);
     this.checkDesktop();
+    this.getUserData();
     this.filters = JSON.parse(
       localStorage.getItem(this.sessionService.getLocalStorageNameMapper('filters'))!,
     );
@@ -132,7 +135,6 @@ export class PostEditComponent extends BaseComponent implements OnInit, OnChange
       }
       if (params.get('id')) {
         this.postId = Number(params.get('id'));
-        this.postsService.lockPost(this.postId).subscribe();
         this.loadPostData(this.postId);
       }
       if (!this.formId) {
@@ -177,7 +179,12 @@ export class PostEditComponent extends BaseComponent implements OnInit, OnChange
       next: (post) => {
         this.formId = post.form_id;
         this.post = post;
-        this.loadSurveyData(this.formId!, post.post_content);
+        if (!this.postsService.isPostLockedForCurrentUser(this.post)) {
+          this.postsService.lockPost(this.post.id).subscribe();
+          this.loadSurveyData(this.formId!, post.post_content);
+        } else {
+          this.backNavigation();
+        }
       },
     });
   }
@@ -246,6 +253,9 @@ export class PostEditComponent extends BaseComponent implements OnInit, OnChange
 
                 const types = [
                   'upload',
+                  'image',
+                  'document',
+                  'audio',
                   'tags',
                   'location',
                   'checkbox',
@@ -349,14 +359,12 @@ export class PostEditComponent extends BaseComponent implements OnInit, OnChange
   }
 
   private async handleUpload(key: string, value: any) {
-    if (!value?.value) return;
+    if (!value?.[0]?.value) return;
     try {
-      const uploadObservable = this.mediaService.getById(value.value);
-      const response: any = await lastValueFrom(uploadObservable);
-
+      const response: any = await lastValueFrom(this.mediaService.getById(value[0].value));
       this.form.patchValue({
         [key]: {
-          id: value.value,
+          id: value[0].value,
           caption: response.result.caption,
           photo: response.result.original_file_url,
         },
@@ -364,6 +372,29 @@ export class PostEditComponent extends BaseComponent implements OnInit, OnChange
     } catch (error: any) {
       this.form.patchValue({ [key]: null });
       throw new Error(`Error fetching file: ${error.message}`);
+    }
+  }
+
+  private async handleMedia(key: string, value: any[]) {
+    if (value?.length === 0) return;
+    try {
+      const mediaFiles: MediaFile[] = [];
+      for (const mediaValue of value) {
+        const media = await lastValueFrom(this.mediaService.getById(mediaValue.value!));
+        const mediaFile: MediaFile = new MediaFile(media.result, media.result.original_file_url);
+        mediaFile.id = mediaValue.id;
+        mediaFile.value = media.result.id;
+        mediaFile.caption = media.result.caption;
+        mediaFile.status = MediaFileStatus.READY;
+        mediaFiles.push(mediaFile);
+      }
+
+      this.form.patchValue({
+        [key]: mediaFiles,
+      });
+    } catch (error: any) {
+      this.form.patchValue({ [key]: null });
+      throw new Error(`Error fetching files: ${error.message}`);
     }
   }
 
@@ -434,6 +465,9 @@ export class PostEditComponent extends BaseComponent implements OnInit, OnChange
       | 'radio'
       | 'text'
       | 'upload'
+      | 'image'
+      | 'document'
+      | 'audio'
       | 'video'
       | 'textarea'
       | 'relation'
@@ -447,6 +481,9 @@ export class PostEditComponent extends BaseComponent implements OnInit, OnChange
         date: this.handleDate.bind(this),
         datetime: this.handleDateTime.bind(this),
         upload: this.handleUpload.bind(this),
+        image: this.handleMedia.bind(this),
+        document: this.handleMedia.bind(this),
+        audio: this.handleMedia.bind(this),
       };
 
     type InputHandlersOptionsType = 'radio' | 'checkbox';
@@ -602,16 +639,22 @@ export class PostEditComponent extends BaseComponent implements OnInit, OnChange
                 const originalValue = this.post?.post_content[0]?.fields.filter(
                   (fieldValue: { key: string | number }) => fieldValue.key === field.key,
                 )[0];
-                if (this.form.value[field.key]?.upload && this.form.value[field.key]?.photo) {
+                let formValue = this.form.value[field.key];
+                if (Array.isArray(formValue)) formValue = formValue[0];
+
+                // No image uploaded in field at all
+                if (!formValue) value.value = [];
+                // Image uploaded
+                else if (formValue.upload && formValue.photo) {
                   try {
                     this.maxSizeError = false;
-                    if (this.maxImageSize > this.form.value[field.key].photo.size) {
+                    if (this.maxImageSize > formValue.photo.size) {
                       const uploadObservable = this.mediaService.uploadFile(
-                        this.form.value[field.key]?.photo,
-                        this.form.value[field.key]?.caption,
+                        formValue.photo,
+                        formValue.caption,
                       );
                       const response: any = await lastValueFrom(uploadObservable);
-                      value.value = response.result.id;
+                      value.value = [response.result.id];
                     } else {
                       this.maxSizeError = true;
                       throw new Error(`Error uploading file: max size exceed`);
@@ -619,30 +662,46 @@ export class PostEditComponent extends BaseComponent implements OnInit, OnChange
                   } catch (error: any) {
                     throw new Error(`Error uploading file: ${error.message}`);
                   }
-                } else if (this.form.value[field.key]?.delete && this.form.value[field.key]?.id) {
+                  // Image deleted
+                } else if (formValue.delete && formValue.id) {
                   try {
-                    const deleteObservable = this.mediaService.delete(
-                      this.form.value[field.key]?.id,
-                    );
+                    const deleteObservable = this.mediaService.delete(formValue.id);
                     await lastValueFrom(deleteObservable);
-                    value.value = null;
+                    value.value = [];
                   } catch (error: any) {
                     throw new Error(`Error deleting file: ${error.message}`);
                   }
-                } else if (originalValue?.value?.mediaCaption !== value.value?.caption) {
+                  // Caption updated
+                } else if (
+                  originalValue?.value?.length > 0 &&
+                  originalValue.value[0].caption !== formValue.caption
+                ) {
                   try {
                     const captionObservable = await this.mediaService.updateCaption(
-                      originalValue.value.id,
-                      value.value.caption,
+                      originalValue.value[0].value,
+                      formValue.caption,
                     );
                     await lastValueFrom(captionObservable);
-                    value.value = originalValue.value.id;
+                    value.value = [originalValue.value[0].value];
                   } catch (error: any) {
                     throw new Error(`Error updating caption: ${error.message}`);
                   }
+                  // Nothing updated
                 } else {
-                  value.value = this.form.value[field.key]?.id || null;
+                  value.value = [formValue.id];
                 }
+                break;
+              case 'image':
+                value.value =
+                  this.form.value[field.key]?.map((fieldValue: any) => fieldValue.value) || [];
+                break;
+              case 'audio':
+                value.value =
+                  this.form.value[field.key]?.map((fieldValue: any) => fieldValue.value) || [];
+                break;
+              case 'document':
+                value.value =
+                  this.form.value[field.key]?.map((fieldValue: any) => fieldValue.value) || [];
                 break;
               default:
                 value.value = this.form.value[field.key] || null;
@@ -700,6 +759,7 @@ export class PostEditComponent extends BaseComponent implements OnInit, OnChange
   private updatePost(postId: number, postData: any) {
     this.postsService.update(postId, postData).subscribe({
       next: ({ result }) => {
+        this.postsService.unlockPost(postId).subscribe();
         this.eventBusService.next({
           type: EventType.UpdatedPost,
           payload: result,
@@ -789,6 +849,7 @@ export class PostEditComponent extends BaseComponent implements OnInit, OnChange
     }
 
     if (this.postId) {
+      this.postsService.unlockPost(this.postId).subscribe();
       this.cancel.emit();
     }
     // else {

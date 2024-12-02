@@ -9,7 +9,7 @@ import { searchFormHelper } from '@helpers';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxMasonryComponent, NgxMasonryOptions } from 'ngx-masonry';
-import { filter, forkJoin, Subject, Subscription } from 'rxjs';
+import { filter, forkJoin, Subscription } from 'rxjs';
 import { PostDetailsModalComponent } from '../map';
 import { MainViewComponent } from '@shared';
 import { SessionService, BreakpointService, EventBusService, EventType } from '@services';
@@ -18,10 +18,10 @@ import { LanguageService } from '../core/services/language.service';
 import {
   SavedsearchesService,
   PostsService,
-  GeoJsonFilter,
   PostResult,
   PostStatus,
   postHelpers,
+  apiHelpers,
 } from '@mzima-client/sdk';
 import _ from 'lodash';
 
@@ -43,10 +43,10 @@ export class FeedComponent extends MainViewComponent implements OnInit, OnDestro
   private _routerEvent = Subscription.EMPTY;
   @ViewChild('feed') public feed: ElementRef;
   @ViewChild('masonry') public masonry: NgxMasonryComponent;
-  private readonly getPostsSubject = new Subject<{
-    params: GeoJsonFilter;
-    add?: boolean;
-  }>();
+  // private readonly getPostsSubject = new Subject<{
+  //   params: GeoJsonFilter;
+  //   add?: boolean;
+  // }>();
   public pagination = {
     page: 0,
     limit: 20,
@@ -65,6 +65,8 @@ export class FeedComponent extends MainViewComponent implements OnInit, OnDestro
   public posts: PostResult[] = [];
   public postCurrentLength = 0;
   public isLoading: boolean;
+  public isDefaultFilters: boolean;
+  public userIsSearchingPostsByKeyword: number;
   public atLeastOnePostExists: boolean;
   public noPostsYet: boolean = false;
   public loadingMorePosts: boolean;
@@ -104,6 +106,7 @@ export class FeedComponent extends MainViewComponent implements OnInit, OnDestro
   public initialLoad = true;
   public urlFromRouteTrigger: string;
   public urlAfterInteractionWithFilters: string;
+  private postRequests: Subscription[] = [];
 
   constructor(
     protected override router: Router,
@@ -278,8 +281,21 @@ export class FeedComponent extends MainViewComponent implements OnInit, OnDestro
     ----------------------------------------------*/
     this.postsService.isLoadingPosts$.pipe(untilDestroyed(this)).subscribe({
       next: (isLoading: boolean) => {
-        // Get end of post load directly from the posts API, use it to set is loading state to false
-        this.isLoading = isLoading;
+        // ---------------
+        this.sessionService.currentUserData$.pipe(untilDestroyed(this)).subscribe({
+          next: (currentUser) => {
+            // Check if default filters is on or not to display "no posts" messages accordingly
+            this.isDefaultFilters = this.getDefaultFilters(currentUser.role as string);
+            // ---------------
+            // Check if default filters is on or not to display "no posts" messages accordingly
+            const searchPostsByKeyword = localStorage.getItem('USH_searchPostByKeyword') as string;
+            this.userIsSearchingPostsByKeyword = searchPostsByKeyword?.length;
+            // ---------------
+            // Get end of post load directly from the posts API, use it to set is loading state to false
+            this.isLoading = isLoading;
+          },
+        });
+        // ---------------
       },
     });
 
@@ -397,8 +413,17 @@ export class FeedComponent extends MainViewComponent implements OnInit, OnDestro
       .on(EventType.UpdatedPost)
       .pipe(untilDestroyed(this))
       .subscribe({
-        next: (post) => {
-          this.refreshPost(post);
+        next: () => {
+          this.refreshPost();
+        },
+      });
+
+    this.eventBusService
+      .on(EventType.RefreshPosts)
+      .pipe(untilDestroyed(this))
+      .subscribe({
+        next: () => {
+          this.refreshPost();
         },
       });
 
@@ -428,17 +453,30 @@ export class FeedComponent extends MainViewComponent implements OnInit, OnDestro
   loadData(): void {}
 
   private getPosts({ params, loadMore }: { params: any; loadMore?: boolean }): void {
-    /* --------------------------------------------
-      Work with Posts Service to get posts from API
-    ----------------------------------------------*/
-    this.postsService.getPosts('', { ...params, ...this.activeSorting }).subscribe({
-      next: (data) => {
-        this.posts = loadMore ? [...this.posts, ...data.results] : data.results;
-      },
-      // complete: () => {
-      //   // console.log('complete?');
-      // },
+    // Call the posts service, keeping the subscription for later
+    const postRequestSubscription = this.postsService
+      .getPosts('', {
+        ...params,
+        only: apiHelpers.ONLY.NEEDED_POSTS_LIST_PROPERTIES,
+        ...this.activeSorting,
+      })
+      .subscribe({
+        next: (data) => {
+          this.posts = loadMore ? [...this.posts, ...data.results] : data.results;
+        },
+      });
+
+    // Unsubscribe and destroy existing subscriptions....
+    this.postRequests.forEach((subscription) => {
+      subscription.unsubscribe();
     });
+
+    // Reset everything so the user sees some loading indicators
+    this.posts = [];
+    this.isLoading = true;
+
+    // Keep the subscription so we can end it later if its replaced with a new api call
+    this.postRequests.push(postRequestSubscription);
   }
 
   public updateMasonry(): void {
@@ -497,6 +535,61 @@ export class FeedComponent extends MainViewComponent implements OnInit, OnDestro
       }, 150);
     },
   };
+
+  public getDefaultFilters(isUserLoggedIn: string) {
+    /* --------------------------------------------
+      Goal: To help us know about the DEFAULT state
+      of individual filters ALL AT ONCE, so that we 
+      can use it to "make decisions" for anything
+      relating to DEFAULT FILTERS on the UI.
+    ---------------------------------------------*/
+    const filtersObj = JSON.parse(localStorage.getItem('USH_filters') as string);
+
+    const filtersDefaultStatus = {
+      // ---------------
+      surveys: JSON.parse(localStorage.getItem('USH_allSurveysChecked') as string),
+      // ---------------
+      source: _.isEqual(filtersObj.source, [
+        'web',
+        'mobile',
+        'email',
+        'sms',
+        'twitter',
+        'ussd',
+        'whatsapp',
+      ]),
+      // ---------------
+      status: isUserLoggedIn
+        ? _.isEqual(filtersObj.status, ['published', 'draft'])
+        : _.isEqual(filtersObj.status, ['published']),
+      // ---------------
+      categories: _.isEqual(filtersObj.tags, []) || filtersObj.tags === '',
+      // ---------------
+      date_range:
+        filtersObj.date === '' ||
+        _.isEqual(filtersObj.date, {
+          start: '',
+          end: '',
+        }),
+      // ---------------
+      location:
+        filtersObj.center_point === '' ||
+        _.isEqual(filtersObj.center_point, {
+          location: {
+            lat: null,
+            lng: null,
+          },
+          distance: 1,
+        }) ||
+        _.isEqual(filtersObj.center_point, {
+          location: {},
+          distance: 1,
+        }),
+      // ---------------
+    };
+
+    return Object.values(filtersDefaultStatus).every((filterType) => filterType === true);
+  }
 
   public showPostDetails(post: PostResult): void {
     //---------------------------
@@ -708,9 +801,15 @@ export class FeedComponent extends MainViewComponent implements OnInit, OnDestro
 
   public changePostsStatus(status: string): void {
     if (status === PostStatus.Published) {
-      const uncompletedPosts: PostResult[] = this.selectedPosts.filter(
-        (post: PostResult) => !postHelpers.isAllRequiredCompleted(post),
-      );
+      const uncompletedPosts: PostResult[] = this.selectedPosts.filter((post: PostResult) => {
+        if (post.post_content) {
+          return !postHelpers.isAllRequiredCompleted(post);
+        } else {
+          return this.postsService.getById(post.id).subscribe((fetchedPost: PostResult) => {
+            return !postHelpers.isAllRequiredCompleted(fetchedPost);
+          });
+        }
+      });
 
       if (uncompletedPosts.length > 0) {
         this.showMessage(
@@ -791,7 +890,9 @@ export class FeedComponent extends MainViewComponent implements OnInit, OnDestro
       });
     }
   }
-
+  public isLocked(post: PostResult) {
+    return this.postsService.isPostLockedForCurrentUser(post);
+  }
   public postStatusChanged(): void {
     this.getPosts({ params: this.params });
     this.selectedPosts = [];
@@ -865,11 +966,9 @@ export class FeedComponent extends MainViewComponent implements OnInit, OnDestro
     }
   }
 
-  refreshPost({ id }: PostResult) {
-    this.postsService.getById(id).subscribe((p) => {
-      const updatedPost = _.cloneDeep(p);
-      this.posts = this.posts.map((obj) => (obj.id === updatedPost.id ? updatedPost : obj));
-    });
+  refreshPost() {
+    this.getPosts({ params: this.params });
+    this.activeCard.scrollCountHandler({ task: 'startCount' });
   }
 
   public changePage(page: number): void {

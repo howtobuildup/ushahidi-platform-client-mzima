@@ -58,6 +58,7 @@ export interface PostPropertiesInterface {
   status?: PostStatus;
   contact?: any;
   source?: string;
+  locks?: any[];
   data_source_message_id?: string;
   allowed_privileges: string[];
 }
@@ -91,7 +92,7 @@ export interface PostResult {
   form: PostForm;
   id: number;
   locale: string;
-  lock?: string | boolean;
+  locks?: any[];
   message?: string;
   parent_id?: number;
   post_date: Date;
@@ -111,6 +112,7 @@ export interface PostResult {
   form_id?: number;
   user?: PostPropertiesUser;
   post_content?: PostContent[];
+  post_media?: any;
 }
 
 interface PostTag {

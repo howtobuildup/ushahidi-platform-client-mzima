@@ -69,5 +69,22 @@ export const getMapLayers = () => {
         code: 'hOSM',
       },
     },
+    overlays: {
+      temperature: {
+        url: 'https://ows.digitalearth.africa/wms?version=1.3.0?',
+        layerName: 'ls9_st',
+        title: 'Surface temperature (Landsat 9)',
+      },
+      rainfall: {
+        url: 'https://ows.digitalearth.africa/wms?version=1.3.0',
+        layerName: 'chirps_dekad',
+        title: 'Rainfall (CHIRPS)',
+      },
+      surfaceWater: {
+        url: 'https://ows.digitalearth.africa/wms?version=1.3.0',
+        layerName: 'wofs_ls_summary_alltime',
+        title: 'Water Observations from Space all-time summary',
+      },
+    },
   };
 };

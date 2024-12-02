@@ -24,7 +24,13 @@
     }
   }
 }
-
+::ng-deep {
+  .leaflet-control-layers-expanded {
+    padding: 20px;
+    font-family: 'Lato Hairline';
+    font-size: 14px;
+  }
+}
 .progress-bar {
   top: 0;
   left: 0;
@@ -32,7 +38,6 @@
   z-index: 50;
   position: absolute;
 }
-
 .map {
   z-index: 15;
   height: 100%;

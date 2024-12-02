@@ -18,6 +18,7 @@ import {
   MarkerClusterGroupOptions,
   tileLayer,
 } from 'leaflet';
+import * as L from 'leaflet';
 import 'leaflet.markercluster';
 import { debounceTime, Observable } from 'rxjs';
 import { PostPreviewComponent } from '../post/post-preview/post-preview.component';
@@ -29,7 +30,9 @@ import {
   GeoJsonPostsResponse,
 } from '@mzima-client/sdk';
 import { SessionService, EventBusService, EventType, BreakpointService } from '@services';
-
+interface Layers<T> {
+  [index: string]: T;
+}
 @UntilDestroy()
 @Component({
   selector: 'app-map',
@@ -41,6 +44,8 @@ export class MapComponent extends MainViewComponent implements OnInit {
   postsCollection: GeoJsonPostsResponse;
   mapLayers: any[] = [];
   mapReady = false;
+  overlays: Layers<any>;
+  baseLayers: Layers<any>;
   mapConfig: MapConfigInterface;
   markerClusterData = new MarkerClusterGroup();
   markerClusterOptions: MarkerClusterGroupOptions = { animate: true, maxClusterRadius: 50 };
@@ -54,6 +59,7 @@ export class MapComponent extends MainViewComponent implements OnInit {
   public progress = 0;
   public isFiltersVisible: boolean;
   public isMainFiltersOpen: boolean;
+  public layerControl: any;
 
   constructor(
     protected override router: Router,
@@ -87,9 +93,11 @@ export class MapComponent extends MainViewComponent implements OnInit {
     });
     this.initFilterListener();
     this.mapConfig = this.sessionService.getMapConfigurations();
-
-    const currentLayer =
-      mapHelper.getMapLayers().baselayers[this.mapConfig.default_view!.baselayer];
+    this.mapConfig.clustering = false;
+    this.baseLayers = mapHelper.getMapLayers().baselayers;
+    const currentLayer = this.baseLayers[this.mapConfig.default_view!.baselayer];
+    // wms-services is in the overlays
+    this.overlays = mapHelper.getMapLayers().overlays;
 
     this.leafletOptions = {
       minZoom: 1,
@@ -179,6 +187,31 @@ export class MapComponent extends MainViewComponent implements OnInit {
     //---------------------
 
     control.zoom({ position: 'bottomleft' }).addTo(map);
+
+    this.layerControl = control.layers({});
+
+    Object.keys(this.baseLayers).forEach((key) => {
+      const layer = this.baseLayers[key] as { url: string; layerOptions: any };
+      this.layerControl.addBaseLayer(tileLayer(layer.url, layer.layerOptions), key);
+    });
+    Object.keys(this.overlays).forEach((key) => {
+      const layer = this.overlays[key];
+      this.layerControl.addOverlay(
+        L.tileLayer.wms(layer.url, {
+          layers: layer.layerName,
+          format: 'image/png',
+          transparent: true,
+        }),
+        layer.title,
+      );
+    });
+
+    this.layerControl.addTo(map);
+    const container = this.layerControl.getContainer();
+    if (!container) return;
+    const title = document.createElement('h2');
+    title.textContent = 'Layers';
+    container.prepend(title);
   }
 
   getPostsGeoJson(pageNumber: number = 1, filter?: any) {
@@ -369,6 +402,14 @@ export class MapComponent extends MainViewComponent implements OnInit {
                 localStorage.setItem('bounds', JSON.stringify(bounds));
               }
             }
+            this.mapLayers.forEach((layer) => {
+              const crowdsourcedData = new L.LayerGroup(layer.getLayers());
+              this.layerControl.addOverlay(crowdsourcedData, 'crowdsourced Data');
+            });
+            // this.layerControl
+            // this.layerControl.addOverlay(layer, postV5.title);
+            // console.log(this.layerControl)
+            // this.map.addControl(this.layerControl);
           }
 
           // if (posts.results.length && this.params.page <= this.params.limit) {

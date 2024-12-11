@@ -1,5 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { PostPropertiesInterface, PostResult } from '@mzima-client/sdk';
+import { EventTrackerService } from '../../core/services/event-tracker.service';
+import { EventType } from '@services';
 
 @Component({
   selector: 'app-post-metadata',
@@ -10,8 +12,11 @@ export class PostMetadataComponent implements OnInit {
   @Input() post: PostResult | PostPropertiesInterface;
   author: string;
 
+  constructor(private eventTrackerService: EventTrackerService) {}
+
   ngOnInit(): void {
     this.getUsername();
+    this.eventTrackerService.trigger({ action: EventType.StatusChange, updateById: true });
   }
 
   private getUsername(): void {

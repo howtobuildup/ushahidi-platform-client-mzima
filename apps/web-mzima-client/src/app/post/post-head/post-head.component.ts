@@ -8,6 +8,7 @@ import { BaseComponent } from '../../base.component';
 import { ShareModalComponent } from '../../shared/components';
 import { PostResult, PostsService, PostStatus, postHelpers } from '@mzima-client/sdk';
 import { ConfirmModalService } from '../../core/services/confirm-modal.service';
+import { EventTrackerService } from '../../core/services/event-tracker.service';
 
 @Component({
   selector: 'app-post-head',
@@ -35,6 +36,7 @@ export class PostHeadComponent extends BaseComponent implements OnInit {
     private translate: TranslateService,
     private eventBusService: EventBusService,
     private snackBar: MatSnackBar,
+    private eventTrackerService: EventTrackerService,
   ) {
     super(sessionService, breakpointService);
     this.checkDesktop();
@@ -81,7 +83,7 @@ export class PostHeadComponent extends BaseComponent implements OnInit {
       if (postHelpers.isAllRequiredCompleted(post)) {
         this.postsService.updateStatus(this.post.id, PostStatus.Published).subscribe((res) => {
           this.post = res.result;
-          this.statusChanged.emit();
+          this.eventTrackerService.emit({ payload: this.post });
         });
       } else {
         this.showMessage(this.translate.instant('notify.post.unfinished_post_task'), 'error', 5000);

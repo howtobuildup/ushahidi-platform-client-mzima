@@ -196,22 +196,39 @@ export class MapComponent extends MainViewComponent implements OnInit {
     });
     Object.keys(this.overlays).forEach((key) => {
       const layer = this.overlays[key];
-      this.layerControl.addOverlay(
-        L.tileLayer.wms(layer.url, {
-          layers: layer.layerName,
-          format: 'image/png',
-          transparent: true,
-        }),
-        layer.title,
-      );
+      const layerToAdd = L.tileLayer.wms(layer.url, {
+        layers: layer.layerName,
+        format: 'image/png',
+        transparent: true,
+      });
+
+      this.layerControl.addOverlay(layerToAdd, layer.title);
     });
 
     this.layerControl.addTo(map);
-    const container = this.layerControl.getContainer();
-    if (!container) return;
-    const title = document.createElement('h2');
-    title.textContent = 'Layers';
-    container.prepend(title);
+
+    map.on('click', (e) => {
+      //Use feature-request to add popup.
+      const featureUrl = `https://ows.digitalearth.africa/wms?
+        exceptions=XML
+        &version=1.3.0
+        &feature_count=101
+        &time=2024-10-01
+        &styles=rainfall_monthly
+        &service=WMS
+        &request=GetFeatureInfo
+        &layers=ls9_st,chirps_dekad,wofs_ls_summary_alltime
+        &service=WMS
+        &request=GetFeatureInfo
+        &bbox=${map.getBounds().toBBoxString()}
+        &width=256&height=256&crs=EPSG%3A3857
+        &query_layers=surface_temperature
+        &info_format=application%2Fjson
+        &y=${e.latlng.lng}
+        &x=${e.latlng.lat}`;
+
+      console.log(featureUrl);
+    });
   }
 
   getPostsGeoJson(pageNumber: number = 1, filter?: any) {
@@ -402,13 +419,13 @@ export class MapComponent extends MainViewComponent implements OnInit {
                 localStorage.setItem('bounds', JSON.stringify(bounds));
               }
             }
+            //Use this to add crowdsourced data to the control
             this.mapLayers.forEach((layer) => {
-              const crowdsourcedData = new L.LayerGroup(layer.getLayers());
-              this.layerControl.addOverlay(crowdsourcedData, 'crowdsourced Data');
+              // const crowdsourcedData = new L.LayerGroup(layer.getLayers());
+              // this.layerControl.addOverlay(crowdsourcedData, 'crowdsourced Data');
             });
             // this.layerControl
             // this.layerControl.addOverlay(layer, postV5.title);
-            // console.log(this.layerControl)
             // this.map.addControl(this.layerControl);
           }
 

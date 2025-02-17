@@ -21,14 +21,13 @@ describe('Automated Tests for Categories', () => {
   it('Deletes a child Category - Bulk Actions', () => {
     categoryFunctions.open_category_list_page();
     //delete child category
-    categoryFunctions.delete_category_bulk_actions('#mat-checkbox-37');
+    categoryFunctions.delete_category_bulk_actions('#mat-checkbox-12');
     categoryFunctions.verify_child_category_deleted('Children B');
   });
 
   it('Deletes a parent category - Bulk Actions', () => {
     categoryFunctions.open_category_list_page();
-
-    categoryFunctions.delete_category_bulk_actions('#mat-checkbox-37');
+    categoryFunctions.delete_category_bulk_actions('#mat-checkbox-13');
     categoryFunctions.verify_parent_category_deleted();
   });
 

@@ -150,6 +150,7 @@ class PostFunctions {
       .click();
     cy.get(PostLocators.postMenuDots).eq(0).click();
     cy.get(PostLocators.archivePostBtn).click();
+    cy.reload();
     cy.get(PostLocators.postPreview)
       .children(PostLocators.postItem)
       .contains(this.postTitle)

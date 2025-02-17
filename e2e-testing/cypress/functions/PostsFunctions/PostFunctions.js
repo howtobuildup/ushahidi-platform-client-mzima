@@ -64,6 +64,7 @@ class PostFunctions {
       .children(PostLocators.postItem)
       .contains(this.postTitle)
       .should('be.visible')
+      .wait(2000)
       .click();
   }
 

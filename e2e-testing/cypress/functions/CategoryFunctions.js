@@ -96,7 +96,7 @@ class CategoryFunctions {
   delete_category_from_details_page(category_name) {
     //click category to open details page
     //target Translation Categories
-    cy.get(CategoryLocators.toggleChildrenBtn).eq(5).click();
+    cy.get(CategoryLocators.toggleChildrenBtn).eq(4).click();
     cy.contains(category_name).click();
     //click delete to delete category
     cy.get(CategoryLocators.categoryDeleteBtn).click();

@@ -21,6 +21,7 @@ class DataViewFunctions {
     loginFunctions.logout();
     //check post appears for non logged in user
     this.click_data_view_btn();
+    cy.reload();
     cy.get(DataViewLocators.postPreview)
       .children(DataViewLocators.postItem)
       .contains('Automated Title Response');

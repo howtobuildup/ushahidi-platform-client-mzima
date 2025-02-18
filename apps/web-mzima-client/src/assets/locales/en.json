@@ -1764,6 +1764,11 @@
     "per_page": "{{count}} users",
     "password": "Password",
     "new_password": "New Password",
+    "enter_password": {
+      "old": "Enter Old Password",
+      "new": "Enter New Password"
+    },
+    "confirm_password_new": "Confirm New Password",
     "register": "Register",
     "role": "Role",
     "roles": "Roles",

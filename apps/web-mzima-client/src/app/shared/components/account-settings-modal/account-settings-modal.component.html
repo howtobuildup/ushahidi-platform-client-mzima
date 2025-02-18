@@ -61,7 +61,7 @@
                 </mat-expansion-panel-header>
 
                 <div class="form-row">
-                  <mat-label>{{ 'user.password' | translate }}</mat-label>
+                  <mat-label>{{ 'user.enter_password.old' | translate }}</mat-label>
                   <mat-form-field appearance="outline">
                     <input matInput type="password" formControlName="password" />
                     <mat-error *ngIf="profileForm.controls['password'].errors">
@@ -71,7 +71,17 @@
                 </div>
 
                 <div class="form-row">
-                  <mat-label>{{ 'user.confirm_password' | translate }}</mat-label>
+                  <mat-label>{{ 'user.enter_password.new' | translate }}</mat-label>
+                  <mat-form-field appearance="outline">
+                    <input matInput type="password" formControlName="password" />
+                    <mat-error *ngIf="profileForm.controls['password'].errors">
+                      <p>{{ 'user.password_length' | translate }}</p>
+                    </mat-error>
+                  </mat-form-field>
+                </div>
+
+                <div class="form-row">
+                  <mat-label>{{ 'user.confirm_password_new' | translate }}</mat-label>
                   <mat-form-field appearance="outline">
                     <input
                       matInput

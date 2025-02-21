@@ -63,8 +63,8 @@
                 <div class="form-row">
                   <mat-label>{{ 'user.enter_password.old' | translate }}</mat-label>
                   <mat-form-field appearance="outline">
-                    <input matInput type="password" formControlName="password" />
-                    <mat-error *ngIf="profileForm.controls['password'].errors">
+                    <input matInput type="password" formControlName="old_password" />
+                    <mat-error *ngIf="profileForm.controls['old_password'].errors">
                       <p>{{ 'user.password_length' | translate }}</p>
                     </mat-error>
                   </mat-form-field>
@@ -73,8 +73,8 @@
                 <div class="form-row">
                   <mat-label>{{ 'user.enter_password.new' | translate }}</mat-label>
                   <mat-form-field appearance="outline">
-                    <input matInput type="password" formControlName="password" />
-                    <mat-error *ngIf="profileForm.controls['password'].errors">
+                    <input matInput type="password" formControlName="new_password" />
+                    <mat-error *ngIf="profileForm.controls['new_password'].errors">
                       <p>{{ 'user.password_length' | translate }}</p>
                     </mat-error>
                   </mat-form-field>
@@ -86,20 +86,19 @@
                     <input
                       matInput
                       type="password"
-                      formControlName="confirmPassword"
+                      formControlName="confirm_new_password"
                       [errorStateMatcher]="matcher"
                     />
                     <mat-error
                       *ngIf="
-                        profileForm.hasError('notSame') || profileForm.controls['password'].errors
+                        profileForm.controls['confirm_new_password'].errors &&
+                        profileForm.controls['confirm_new_password'].dirty
                       "
                     >
-                      <p *ngIf="profileForm.controls['password'].errors">
-                        {{ 'user.password_length' | translate }}
-                      </p>
-                      <p *ngIf="profileForm.hasError('notSame')">
-                        {{ 'user.password_match' | translate }}
-                      </p>
+                      {{ 'user.password_length' | translate }}
+                    </mat-error>
+                    <mat-error *ngIf="profileForm.hasError('notSame')">
+                      {{ 'user.password_match' | translate }}
                     </mat-error>
                   </mat-form-field>
                 </div>

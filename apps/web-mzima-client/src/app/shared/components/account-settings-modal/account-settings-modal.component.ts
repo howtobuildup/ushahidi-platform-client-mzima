@@ -72,12 +72,13 @@ export class AccountSettingsModalComponent implements OnInit {
 
   private checkPasswords: ValidatorFn = (group: AbstractControl): ValidationErrors | null => {
     if (!group) return null;
-    const pass = group.get('password')?.value;
-    const confirmPass = group.get('confirmPassword')?.value;
-    if (confirmPass) {
-      return pass === confirmPass ? null : { notSame: true };
+    const newPassword = group.get('new_password')?.value;
+    const confirmNewPassword = group.get('confirm_new_password')?.value;
+    if (confirmNewPassword) {
+      return newPassword === confirmNewPassword ? null : { notSame: true };
+    } else {
+      return null;
     }
-    return null;
   };
 
   constructor(
@@ -98,8 +99,9 @@ export class AccountSettingsModalComponent implements OnInit {
         role: [''],
         display_name: ['', [Validators.required]],
         email: ['', [Validators.required, Validators.pattern(regexHelper.emailValidate())]],
-        password: [''],
-        confirmPassword: [''],
+        old_password: [''],
+        new_password: [''],
+        confirm_new_password: [''],
       },
       { validators: this.checkPasswords },
     );
@@ -159,7 +161,7 @@ export class AccountSettingsModalComponent implements OnInit {
     if (this.isUpdatingPassword) {
       options = {
         ...options,
-        password: this.profileForm.value.password,
+        password: this.profileForm.value.new_password,
       };
     }
 
@@ -167,8 +169,9 @@ export class AccountSettingsModalComponent implements OnInit {
     this.usersService.updateCurrentUser(options).subscribe({
       next: () => {
         this.getProfile();
-        this.profileForm.controls['password'].setValue('');
-        this.profileForm.controls['confirmPassword'].setValue('');
+        this.profileForm.controls['old_password'].setValue('');
+        this.profileForm.controls['new_password'].setValue('');
+        this.profileForm.controls['confirm_new_password'].setValue('');
         this.updatePassword(false);
         this.profileForm.enable();
         this.closeModal();
@@ -204,15 +207,23 @@ export class AccountSettingsModalComponent implements OnInit {
 
     if (this.isUpdatingPassword) {
       this.setFieldsValidators(
-        [this.profileForm.controls['password'], this.profileForm.controls['confirmPassword']],
+        [
+          this.profileForm.controls['old_password'],
+          this.profileForm.controls['new_password'],
+          this.profileForm.controls['confirm_new_password'],
+        ],
         [Validators.required, Validators.minLength(8), Validators.maxLength(64)],
       );
     } else {
       this.setFieldsValidators(
-        [this.profileForm.controls['password'], this.profileForm.controls['confirmPassword']],
+        [
+          this.profileForm.controls['old_password'],
+          this.profileForm.controls['new_password'],
+          this.profileForm.controls['confirm_new_password'],
+        ],
         [],
       );
-      this.profileForm.patchValue({ password: '', confirmPassword: '' });
+      this.profileForm.patchValue({ old_password: '', new_password: '', confirm_new_password: '' });
     }
   }
 

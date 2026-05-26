@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { AuthPage } from './auth.page';
-import { IsSignupEnabledGuard } from '@guards';
 
 const routes: Routes = [
   {
@@ -14,8 +13,10 @@ const routes: Routes = [
       },
       {
         path: 'signup',
-        loadChildren: () => import('./signup/signup.module').then((m) => m.SignupPageModule),
-        canActivate: [IsSignupEnabledGuard],
+        redirectTo: '/auth/login',
+        pathMatch: 'full',
+        // loadChildren: () => import('./signup/signup.module').then((m) => m.SignupPageModule),
+        // canActivate: [IsSignupEnabledGuard],
       },
       {
         path: '',

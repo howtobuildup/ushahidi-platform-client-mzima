@@ -32,6 +32,8 @@ export class LanguagePage {
   }
 
   public continue(): void {
+    this.languageService.changeLanguage(this.selectedLanguage);
+
     if (!this.storageService.getStorage(STORAGE_KEYS.INTRO_DONE)) {
       this.router.navigate(['/walkthrough']);
       return;

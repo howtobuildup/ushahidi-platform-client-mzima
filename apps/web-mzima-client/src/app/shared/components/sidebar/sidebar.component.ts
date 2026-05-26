@@ -5,7 +5,7 @@ import { LoginComponent } from '@auth';
 import { CollectionsComponent } from '@data';
 import { EnumGtmEvent, EnumGtmSource, Roles, Permissions } from '@enums';
 import { takeUntilDestroy$ } from '@helpers';
-import { MenuInterface, SiteConfigInterface, UserMenuInterface } from '@models';
+import { MenuInterface, UserMenuInterface } from '@models';
 import { UserInterface } from '@mzima-client/sdk';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -29,8 +29,6 @@ export class SidebarComponent implements OnInit {
   public userMenu: UserMenuInterface[] = [];
   private userData$: Observable<UserInterface>;
   private isDesktop$: Observable<boolean>;
-  public siteConfig: SiteConfigInterface;
-  public canRegister = false;
   public isDesktop = false;
   public isInnerPage = false;
   public menu: MenuInterface[] = [];
@@ -46,7 +44,6 @@ export class SidebarComponent implements OnInit {
   ) {
     this.userData$ = this.sessionService.currentUserData$.pipe(takeUntilDestroy$());
     this.isDesktop$ = this.breakpointService.isDesktop$.pipe(takeUntilDestroy$());
-    this.siteConfig = this.sessionService.getSiteConfigurations();
     this.isDesktop$.subscribe({
       next: (isDesktop) => {
         this.isDesktop = isDesktop;
@@ -75,7 +72,6 @@ export class SidebarComponent implements OnInit {
       ];
       this.isHost =
         userData.role === Roles.Admin || hostRoles.some((r) => userData.permissions?.includes(r));
-      this.canRegister = !this.siteConfig.private && !this.siteConfig.disable_registration;
       this.initMenu();
     });
 
@@ -142,17 +138,17 @@ export class SidebarComponent implements OnInit {
       {
         label: 'nav.login',
         icon: 'auth',
-        visible: !this.isLoggedIn && !this.canRegister,
+        visible: !this.isLoggedIn,
         action: () => this.openLogin(),
         ref: 'auth',
       },
-      {
-        label: 'nav.login_register',
-        icon: 'auth',
-        visible: !this.isLoggedIn && this.canRegister,
-        action: () => this.openLogin(),
-        ref: 'auth',
-      },
+      // {
+      //   label: 'nav.login_register',
+      //   icon: 'auth',
+      //   visible: !this.isLoggedIn && this.canRegister,
+      //   action: () => this.openLogin(),
+      //   ref: 'auth',
+      // },
       // {
       //   label: 'nav.help_support',
       //   icon: 'info',
@@ -168,9 +164,6 @@ export class SidebarComponent implements OnInit {
       width: '100%',
       maxWidth: 576,
       panelClass: ['modal', 'login-modal'],
-      data: {
-        isSignupActive: this.canRegister,
-      },
     });
     dialogRef.afterClosed().subscribe({
       next: () => this.removeFocusFromMenuItem('auth'),

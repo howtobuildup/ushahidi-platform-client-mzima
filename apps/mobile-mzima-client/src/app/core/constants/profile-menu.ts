@@ -58,7 +58,7 @@ export const profileMenu: ProfileMenuItem[] = [
     isLoggedGuard: true,
   },
   {
-    label: 'profile.menu.log_in_or_sign_up',
+    label: 'auth.log_in',
     icon: 'logout',
     route: '/auth',
     hideDetails: true,

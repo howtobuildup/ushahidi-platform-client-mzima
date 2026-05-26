@@ -5,7 +5,7 @@ import { NavigationEnd, Router } from '@angular/router';
 import { LoginComponent } from '@auth';
 import { CollectionsComponent } from '@data';
 import { EnumGtmEvent, EnumGtmSource } from '@enums';
-import { SiteConfigInterface, UserMenuInterface } from '@models';
+import { UserMenuInterface } from '@models';
 import { UserInterface } from '@mzima-client/sdk';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
@@ -41,10 +41,8 @@ export class ToolbarComponent implements OnInit {
   public showSearchForm: boolean;
   public pageTitle: string;
   public isBurgerMenuOpen = false;
-  public siteConfig: SiteConfigInterface;
   public menu: UserMenuInterface[];
   public isAdmin = false;
-  public canRegister = false;
   public isInnerPage = false;
   public isSettingsPage = false;
 
@@ -62,7 +60,6 @@ export class ToolbarComponent implements OnInit {
   ) {
     this.userData$ = this.session.currentUserData$.pipe(untilDestroyed(this));
     this.isDesktop$ = this.breakpointService.isDesktop$.pipe(untilDestroyed(this));
-    this.siteConfig = this.session.getSiteConfigurations();
     this.isDonateAvailable = <boolean>this.session.getSiteConfigurations().donation?.enabled;
 
     this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => {
@@ -87,7 +84,6 @@ export class ToolbarComponent implements OnInit {
       this.profile = userData;
       this.isLoggedIn = !!userData.userId;
       this.isAdmin = userData.role === 'admin';
-      this.canRegister = !this.siteConfig.private && !this.siteConfig.disable_registration;
       this.initMenu();
     });
   }
@@ -122,15 +118,15 @@ export class ToolbarComponent implements OnInit {
       {
         label: 'nav.login',
         icon: 'auth',
-        visible: !this.isLoggedIn && !this.canRegister,
+        visible: !this.isLoggedIn,
         action: () => this.openLogin(),
       },
-      {
-        label: 'nav.login_register',
-        icon: 'auth',
-        visible: !this.isLoggedIn && this.canRegister,
-        action: () => this.openLogin(),
-      },
+      // {
+      //   label: 'nav.login_register',
+      //   icon: 'auth',
+      //   visible: !this.isLoggedIn && this.canRegister,
+      //   action: () => this.openLogin(),
+      // },
     ];
   }
 
@@ -218,9 +214,6 @@ export class ToolbarComponent implements OnInit {
       width: '100%',
       maxWidth: 576,
       panelClass: ['modal', 'login-modal'],
-      data: {
-        isSignupActive: this.canRegister,
-      },
     });
   }
 

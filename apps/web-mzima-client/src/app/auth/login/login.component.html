@@ -12,12 +12,11 @@
 </mzima-client-button>
 
 <mat-tab-group
-  class="tabs"
+  class="tabs tabs--single"
   dynamicHeight
   disableRipple
   disablePagination
   animationDuration="0ms"
-  [ngClass]="{ 'tabs--single': !isSignupActive }"
 >
   <mat-tab [label]="'nav.login' | translate">
     <app-login-form (loggined)="successfully($event)">
@@ -33,6 +32,7 @@
       </mzima-client-button>
     </app-login-form>
   </mat-tab>
+  <!--
   <mat-tab [label]="'nav.registration' | translate" *ngIf="isSignupActive">
     <app-registration-form (registered)="successfully($event)">
       <mzima-client-button
@@ -47,4 +47,5 @@
       </mzima-client-button>
     </app-registration-form>
   </mat-tab>
+  -->
 </mat-tab-group>

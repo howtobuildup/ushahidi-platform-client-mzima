@@ -1,5 +1,5 @@
-import { Component, Inject } from '@angular/core';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { Component } from '@angular/core';
+import { MatDialogRef } from '@angular/material/dialog';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BreakpointService } from '@services';
 import { Observable } from 'rxjs';
@@ -12,15 +12,12 @@ import { Observable } from 'rxjs';
 })
 export class LoginComponent {
   public isDesktop$: Observable<boolean>;
-  public isSignupActive: boolean;
 
   constructor(
-    @Inject(MAT_DIALOG_DATA) private data: any,
     private matDialogRef: MatDialogRef<LoginComponent>,
     private breakpointService: BreakpointService,
   ) {
     this.isDesktop$ = this.breakpointService.isDesktop$.pipe(untilDestroyed(this));
-    this.isSignupActive = this.data.isSignupActive;
   }
 
   public cancel() {

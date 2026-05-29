@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
-import { CanActivate, Router } from '@angular/router';
-import { SessionService } from '@services';
+import { CanActivate, UrlTree } from '@angular/router';
+import { LandingRouteService, SessionService } from '@services';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { Observable } from 'rxjs';
 
 @UntilDestroy()
 @Injectable({
@@ -10,7 +11,10 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 export class NotAuthorizedGuard implements CanActivate {
   private isLoggedIn: boolean;
 
-  constructor(private router: Router, private sessionService: SessionService) {
+  constructor(
+    private landingRouteService: LandingRouteService,
+    private sessionService: SessionService,
+  ) {
     this.sessionService
       .getCurrentUserData()
       .pipe(untilDestroyed(this))
@@ -19,10 +23,9 @@ export class NotAuthorizedGuard implements CanActivate {
       });
   }
 
-  canActivate(): boolean {
+  canActivate(): boolean | Observable<boolean | UrlTree> {
     if (this.isLoggedIn) {
-      this.router.navigate(['/']);
-      return false;
+      return this.landingRouteService.getLandingUrl();
     }
     return true;
   }

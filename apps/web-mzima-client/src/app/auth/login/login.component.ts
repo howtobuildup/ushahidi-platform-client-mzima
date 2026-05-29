@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Optional } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BreakpointService } from '@services';
@@ -12,19 +12,21 @@ import { Observable } from 'rxjs';
 })
 export class LoginComponent {
   public isDesktop$: Observable<boolean>;
+  public isDialog = false;
 
   constructor(
-    private matDialogRef: MatDialogRef<LoginComponent>,
+    @Optional() private matDialogRef: MatDialogRef<LoginComponent> | null,
     private breakpointService: BreakpointService,
   ) {
+    this.isDialog = !!this.matDialogRef;
     this.isDesktop$ = this.breakpointService.isDesktop$.pipe(untilDestroyed(this));
   }
 
   public cancel() {
-    this.matDialogRef.close('cancel');
+    this.matDialogRef?.close('cancel');
   }
 
   public successfully(state: boolean): void {
-    this.matDialogRef.close(state);
+    this.matDialogRef?.close(state);
   }
 }

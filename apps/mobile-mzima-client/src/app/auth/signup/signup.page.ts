@@ -3,7 +3,7 @@ import { AbstractControl, FormBuilder, ValidatorFn, Validators } from '@angular/
 import { Router } from '@angular/router';
 import { CONST } from '@constants';
 import { fieldErrorMessages, regexHelper } from '@helpers';
-import { AuthService, DeploymentService } from '@services';
+import { AuthService, DeploymentService, LandingRouteService } from '@services';
 import { emailExistsValidator } from '@validators';
 
 @Component({
@@ -33,6 +33,7 @@ export class SignupPage {
     private authService: AuthService,
     private router: Router,
     private deploymentService: DeploymentService,
+    private landingRouteService: LandingRouteService,
   ) {}
 
   public signUp(): void {
@@ -44,7 +45,9 @@ export class SignupPage {
         this.form.enable();
         this.authService.login(email, password).subscribe({
           next: () => {
-            this.router.navigate(['/']);
+            this.landingRouteService
+              .getLandingUrl()
+              .subscribe((url) => this.router.navigateByUrl(url));
           },
         });
       },

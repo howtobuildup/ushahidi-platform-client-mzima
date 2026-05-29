@@ -2,8 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { CONST } from '@constants';
+import { isSubmitOnlyUser } from '@helpers';
 import { AddPostModalComponent } from '@post';
-import { EventBusService, EventType, BreakpointService } from '@services';
+import { EventBusService, EventType, BreakpointService, LandingRouteService } from '@services';
 import { Observable } from 'rxjs';
 
 @UntilDestroy()
@@ -19,6 +21,7 @@ export class SubmitPostButtonComponent implements OnInit {
     private dialog: MatDialog,
     private eventBusService: EventBusService,
     private breakpointService: BreakpointService,
+    private landingRouteService: LandingRouteService,
     private router: Router,
   ) {
     this.isDesktop$ = this.breakpointService.isDesktop$.pipe(untilDestroyed(this));
@@ -31,6 +34,14 @@ export class SubmitPostButtonComponent implements OnInit {
   }
 
   public async addPost(): Promise<void> {
+    const role = localStorage.getItem(`${CONST.LOCAL_STORAGE_PREFIX}role`);
+    const permissions = localStorage.getItem(`${CONST.LOCAL_STORAGE_PREFIX}permissions`);
+
+    if (isSubmitOnlyUser(permissions, role)) {
+      this.landingRouteService.getLandingUrl().subscribe((url) => this.router.navigateByUrl(url));
+      return;
+    }
+
     const dialogRef = this.dialog.open(AddPostModalComponent, {
       width: '100%',
       maxWidth: 615,

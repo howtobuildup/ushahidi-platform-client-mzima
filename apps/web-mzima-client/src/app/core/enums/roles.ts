@@ -9,6 +9,7 @@ export enum Roles {
 export enum Permissions {
   ManageUsers = 'Manage Users',
   ManagePosts = 'Manage Posts',
+  SubmitPosts = 'Submit Posts',
   ManageSettings = 'Manage Settings',
   ManageCollections = 'Manage Collections and Saved Searches',
   ImportExport = 'Bulk Data Import and Export',

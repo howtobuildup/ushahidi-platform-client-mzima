@@ -1,4 +1,6 @@
 export * from './not-authorized.guard';
+export * from './authorized.guard';
+export * from './submit-posts.guard';
 export * from './walkthrough.guard';
 export * from './language.guard';
 export * from './not-deployment.guard';

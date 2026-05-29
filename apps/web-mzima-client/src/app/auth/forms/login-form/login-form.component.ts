@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
-import { AuthService, EventBusService, EventType } from '@services';
+import { AuthService, EventBusService, EventType, LandingRouteService } from '@services';
 import { regexHelper } from '@helpers';
 import { ForgotPasswordComponent } from '@auth';
 import { Router } from '@angular/router';
@@ -24,6 +24,7 @@ export class LoginFormComponent {
     private router: Router,
     private dialog: MatDialog,
     private eventBusService: EventBusService,
+    private landingRouteService: LandingRouteService,
   ) {
     this.form = this.formBuilder.group({
       email: ['', [Validators.required, Validators.pattern(regexHelper.emailValidate())]],
@@ -47,6 +48,9 @@ export class LoginFormComponent {
     this.authService.login(email, password).subscribe({
       next: (response) => {
         this.loggined.emit(response);
+        this.landingRouteService
+          .getLandingUrl()
+          .subscribe((url) => this.router.navigateByUrl(url));
       },
       error: (err) => {
         this.loginError = err.error.message;
@@ -71,7 +75,7 @@ export class LoginFormComponent {
 
     dialogRef.afterClosed().subscribe((result) => {
       if (result) {
-        this.router.navigate([`/reset`]);
+        this.router.navigate([`/login/reset`]);
       } else {
         this.eventBusService.next({
           type: EventType.OpenLoginModal,

@@ -42,7 +42,7 @@ import {
 } from '@mzima-client/sdk';
 import { preparingVideoUrl } from '../../core/helpers/validators';
 import { ConfirmModalService } from '../../core/services/confirm-modal.service';
-import { objectHelpers, formValidators } from '@helpers';
+import { isSubmitOnlyUser, objectHelpers, formValidators } from '@helpers';
 import { AlphanumericValidatorValidator } from '../../core/validators';
 import { PhotoRequired } from '../../core/validators/photo-required';
 import { lastValueFrom } from 'rxjs';
@@ -591,9 +591,26 @@ export class PostEditComponent implements OnInit, OnChanges {
       },
       complete: async () => {
         await this.postComplete();
+        const role = localStorage.getItem(this.sessionService.getLocalStorageNameMapper('role'));
+        const permissions = localStorage.getItem(
+          this.sessionService.getLocalStorageNameMapper('permissions'),
+        );
+        if (isSubmitOnlyUser(permissions, role)) {
+          this.resetCreateForm();
+          return;
+        }
+
         this.router.navigate(['/feed']);
       },
     });
+  }
+
+  private resetCreateForm(): void {
+    this.completeStages = [];
+    this.postLanguages = [];
+    this.submitted = false;
+    this.form.enable();
+    this.loadData(this.formId!);
   }
 
   private showMessage(message: string, type: string) {

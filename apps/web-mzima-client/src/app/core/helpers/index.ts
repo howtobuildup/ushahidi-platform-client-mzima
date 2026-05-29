@@ -10,3 +10,4 @@ export * as regexHelper from './regex';
 export * as arrayHelpers from './array-helpers';
 export * as formValidators from './validators';
 export * as dateHelper from './date-helper';
+export * from './permission-access';

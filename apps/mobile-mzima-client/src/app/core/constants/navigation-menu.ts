@@ -2,8 +2,8 @@ export const navigationMenu = [
   {
     label: 'navigation.map',
     icon: 'location',
-    route: '/',
-    activeRoutes: ['/search/', '/collection/'],
+    route: '/map',
+    activeRoutes: ['/map/search/', '/map/collection/'],
   },
   {
     label: 'navigation.activity',

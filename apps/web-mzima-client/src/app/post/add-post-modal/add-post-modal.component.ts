@@ -19,9 +19,8 @@ export class AddPostModalComponent {
       next: (types) => {
         this.types = types.results || [];
         this.types.map((el) => {
-          el.visible =
-            el.everyone_can_create ||
-            el.can_create.includes(localStorage.getItem(`${CONST.LOCAL_STORAGE_PREFIX}role`));
+          const role = localStorage.getItem(`${CONST.LOCAL_STORAGE_PREFIX}role`) || '';
+          el.visible = el.everyone_can_create || el.can_create.includes(role);
         });
       },
     });

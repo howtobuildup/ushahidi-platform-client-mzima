@@ -39,7 +39,7 @@ export class WalkthroughPage {
   public finish() {
     this.storageService.setStorage(STORAGE_KEYS.INTRO_DONE, 'yes');
     this.deploymentService.isDeployment()
-      ? this.router.navigate(['/'])
+      ? this.router.navigate(['/auth/login'])
       : this.router.navigate(['/deployment']);
   }
 }

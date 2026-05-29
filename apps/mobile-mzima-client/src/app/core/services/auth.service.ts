@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, mergeMap } from 'rxjs';
+import { Observable, switchMap, tap } from 'rxjs';
 import { EnvService, SessionService } from '@services';
 import { Router } from '@angular/router';
 import { CONST } from '@constants';
@@ -39,7 +39,7 @@ export class AuthService extends ResourceService<any> {
       scope: CONST.CLAIMED_USER_SCOPES.join(' '),
     };
     return super.post(payload).pipe(
-      mergeMap(async (authResponse) => {
+      switchMap((authResponse) => {
         const accessToken = authResponse.access_token;
 
         if (authResponse.expires_in) {
@@ -57,13 +57,12 @@ export class AuthService extends ResourceService<any> {
             tokenType: authResponse.token_type,
           });
         }
-        return this.userService.getCurrentUser().subscribe({
-          next: (userData) => {
-            const { result } = userData;
-            this.setCurrentUserToSession(result);
-            this.userService.dispatchUserEvents({ result });
-          },
-        });
+        return this.userService.getCurrentUser();
+      }),
+      tap((userData) => {
+        const { result } = userData;
+        this.setCurrentUserToSession(result);
+        this.userService.dispatchUserEvents(result);
       }),
     );
   }
@@ -99,5 +98,6 @@ export class AuthService extends ResourceService<any> {
     console.log('logout');
     this.sessionService.clearSessionData();
     this.sessionService.clearUserData();
+    this.router.navigate(['/auth/login']);
   }
 }

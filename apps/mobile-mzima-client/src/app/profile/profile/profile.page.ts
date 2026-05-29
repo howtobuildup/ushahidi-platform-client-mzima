@@ -107,7 +107,7 @@ export class ProfilePage {
 
     if (result.role === 'confirm') {
       await this.dataBaseService.set(STORAGE_KEYS.PENDING_POST_KEY, []);
-      this.router.navigate(['/']);
+      this.router.navigate(['/map']);
     }
   }
 

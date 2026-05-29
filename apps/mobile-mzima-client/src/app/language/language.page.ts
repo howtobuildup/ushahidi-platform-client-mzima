@@ -40,7 +40,7 @@ export class LanguagePage {
     }
 
     this.deploymentService.isDeployment()
-      ? this.router.navigate(['/'])
+      ? this.router.navigate(['/auth/login'])
       : this.router.navigate(['/deployment']);
   }
 }

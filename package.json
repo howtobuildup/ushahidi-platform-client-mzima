@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "license": "AGPL-3.0-only",
   "scripts": {
-    "web:serve": "nx serve web-mzima-client",
+    "web:serve": "node tools/write-web-env.mjs && nx serve web-mzima-client",
     "web:build": "nx run web-mzima-client:build:production",
     "web:devbuild": "nx run web-mzima-client:build:development",
     "web:cypress": "nx e2e web-mzima-client-e2e --watch",

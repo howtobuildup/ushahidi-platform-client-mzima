@@ -1,6 +1,11 @@
 import { Injectable } from '@angular/core';
-import { CanActivate, Router } from '@angular/router';
-import { Observable } from 'rxjs';
+import {
+  ActivatedRouteSnapshot,
+  CanActivate,
+  Router,
+  RouterStateSnapshot,
+  UrlTree,
+} from '@angular/router';
 
 import { SessionService } from '@services';
 
@@ -12,12 +17,13 @@ export class AuthorizedGuard implements CanActivate {
 
   constructor(private router: Router, private sessionService: SessionService) {}
 
-  canActivate(): Observable<boolean> | Promise<boolean> | boolean {
+  canActivate(_route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean | UrlTree {
     const isLogged = this.sessionService.isLogged();
     if (!isLogged) {
       console.warn('Not authorized');
-      // this.router.navigate(['/']);
-      return false;
+      return this.router.createUrlTree(['/auth/login'], {
+        queryParams: { returnUrl: state.url },
+      });
     } else {
       return true;
     }

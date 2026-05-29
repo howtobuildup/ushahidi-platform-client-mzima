@@ -26,7 +26,7 @@ import { PostEditForm, prepareRelationConfig, UploadFileHelper } from '../helper
 
 import dayjs from 'dayjs';
 import timezone from 'dayjs/plugin/timezone';
-import { objectHelpers, dateHelper } from '@helpers';
+import { isSubmitOnlyUser, objectHelpers, dateHelper } from '@helpers';
 
 dayjs.extend(timezone);
 
@@ -75,6 +75,12 @@ export class PostEditPage {
   public isConnection = true;
   public connectionInfo = '';
   private queryParams: Params;
+  private userRole = '';
+  private userPermissions = '';
+  private readonly postSuccessMessage = [
+    'Thank you for submitting your report.',
+    'The post is being reviewed by our team and soon will appear on the platform.',
+  ].join(' ');
 
   dateOption: any;
 
@@ -96,8 +102,13 @@ export class PostEditPage {
     this.route.queryParams.subscribe({
       next: (queryParams) => {
         this.queryParams = queryParams;
+        this.selectedSurveyId = queryParams['surveyId'] ? Number(queryParams['surveyId']) : null;
       },
     });
+    this.userRole =
+      localStorage.getItem(this.sessionService.getLocalStorageNameMapper('role')) || '';
+    this.userPermissions =
+      localStorage.getItem(this.sessionService.getLocalStorageNameMapper('permissions')) || '';
   }
 
   async ionViewWillEnter() {
@@ -111,6 +122,8 @@ export class PostEditPage {
     if (this.post) {
       this.selectedSurveyId = this.post.form_id!;
       this.loadForm(this.post.post_content);
+    } else if (this.selectedSurveyId) {
+      this.loadForm();
     }
 
     this.transformSurveys();
@@ -189,7 +202,7 @@ export class PostEditPage {
           })
           .toPromise();
         await this.dataBaseService.set(STORAGE_KEYS.SURVEYS, response.results);
-        return response.results;
+        return this.filterSurveysForCurrentRole(response.results);
       } catch (err) {
         console.log(err);
         return this.loadSurveyFormLocalDB();
@@ -307,7 +320,18 @@ export class PostEditPage {
   }
 
   private async loadSurveyFormLocalDB() {
-    return this.dataBaseService.get(STORAGE_KEYS.SURVEYS);
+    const surveys = await this.dataBaseService.get(STORAGE_KEYS.SURVEYS);
+    return this.filterSurveysForCurrentRole(surveys || []);
+  }
+
+  private filterSurveysForCurrentRole(surveys: any[]) {
+    if (!this.isSubmitOnlyUser()) {
+      return surveys;
+    }
+
+    return surveys.filter((survey) => {
+      return survey.everyone_can_create || survey.can_create?.includes(this.userRole);
+    });
   }
 
   private updateForm(updateValues: any[]) {
@@ -622,9 +646,7 @@ export class PostEditPage {
     this.postsService.update(postId, postData).subscribe({
       error: () => this.form.enable(),
       complete: async () => {
-        await this.postComplete(
-          'Thank you for submitting your report. The post is being reviewed by our team and soon will appear on the platform.',
-        );
+        await this.postComplete(this.postSuccessMessage);
         this.backNavigation();
         // this.updated.emit();
       },
@@ -644,12 +666,20 @@ export class PostEditPage {
         }
       },
       complete: async () => {
-        await this.postComplete(
-          'Thank you for submitting your report. The post is being reviewed by our team and soon will appear on the platform.',
-        );
+        await this.postComplete(this.postSuccessMessage);
+        if (this.isSubmitOnlyUser()) {
+          this.resetCreateForm();
+          return;
+        }
         this.backNavigation();
       },
     });
+  }
+
+  private resetCreateForm(): void {
+    this.completeStages = [];
+    this.checkedList = [];
+    this.loadForm();
   }
 
   async postComplete(message: string) {
@@ -672,8 +702,7 @@ export class PostEditPage {
     if (!objectHelpers.objectsCompare(this.initialFormData, this.form.value)) {
       const result = await this.alertService.presentAlert({
         header: 'Success!',
-        message:
-          'Thank you for submitting your report. The post is being reviewed by our team and soon will appear on the platform.',
+        message: this.postSuccessMessage,
       });
       if (result.role !== 'confirm') return;
     }
@@ -690,14 +719,23 @@ export class PostEditPage {
   }
 
   public backNavigation(): void {
+    if (this.isSubmitOnlyUser()) {
+      this.resetCreateForm();
+      return;
+    }
+
     this.clearData();
     this.router.navigate([
       this.queryParams['profile']
         ? 'profile/posts'
         : this.isConnection && this.postId
         ? this.postId
-        : '/',
+        : '/map',
     ]);
+  }
+
+  private isSubmitOnlyUser(): boolean {
+    return isSubmitOnlyUser(this.userPermissions, this.userRole);
   }
 
   public preventSubmitIncaseTheresNoBackendValidation() {

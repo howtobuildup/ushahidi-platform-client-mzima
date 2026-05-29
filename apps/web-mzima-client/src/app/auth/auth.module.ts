@@ -18,7 +18,6 @@ import {
 } from '@auth';
 import { TranslateModule } from '@ngx-translate/core';
 import { DirectiveModule, LottieAnimationModule, PasswordStrengthModule } from '@shared';
-import { AuthRoutingModule } from './auth-routing.module';
 import { MzimaUiModule } from '@mzima-client/mzima-ui';
 
 @NgModule({
@@ -33,7 +32,6 @@ import { MzimaUiModule } from '@mzima-client/mzima-ui';
   ],
   imports: [
     CommonModule,
-    AuthRoutingModule,
     MatInputModule,
     MatDialogModule,
     MatButtonModule,

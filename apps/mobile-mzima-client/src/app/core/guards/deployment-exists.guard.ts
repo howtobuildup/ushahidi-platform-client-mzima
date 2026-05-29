@@ -15,7 +15,7 @@ export class DeploymentExistsGuard implements CanActivate {
   canActivate(): Observable<boolean> | Promise<boolean> | boolean {
     const isDeployment = this.deploymentService.isDeployment();
     if (isDeployment) {
-      this.router.navigate(['/']);
+      this.router.navigate(['/auth/login']);
       return false;
     } else {
       return true;

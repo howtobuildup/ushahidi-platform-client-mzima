@@ -1,12 +1,18 @@
 import { NgModule } from '@angular/core';
 import { PreloadAllModules, RouterModule, Routes } from '@angular/router';
-import { LanguageGuard, NotAuthorizedGuard } from '@guards';
+import { AuthorizedGuard, LanguageGuard, NotAuthorizedGuard, SubmitPostsGuard } from '@guards';
 import { PageNotFoundComponent } from '@components';
 
 const routes: Routes = [
   {
     path: '',
+    redirectTo: 'auth/login',
+    pathMatch: 'full',
+  },
+  {
+    path: 'map',
     loadChildren: () => import('./map/map.module').then((m) => m.MapPageModule),
+    canActivate: [LanguageGuard, AuthorizedGuard, SubmitPostsGuard],
   },
   {
     path: 'language',
@@ -20,7 +26,7 @@ const routes: Routes = [
   {
     path: 'profile',
     loadChildren: () => import('./profile/profile.module').then((m) => m.ProfilePageModule),
-    canActivate: [LanguageGuard],
+    canActivate: [LanguageGuard, AuthorizedGuard, SubmitPostsGuard],
   },
   {
     path: 'walkthrough',
@@ -37,7 +43,7 @@ const routes: Routes = [
   {
     path: 'post-edit',
     loadChildren: () => import('./post/post-edit/post-edit.module').then((m) => m.PostEditModule),
-    canActivate: [LanguageGuard],
+    canActivate: [LanguageGuard, AuthorizedGuard, SubmitPostsGuard],
     data: {
       breadcrumb: 'nav.posts',
       ogTitle: 'nav.posts',
@@ -60,12 +66,21 @@ const routes: Routes = [
   {
     path: 'activity',
     loadChildren: () => import('./activity/activity.module').then((m) => m.ActivityPageModule),
-    canActivate: [LanguageGuard],
+    canActivate: [LanguageGuard, AuthorizedGuard, SubmitPostsGuard],
+  },
+  {
+    path: 'no-access',
+    component: PageNotFoundComponent,
+    canActivate: [LanguageGuard, AuthorizedGuard],
+    data: {
+      breadcrumb: 'app.page-not-found',
+      ogTitle: 'app.page-not-found',
+    },
   },
   {
     path: ':id',
     loadChildren: () => import('./post/post.module').then((m) => m.PostPageModule),
-    canActivate: [LanguageGuard],
+    canActivate: [LanguageGuard, AuthorizedGuard, SubmitPostsGuard],
   },
   {
     path: '**',

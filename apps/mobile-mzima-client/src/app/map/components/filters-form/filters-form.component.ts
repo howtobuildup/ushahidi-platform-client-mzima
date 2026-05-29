@@ -411,7 +411,7 @@ export class FiltersFormComponent implements OnChanges, OnDestroy {
     if (result.role === 'confirm') {
       this.clearAllFilters();
       this.filtersModal.closeModal(true);
-      this.router.navigate(['']);
+      this.router.navigate(['/map']);
     }
   }
 

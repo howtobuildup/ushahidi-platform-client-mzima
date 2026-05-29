@@ -1,18 +1,43 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes, TitleStrategy } from '@angular/router';
-import { HostGuard, ResetTokenGuard } from '@guards';
+import {
+  AuthGuard,
+  HostGuard,
+  LoginRedirectGuard,
+  ResetTokenGuard,
+  SubmitPostsGuard,
+} from '@guards';
 import { PageNotFoundComponent } from './shared/components';
 import { UshahidiPageTitleStrategy } from '@services';
+import { LoginComponent, ResetComponent } from '@auth';
 
 const routes: Routes = [
   {
     path: '',
-    redirectTo: 'map',
+    redirectTo: 'login',
     pathMatch: 'full',
+  },
+  {
+    path: 'login',
+    component: LoginComponent,
+    canActivate: [LoginRedirectGuard],
+    data: {
+      breadcrumb: 'nav.login',
+      ogTitle: 'nav.login',
+    },
+  },
+  {
+    path: 'login/reset',
+    component: ResetComponent,
+    data: {
+      breadcrumb: 'nav.resetpassword',
+      ogTitle: 'nav.resetpassword',
+    },
   },
   {
     path: 'map',
     loadChildren: () => import('./map/map.module').then((m) => m.MapModule),
+    canActivate: [AuthGuard, SubmitPostsGuard],
     data: {
       breadcrumb: 'nav.map',
       ogTitle: 'nav.map',
@@ -21,6 +46,7 @@ const routes: Routes = [
   {
     path: 'data',
     loadChildren: () => import('./data/data.module').then((m) => m.DataModule),
+    canActivate: [AuthGuard, SubmitPostsGuard],
     data: {
       breadcrumb: 'nav.data',
       ogTitle: 'nav.data',
@@ -29,6 +55,7 @@ const routes: Routes = [
   {
     path: 'feed',
     loadChildren: () => import('./feed/feed.module').then((m) => m.FeedModule),
+    canActivate: [AuthGuard, SubmitPostsGuard],
     data: {
       breadcrumb: 'nav.feed',
       ogTitle: 'nav.feed',
@@ -37,6 +64,7 @@ const routes: Routes = [
   {
     path: 'activity',
     loadChildren: () => import('./activity/activity.module').then((m) => m.ActivityModule),
+    canActivate: [AuthGuard, SubmitPostsGuard],
     data: {
       breadcrumb: 'nav.activity',
       ogTitle: 'nav.activity',
@@ -45,7 +73,7 @@ const routes: Routes = [
   {
     path: 'settings',
     loadChildren: () => import('./settings/settings.module').then((m) => m.SettingsModule),
-    canActivate: [HostGuard],
+    canActivate: [AuthGuard, SubmitPostsGuard, HostGuard],
     data: {
       breadcrumb: 'nav.settings',
       ogTitle: 'nav.settings',
@@ -54,6 +82,7 @@ const routes: Routes = [
   {
     path: 'post',
     loadChildren: () => import('./post/post.module').then((m) => m.PostModule),
+    canActivate: [AuthGuard, SubmitPostsGuard],
     data: {
       breadcrumb: 'nav.posts',
       ogTitle: 'nav.posts',
@@ -62,10 +91,16 @@ const routes: Routes = [
   {
     path: 'reset',
     title: 'reset',
-    loadChildren: () => import('./auth/auth.module').then((m) => m.AuthModule),
+    redirectTo: 'login/reset',
+    pathMatch: 'full',
+  },
+  {
+    path: 'no-access',
+    component: PageNotFoundComponent,
+    canActivate: [AuthGuard],
     data: {
-      breadcrumb: 'nav.resetpassword',
-      ogTitle: 'nav.resetpassword',
+      breadcrumb: 'app.page-not-found',
+      ogTitle: 'app.page-not-found',
     },
   },
   {

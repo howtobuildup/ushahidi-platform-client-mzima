@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { LoginComponent } from '@auth';
 import { CollectionsComponent } from '@data';
 import { EnumGtmEvent, EnumGtmSource, Roles, Permissions } from '@enums';
-import { takeUntilDestroy$ } from '@helpers';
+import { isSubmitOnlyUser, takeUntilDestroy$ } from '@helpers';
 import { MenuInterface, UserMenuInterface } from '@models';
 import { UserInterface } from '@mzima-client/sdk';
 import { TranslateService } from '@ngx-translate/core';
@@ -26,6 +26,7 @@ import { SupportModalComponent } from '../support-modal/support-modal.component'
 export class SidebarComponent implements OnInit {
   isLoggedIn = false;
   public isHost = false;
+  public isFieldMonitor = false;
   public userMenu: UserMenuInterface[] = [];
   private userData$: Observable<UserInterface>;
   private isDesktop$: Observable<boolean>;
@@ -65,6 +66,7 @@ export class SidebarComponent implements OnInit {
   ngOnInit() {
     this.userData$.subscribe((userData) => {
       this.isLoggedIn = !!userData.userId;
+      this.isFieldMonitor = isSubmitOnlyUser(userData.permissions, userData.role);
       const hostRoles = [
         Permissions.ManageUsers,
         Permissions.ManageSettings,
@@ -87,18 +89,21 @@ export class SidebarComponent implements OnInit {
         router: 'map',
         icon: 'map',
         ref: 'map',
+        hidden: this.isFieldMonitor,
       },
       {
         label: 'views.data',
         router: 'feed',
         icon: 'data',
         ref: 'feed',
+        hidden: this.isFieldMonitor,
       },
       {
         label: 'views.activity',
         router: 'activity',
         icon: 'activity',
         ref: 'activity',
+        hidden: this.isFieldMonitor,
       },
       {
         label: 'nav.settings',
@@ -106,6 +111,7 @@ export class SidebarComponent implements OnInit {
         adminGuard: true,
         router: 'settings',
         ref: 'settings',
+        hidden: this.isFieldMonitor,
       },
     ];
   }

@@ -5,3 +5,6 @@ export { AdminGuard } from './admin.guard';
 export { ManageUsersGuard } from './manage-users.guard';
 export { ManageSettingsGuard } from './manage-settings.guard';
 export { DataImportExportGuard } from './data-import-export.guard';
+export { AuthGuard } from './auth.guard';
+export { LoginRedirectGuard } from './login-redirect.guard';
+export { SubmitPostsGuard } from './submit-posts.guard';

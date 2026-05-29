@@ -10,7 +10,9 @@ export class ResetTokenGuard implements CanActivate {
 
   // Guard created for handling old reset password url on legacy deployments
   canActivate(route: ActivatedRouteSnapshot): Observable<boolean> | boolean {
-    this.router.navigate([`/reset`], { queryParams: { token: route.paramMap.get('token') } });
+    this.router.navigate([`/login/reset`], {
+      queryParams: { token: route.paramMap.get('token') },
+    });
     return false;
   }
 }

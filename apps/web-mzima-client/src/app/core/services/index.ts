@@ -4,6 +4,7 @@ export { ConfigService } from './config.service';
 export { LanguageService } from './language.service';
 export { LoaderService } from './loader.service';
 export { EventBusService, EventType } from './event-bus.service';
+export { LandingRouteService } from './landing-route.service';
 export { BreakpointService } from './breakpoint.service';
 export { IconService } from './icon.service';
 export { AuthService } from './auth.service';

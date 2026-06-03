@@ -565,6 +565,7 @@ export class PostEditPage {
     if (!this.form.valid) this.form.markAllAsTouched();
 
     this.preventSubmitIncaseTheresNoBackendValidation();
+    if (this.form.invalid || this.atLeastOneFieldHasValidationError) return;
 
     if (this.postId) postData.post_date = this.post.post_date || new Date().toISOString();
 
@@ -574,7 +575,15 @@ export class PostEditPage {
     console.log('postData', postData);
 
     if (this.isConnection) {
-      await this.uploadPost();
+      try {
+        await this.uploadPost();
+      } catch (error: any) {
+        this.form.enable();
+        this.toastService.presentToast({
+          message: error?.error?.errors?.[0]?.message || error?.message || 'Failed to upload post',
+          duration: 3000,
+        });
+      }
     } else {
       await this.postComplete(
         'Thank you for your report. A message will be sent when the connection is restored.',
@@ -597,7 +606,10 @@ export class PostEditPage {
    * Upload created post from indexedb
    */
   async uploadPost() {
-    const pendingPosts: any[] = await this.dataBaseService.get(STORAGE_KEYS.PENDING_POST_KEY);
+    const pendingPosts: any[] =
+      (await this.dataBaseService.get(STORAGE_KEYS.PENDING_POST_KEY)) || [];
+    const remainingPosts = [...pendingPosts];
+
     for (let postData of pendingPosts) {
       if (postData?.file?.upload) {
         postData = await new UploadFileHelper(this.mediaService).uploadFile(
@@ -611,14 +623,23 @@ export class PostEditPage {
       }
 
       if (this.postId) {
-        this.updatePost(this.postId, postData);
+        await this.updatePost(this.postId, postData);
       } else {
         if (!this.atLeastOneFieldHasValidationError) {
-          this.createPost(postData);
+          await this.createPost(postData);
         }
       }
+
+      remainingPosts.shift();
+      await this.dataBaseService.set(STORAGE_KEYS.PENDING_POST_KEY, remainingPosts);
     }
-    await this.dataBaseService.set(STORAGE_KEYS.PENDING_POST_KEY, []);
+
+    await this.postComplete(this.postSuccessMessage);
+    if (this.isSubmitOnlyUser() && !this.postId) {
+      this.resetCreateForm();
+      return;
+    }
+    this.backNavigation();
   }
 
   async deleteFile(postData: any, { fileId }: any) {
@@ -642,38 +663,13 @@ export class PostEditPage {
   }
 
   /** Update post */
-  private updatePost(postId: number, postData: any) {
-    this.postsService.update(postId, postData).subscribe({
-      error: () => this.form.enable(),
-      complete: async () => {
-        await this.postComplete(this.postSuccessMessage);
-        this.backNavigation();
-        // this.updated.emit();
-      },
-    });
+  private async updatePost(postId: number, postData: any): Promise<void> {
+    await lastValueFrom(this.postsService.update(postId, postData));
   }
 
   /** Create post */
-  private createPost(postData: any) {
-    this.postsService.post(postData).subscribe({
-      error: ({ error }) => {
-        this.form.enable();
-        if (error.errors[0].status === 403) {
-          this.toastService.presentToast({
-            message: `Failed to create a post. ${error.errors[0].message}`,
-            duration: 3000,
-          });
-        }
-      },
-      complete: async () => {
-        await this.postComplete(this.postSuccessMessage);
-        if (this.isSubmitOnlyUser()) {
-          this.resetCreateForm();
-          return;
-        }
-        this.backNavigation();
-      },
-    });
+  private async createPost(postData: any): Promise<void> {
+    await lastValueFrom(this.postsService.post(postData));
   }
 
   private resetCreateForm(): void {

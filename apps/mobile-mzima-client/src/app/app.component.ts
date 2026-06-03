@@ -136,12 +136,16 @@ export class AppComponent extends BaseComponent {
 
   async uploadPendingPosts() {
     const posts: any[] = await this.dataBaseService.get(STORAGE_KEYS.PENDING_POST_KEY);
-    for (let post of posts) {
+    const remainingPosts = [...(posts || [])];
+
+    for (let post of posts || []) {
       if (post?.file?.upload)
         post = await new UploadFileHelper(this.mediaService).uploadFile(post, post.file);
       await firstValueFrom(this.postsService.post(post));
+      remainingPosts.shift();
+      await this.dataBaseService.set(STORAGE_KEYS.PENDING_POST_KEY, remainingPosts);
     }
+
     this.toastMessage$.next('All pending posts uploaded to the server');
-    await this.dataBaseService.set(STORAGE_KEYS.PENDING_POST_KEY, []);
   }
 }

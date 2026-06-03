@@ -94,7 +94,20 @@
       <ng-container *ngFor="let item of menu">
         <hr *ngIf="item.separator" />
         <a
-          *ngIf="item.visible"
+          *ngIf="item.visible && item.router"
+          class="mobile-menu-button"
+          [data-qa]="'btn-' + item.icon"
+          [routerLink]="createRouterLink(item.router)"
+          (click)="toggleBurgerMenu(false)"
+        >
+          <mat-icon class="mobile-menu-button__icon" [svgIcon]="item.icon"></mat-icon>
+          <span class="mobile-menu-button__title">
+            {{ item.label | translate }}
+          </span>
+        </a>
+        <button
+          *ngIf="item.visible && !item.router"
+          type="button"
           class="mobile-menu-button"
           [data-qa]="'btn-' + item.icon"
           (click)="item.action && item.action()"
@@ -103,7 +116,7 @@
           <span class="mobile-menu-button__title">
             {{ item.label | translate }}
           </span>
-        </a>
+        </button>
       </ng-container>
       <hr />
       <a class="mobile-menu-button"> {{ 'app.privacy_policy' | translate }} </a>

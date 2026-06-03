@@ -1,3 +1,4 @@
+<!-- Previous Activity view retained for reference.
 <div class="activity-page">
   <div class="container">
     <app-notification type="warning" id="activity-issues-warning">
@@ -9,3 +10,93 @@
     </div>
   </div>
 </div>
+-->
+
+<section class="dashboard-page">
+  <header class="report-header">
+    <div>
+      <h1>{{ 'dashboard.title' | translate }}</h1>
+    </div>
+
+    <div class="range-controls" [attr.aria-label]="'dashboard.date_range_label' | translate">
+      <mat-form-field appearance="outline">
+        <mat-select [(value)]="selectedRange" [attr.aria-label]="'dashboard.view_range' | translate">
+          <mat-option value="feb-mar-2026">{{ 'dashboard.view_range' | translate }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <strong>{{ 'dashboard.display_range' | translate }}</strong>
+    </div>
+  </header>
+
+  <div class="summary-grid">
+    <article
+      class="summary-card"
+      *ngFor="let metric of summaryMetrics"
+      [class.summary-card--danger]="metric.tone === 'danger'"
+      [class.summary-card--primary]="metric.tone === 'primary'"
+    >
+      <strong>{{ metric.value }}</strong>
+      <span>{{ metric.labelKey | translate }}</span>
+    </article>
+  </div>
+
+  <div class="chart-grid">
+    <article class="report-card location-card">
+      <h2>{{ 'dashboard.charts.total_incidents_by_location' | translate }}</h2>
+      <div class="location-chart" [attr.aria-label]="'dashboard.charts.total_incidents_by_location_aria' | translate">
+        <div class="plot-area">
+          <div
+            class="location-bar"
+            *ngFor="let item of locationMetrics"
+            [style.height.%]="(item.value / maxValue(locationMetrics)) * 100"
+            [style.background]="item.color"
+          ></div>
+        </div>
+        <div class="axis-labels">
+          <span *ngFor="let item of locationMetrics">{{ item.labelKey | translate }}</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="report-card incident-type-card">
+      <h2>{{ 'dashboard.charts.incident_type' | translate }}</h2>
+      <div class="incident-type-chart" [attr.aria-label]="'dashboard.charts.incident_type_distribution_aria' | translate">
+        <div
+          class="type-bar"
+          *ngFor="let item of incidentTypeMetrics"
+          [style.height.%]="(item.value / maxValue(incidentTypeMetrics)) * 100"
+          [style.background]="item.color"
+          [attr.title]="(item.labelKey | translate) + ': ' + item.value"
+        ></div>
+      </div>
+    </article>
+  </div>
+
+  <article class="report-card timeline-card">
+    <div class="timeline-head">
+      <h2>{{ 'dashboard.charts.timeline_of_incidents' | translate }}</h2>
+      <div class="legend">
+        <span><i class="legend-dot legend-dot--conflict"></i>{{ 'dashboard.legend.conflict' | translate }}</span>
+        <span><i class="legend-dot legend-dot--gbv"></i>{{ 'dashboard.legend.gbv_incidents' | translate }}</span>
+        <span><i class="legend-dot legend-dot--environmental"></i>{{ 'dashboard.legend.environmental' | translate }}</span>
+      </div>
+    </div>
+
+    <div class="timeline-chart" [attr.aria-label]="'dashboard.charts.timeline_of_incidents_aria' | translate">
+      <div class="stacked-bar" *ngFor="let item of timeline" [attr.title]="item.day">
+        <span
+          class="stacked-bar__segment stacked-bar__segment--conflict"
+          [style.height.%]="(item.conflict / timelineTotal(item)) * 100"
+        ></span>
+        <span
+          class="stacked-bar__segment stacked-bar__segment--gbv"
+          [style.height.%]="(item.gbv / timelineTotal(item)) * 100"
+        ></span>
+        <span
+          class="stacked-bar__segment stacked-bar__segment--environmental"
+          [style.height.%]="(item.environmental / timelineTotal(item)) * 100"
+        ></span>
+      </div>
+    </div>
+  </article>
+</section>

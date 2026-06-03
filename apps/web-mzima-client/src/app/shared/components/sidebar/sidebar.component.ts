@@ -85,6 +85,13 @@ export class SidebarComponent implements OnInit {
   private initNavigationMenu(): void {
     this.menu = [
       {
+        label: 'views.activity',
+        router: 'activity',
+        icon: 'activity',
+        ref: 'activity',
+        hidden: this.isFieldMonitor,
+      },
+      {
         label: 'views.map',
         router: 'map',
         icon: 'map',
@@ -96,13 +103,6 @@ export class SidebarComponent implements OnInit {
         router: 'feed',
         icon: 'data',
         ref: 'feed',
-        hidden: this.isFieldMonitor,
-      },
-      {
-        label: 'views.activity',
-        router: 'activity',
-        icon: 'activity',
-        ref: 'activity',
         hidden: this.isFieldMonitor,
       },
       {

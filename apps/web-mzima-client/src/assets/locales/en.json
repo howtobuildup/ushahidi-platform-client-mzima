@@ -633,7 +633,7 @@
     "my_account": "My account",
     "404": "Whoops",
     "about": "About",
-    "activity": "Activity",
+    "activity": "Dashboard",
     "add_post": "Add Post",
     "account_settings": "Account Settings",
     "alerts": "Alerts",
@@ -711,8 +711,54 @@
   "views": {
     "map": "Map view",
     "list": "Timeline",
-    "activity": "Activity",
+    "activity": "Dashboard",
     "data": "Data view"
+  },
+  "dashboard": {
+    "title": "Recent reports",
+    "date_range_label": "Report date range",
+    "view_range": "View range",
+    "display_range": "February 2026 - March 2026",
+    "summary": {
+      "total_incidents": "Total Number of Incidents",
+      "environmental_conflict": "Environmental conflict",
+      "gender_based_violence": "Gender Based violence",
+      "political_conflict": "Political Conflict",
+      "clan_conflict": "Clan Conflict"
+    },
+    "charts": {
+      "total_incidents_by_location": "Total Incidents by location",
+      "total_incidents_by_location_aria": "Total incidents by location",
+      "incident_type": "Incident type",
+      "incident_type_distribution_aria": "Incident type distribution",
+      "timeline_of_incidents": "Timeline of Incidents",
+      "timeline_of_incidents_aria": "Timeline of incidents"
+    },
+    "locations": {
+      "jubaland": "Jubaland",
+      "puntland": "Puntland",
+      "south_west": "South West",
+      "galmudug": "Galmudug"
+    },
+    "incident_types": {
+      "environmental": "Environmental",
+      "gbv": "GBV",
+      "political": "Political",
+      "clan": "Clan",
+      "other": "Other",
+      "escalation": "Escalation",
+      "response": "Response",
+      "reported": "Reported",
+      "verified": "Verified",
+      "pending": "Pending",
+      "closed": "Closed",
+      "referred": "Referred"
+    },
+    "legend": {
+      "conflict": "Conflict",
+      "gbv_incidents": "GBV incidents",
+      "environmental": "Environmental"
+    }
   },
   "share": {
     "share_deployment": "Share deployment",
@@ -2673,4 +2719,3 @@
     "adminUserLimitReached": "limit:{{:admin}}"
   }
 }
-

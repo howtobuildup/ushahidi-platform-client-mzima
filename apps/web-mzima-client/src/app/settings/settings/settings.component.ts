@@ -39,13 +39,13 @@ export class SettingsComponent implements OnInit {
 
   initMenu() {
     this.settingsItems = [
-      {
-        title: 'settings.settings_list.general',
-        description: 'settings.settings_list.general_desc',
-        icon: 'general',
-        router: 'general',
-        visible: this.isAdmin || this.isManageSettings,
-      },
+      // {
+      //   title: 'settings.settings_list.general',
+      //   description: 'settings.settings_list.general_desc',
+      //   icon: 'general',
+      //   router: 'general',
+      //   visible: this.isAdmin || this.isManageSettings,
+      // },
       {
         title: 'settings.settings_list.surveys',
         description: 'settings.settings_list.surveys_desc',
@@ -76,14 +76,14 @@ export class SettingsComponent implements OnInit {
           (this.isAdmin && this.isDonateAvailable) ||
           (this.isManageSettings && this.isDonateAvailable),
       },
-      {
-        title: 'settings.settings_list.user_settings',
-        description: 'settings.settings_list.user_settings_desc',
-        icon: 'configure',
-        router: 'user-settings',
-        visible:
-          this.isAdmin || this.isManageUsers || this.isManageSettings || this.isManageImportExport,
-      },
+      // {
+      //   title: 'settings.settings_list.user_settings',
+      //   description: 'settings.settings_list.user_settings_desc',
+      //   icon: 'configure',
+      //   router: 'user-settings',
+      //   visible:
+      //     this.isAdmin || this.isManageUsers || this.isManageSettings || this.isManageImportExport,
+      // },
       {
         title: 'settings.settings_list.export_hxl',
         description: 'settings.settings_list.export_desc_hxl',
@@ -112,13 +112,13 @@ export class SettingsComponent implements OnInit {
         router: 'categories',
         visible: this.isAdmin || this.isManageSettings,
       },
-      {
-        title: 'settings.settings_list.webhooks',
-        description: 'settings.settings_list.webhooks_desc',
-        icon: 'webhook',
-        router: 'webhooks',
-        visible: this.isAdmin || this.isManageSettings,
-      },
+      // {
+      //   title: 'settings.settings_list.webhooks',
+      //   description: 'settings.settings_list.webhooks_desc',
+      //   icon: 'webhook',
+      //   router: 'webhooks',
+      //   visible: this.isAdmin || this.isManageSettings,
+      // },
     ];
   }
 }

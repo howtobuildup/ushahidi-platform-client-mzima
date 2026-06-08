@@ -67,10 +67,12 @@ export class CreateFieldModalComponent implements OnInit {
       this.selectedFieldType.options = this.selectedFieldType.options.map(
         (option: any) => option.id,
       );
-      this.setTempSelectedFieldType();
     }
     this.editMode = true;
     this.setHasOptionValidate();
+    if (this.hasOptions) {
+      this.setTempSelectedFieldType();
+    }
     this.checkLoadAvailableData(this.selectedFieldType.input);
     if (Array.isArray(this.selectedFieldType.translations)) {
       this.selectedFieldType.translations = {};
@@ -116,7 +118,16 @@ export class CreateFieldModalComponent implements OnInit {
 
   onChange(index: number) {
     const option = this.fieldOptions[index];
-    this.selectedFieldType.options[index] = option.value.trim();
+    const value = option.value.trim();
+    const selectedOption = this.selectedFieldType.options[index];
+    if (selectedOption && typeof selectedOption === 'object') {
+      selectedOption.label = value;
+      if (!selectedOption.name) {
+        selectedOption.name = value;
+      }
+    } else {
+      this.selectedFieldType.options[index] = value;
+    }
     this.checkForEmptyOptions();
     this.optionValidation(index);
   }
@@ -139,11 +150,7 @@ export class CreateFieldModalComponent implements OnInit {
   }
 
   private checkForEmptyOptions() {
-    if (this.selectedFieldType.options.length) {
-      this.emptyTitleOption = !!this.selectedFieldType.options.filter(
-        (el: string) => el.trim() === '',
-      ).length;
-    }
+    this.emptyTitleOption = this.fieldOptions.some((option) => option.value.trim() === '');
   }
 
   get onlyOptional() {
@@ -316,16 +323,28 @@ export class CreateFieldModalComponent implements OnInit {
   public addOption() {
     if (!this.selectedFieldType.options) this.selectedFieldType.options = [];
     this.selectedFieldType.options.push('');
-    this.checkForEmptyOptions();
     this.fieldOptions.push({ value: '', error: '' });
+    this.checkForEmptyOptions();
   }
 
   private setTempSelectedFieldType() {
-    this.fieldOptions = this.selectedFieldType.options.map((opt: string) => ({
-      value: opt,
+    if (!Array.isArray(this.selectedFieldType.options)) {
+      this.selectedFieldType.options = [];
+    }
+
+    this.fieldOptions = this.selectedFieldType.options.map((option: any) => ({
+      value: this.getEditableOptionLabel(option),
       error: '',
     }));
     this.fieldOptions.forEach((opt, i) => this.optionValidation(i));
+  }
+
+  private getEditableOptionLabel(option: any): string {
+    if (!option || typeof option !== 'object') {
+      return String(option ?? '');
+    }
+
+    return String(option.label ?? option.name ?? option.value ?? option.tag ?? option.id ?? '');
   }
 
   private setHasOptionValidate() {
@@ -364,7 +383,7 @@ export class CreateFieldModalComponent implements OnInit {
 
   public validateDuplicate() {
     if (surveyHelper.fieldCanHaveOptions(this.selectedFieldType)) {
-      return surveyHelper.areOptionsUnique(this.selectedFieldType.options);
+      return surveyHelper.areOptionsUnique(this.fieldOptions.map((option) => option.value.trim()));
     }
     return true;
   }

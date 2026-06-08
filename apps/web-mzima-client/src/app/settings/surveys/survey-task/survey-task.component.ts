@@ -40,8 +40,10 @@ export class SurveyTaskComponent implements OnInit, OnChanges {
   @Input() selectLanguageCode: string;
   @Input() roles: RoleResult[];
   @Input() isMain: boolean;
+  @Input() importingXlsForm = false;
   @Output() colorSelected = new EventEmitter();
   @Output() languageChange = new EventEmitter();
+  @Output() xlsFormImport = new EventEmitter<Event>();
   @Output() duplicateTaskChange = new EventEmitter();
   @Output() deleteTaskChange = new EventEmitter();
   @Output() errorFieldChange = new EventEmitter();
@@ -80,6 +82,7 @@ export class SurveyTaskComponent implements OnInit, OnChanges {
       if (Array.isArray(this.task.translations)) {
         this.task.translations = {};
       }
+      this.refreshTaskFields();
     }
 
     if (changes['selectLanguageCode']) {
@@ -119,13 +122,17 @@ export class SurveyTaskComponent implements OnInit, OnChanges {
 
   ngOnInit(): void {
     this.surveyId = this.route.snapshot.paramMap.get('id') || '';
-    this.taskFields = this.task.fields;
-    this.splitTaskFields(this.taskFields);
-    this.currentInterimId = this.findIntermId();
-    this.isPost = this.task.type === 'post';
+    this.refreshTaskFields();
     if (this.surveyId && this.isPost) {
       this.getSurveyRoles();
     }
+  }
+
+  private refreshTaskFields(): void {
+    this.taskFields = this.task.fields || [];
+    this.splitTaskFields(this.taskFields);
+    this.currentInterimId = this.findIntermId();
+    this.isPost = this.task.type === 'post';
   }
 
   private splitTaskFields(taskFields: FormAttributeInterface[]) {
@@ -260,14 +267,26 @@ export class SurveyTaskComponent implements OnInit, OnChanges {
   }
 
   async deleteField(index: number) {
-    const confirmed = await this.confirm.open({
-      title: this.translate.instant('notify.form.delete_attribute_confirm'),
-      description: `<p>${this.translate.instant('notify.form.delete_attribute_confirm_desc')}</p>`,
-    });
+    const confirmed = await this.confirmFieldDeletion();
     if (!confirmed) return;
     this.draggableFields.splice(index, 1);
     this.mergeTaskFieldsData();
     this.taskChangeEmit();
+  }
+
+  async deleteFixedField(index: number) {
+    const confirmed = await this.confirmFieldDeletion();
+    if (!confirmed) return;
+    this.nonDraggableFields.splice(index, 1);
+    this.mergeTaskFieldsData();
+    this.taskChangeEmit();
+  }
+
+  private confirmFieldDeletion(): Promise<boolean> {
+    return this.confirm.open({
+      title: this.translate.instant('notify.form.delete_attribute_confirm'),
+      description: `<p>${this.translate.instant('notify.form.delete_attribute_confirm_desc')}</p>`,
+    });
   }
 
   get anonymiseReportersEnabled() {

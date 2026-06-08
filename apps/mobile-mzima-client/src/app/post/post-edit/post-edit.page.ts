@@ -689,7 +689,7 @@ export class PostEditPage {
       post_content: this.tasks,
       post_date: new Date().toISOString(),
       published_to: [],
-      title: this.title,
+      title: this.title || this.selectedSurvey?.name || 'Report',
       type: 'report',
     };
 

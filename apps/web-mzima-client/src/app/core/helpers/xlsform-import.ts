@@ -19,6 +19,10 @@ interface ChoiceOption {
   [key: string]: any;
 }
 
+interface XlsFormGroupContext {
+  relevant: string;
+}
+
 export interface ImportedXlsForm {
   name: string;
   tasks: SurveyItemTask[];
@@ -102,53 +106,60 @@ function buildTasks(
   choicesByList: Record<string, ChoiceOption[]>,
 ): SurveyItemTask[] {
   const defaultTask = clone(surveyHelper.defaultTask);
-  const importedTask: any = {
-    description: '',
-    fields: [],
-    form_id: 0,
-    id: getInterimId(0),
-    label: 'Imported XLSForm questions',
-    priority: 1,
-    required: false,
-    show_when_published: true,
-    task_is_internal_only: false,
-    translations: {
-      so: {
-        label: 'Su’aalaha XLSForm ee la keenay',
-      },
-    },
-    type: 'task',
-  };
 
-  let priority = 1;
+  const groupStack: XlsFormGroupContext[] = [];
+  let priority = defaultTask.fields.length + 1;
   rows.forEach((row) => {
-    const mapped = mapSurveyRowToField(row, choicesByList, priority);
+    const type = String(row['type'] || '').trim();
+    const baseType = type.split(/\s+/)[0];
+
+    if (baseType === 'begin_group') {
+      groupStack.push({
+        relevant: String(row['relevant'] || '').trim(),
+      });
+      return;
+    }
+
+    if (baseType === 'end_group') {
+      groupStack.pop();
+      return;
+    }
+
+    const inheritedRelevant = combineRelevantExpressions(
+      groupStack.map((group) => group.relevant).filter(Boolean),
+    );
+    const mapped = mapSurveyRowToField(row, choicesByList, priority, inheritedRelevant);
     if (mapped) {
-      importedTask.fields.push(mapped);
+      defaultTask.fields.push(mapped);
       priority += 1;
     }
   });
 
-  return importedTask.fields.length ? [defaultTask, importedTask] : [defaultTask];
+  return [defaultTask as unknown as SurveyItemTask];
 }
 
 function mapSurveyRowToField(
   row: XlsFormRow,
   choicesByList: Record<string, ChoiceOption[]>,
   priority: number,
+  inheritedRelevant = '',
 ): any | null {
   const type = String(row['type'] || '').trim();
   const name = String(row['name'] || '').trim();
-  if (!type || !name || ['start', 'end', 'today', 'begin_group', 'end_group'].includes(type)) {
+  const [baseType, listName] = type.split(/\s+/);
+  if (!type || !name || ['start', 'end', 'today'].includes(baseType)) {
     return null;
   }
 
-  const [baseType, listName] = type.split(/\s+/);
   const config: any = {};
   ['relevant', 'parameters', 'choice_filter'].forEach((key) => {
     const value = String(row[key] || '').trim();
     if (value) config[key] = value;
   });
+  config.relevant = combineRelevantExpressions([inheritedRelevant, config.relevant]);
+  if (!config.relevant) {
+    delete config.relevant;
+  }
 
   const field = {
     cardinality: baseType === 'select_multiple' ? 0 : 1,
@@ -173,6 +184,18 @@ function mapSurveyRowToField(
   };
 
   return field;
+}
+
+function combineRelevantExpressions(expressions: Array<string | null | undefined>): string {
+  const uniqueExpressions = expressions
+    .map((expression) => String(expression || '').trim())
+    .filter(Boolean)
+    .filter((expression, index, allExpressions) => allExpressions.indexOf(expression) === index);
+
+  if (!uniqueExpressions.length) return '';
+  if (uniqueExpressions.length === 1) return uniqueExpressions[0];
+
+  return uniqueExpressions.map((expression) => `(${expression})`).join(' and ');
 }
 
 function mapInput(type: string): string {

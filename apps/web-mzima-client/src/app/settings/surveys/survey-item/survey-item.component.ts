@@ -229,11 +229,12 @@ export class SurveyItemComponent implements OnInit {
     this.importingXlsForm = true;
     try {
       const imported = await xlsFormImportHelper.importXlsForm(file);
+      const tasks = this.mergeImportedFields(imported.tasks);
       this.form.patchValue({
         name: imported.name,
         enabled_languages: imported.enabledLanguages,
         translations: imported.translations,
-        tasks: imported.tasks,
+        tasks,
       });
       this.initLanguages(imported.enabledLanguages);
       this.initTasks();
@@ -251,6 +252,29 @@ export class SurveyItemComponent implements OnInit {
       this.importingXlsForm = false;
       input.value = '';
     }
+  }
+
+  private mergeImportedFields(importedTasks: SurveyItemTask[]): SurveyItemTask[] {
+    const currentTasks: SurveyItemTask[] = this.getFormControl('tasks').value || [];
+    const currentMainTask = currentTasks.find((task) => task.type === 'post');
+    const importedMainTask = importedTasks.find((task) => task.type === 'post');
+    if (!importedMainTask) return currentTasks;
+
+    const coreFields = (currentMainTask?.fields || importedMainTask.fields).filter((field) =>
+      ['title', 'description'].includes(field.type),
+    );
+    const importedFields = importedMainTask.fields.filter(
+      (field) => !['title', 'description'].includes(field.type),
+    );
+    const mergedMainTask = {
+      ...(currentMainTask || importedMainTask),
+      fields: [...coreFields, ...importedFields],
+    };
+    const additionalTasks = currentTasks.filter(
+      (task) => task.type !== 'post' && task.label !== 'Imported XLSForm questions',
+    );
+
+    return [mergedMainTask, ...additionalTasks];
   }
 
   initRoles() {

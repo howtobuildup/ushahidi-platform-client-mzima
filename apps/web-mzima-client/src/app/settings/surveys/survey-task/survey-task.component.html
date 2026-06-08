@@ -64,16 +64,35 @@
               : ('translations.field_add_translation' | translate)
           }}
         </h2>
-        <mzima-client-button
-          color="secondary"
-          fill="outline"
-          (buttonClick)="addField()"
-          [data-qa]="'btn-survey-add-field'"
-          *ngIf="isDefaultLanguageSelected"
-        >
-          <span>{{ 'form.add_field' | translate }}</span>
-          <mat-icon icon svgIcon="plus"></mat-icon>
-        </mzima-client-button>
+        <div class="form-head-panel__actions" *ngIf="isDefaultLanguageSelected">
+          <ng-container *ngIf="isPost">
+            <input
+              #xlsFormInput
+              type="file"
+              accept=".xlsx,.xls"
+              hidden
+              (change)="xlsFormImport.emit($event)"
+            />
+            <mzima-client-button
+              color="secondary"
+              fill="outline"
+              (buttonClick)="xlsFormInput.click()"
+              [disabled]="importingXlsForm"
+              [data-qa]="'btn-import-xlsform'"
+            >
+              <span>{{ 'survey.import_xlsform' | translate }}</span>
+            </mzima-client-button>
+          </ng-container>
+          <mzima-client-button
+            color="secondary"
+            fill="outline"
+            (buttonClick)="addField()"
+            [data-qa]="'btn-survey-add-field'"
+          >
+            <span>{{ 'form.add_field' | translate }}</span>
+            <mat-icon icon svgIcon="plus"></mat-icon>
+          </mzima-client-button>
+        </div>
       </div>
 
       <div cdkDropList class="fields-list" *ngIf="taskFields?.length; else noFields">
@@ -108,6 +127,17 @@
               [data-qa]="'btn-field-edit-' + field.label"
             >
               <mat-icon icon svgIcon="pencil"></mat-icon>
+            </mzima-client-button>
+            <mzima-client-button
+              fill="clear"
+              color="gray"
+              [iconOnly]="true"
+              class="field-item__control"
+              *ngIf="isDefaultLanguageSelected"
+              (buttonClick)="deleteFixedField(i)"
+              [data-qa]="'btn-field-delete-' + field.label"
+            >
+              <mat-icon icon svgIcon="delete"></mat-icon>
             </mzima-client-button>
           </div>
         </div>

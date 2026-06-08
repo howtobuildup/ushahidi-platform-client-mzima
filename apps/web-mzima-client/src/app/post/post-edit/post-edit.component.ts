@@ -671,7 +671,7 @@ export class PostEditComponent implements OnInit, OnChanges {
       post_content: this.tasks,
       post_date: new Date().toISOString(),
       published_to: [],
-      title: this.title,
+      title: this.title || this.surveyName || 'Report',
       type: 'report',
     };
 

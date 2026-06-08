@@ -1,14 +1,12 @@
 import { Component, OnInit } from '@angular/core';
-import { CONST } from '@constants';
 import { Observable } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { PollingService, SessionService, BreakpointService } from '@services';
+import { PollingService, BreakpointService } from '@services';
 import {
   ExportJobsService,
   FormsService,
   FormInterface,
   ExportJobInterface,
-  UsersService,
 } from '@mzima-client/sdk';
 
 @UntilDestroy()
@@ -22,16 +20,12 @@ export class DataExportComponent implements OnInit {
   forms: FormInterface[] = [];
   fieldsMap: any = {};
   exportJobs: ExportJobInterface[] = [];
-  hxlEnabled = false;
-  hxlApiKey = false;
   showProgress = false;
   exportView = true;
   exportJobsReady = false;
 
   constructor(
     private formsService: FormsService,
-    private sessionService: SessionService,
-    private usersService: UsersService,
     private exportJobsService: ExportJobsService,
     private pollingService: PollingService,
     private breakpointService: BreakpointService,
@@ -44,23 +38,7 @@ export class DataExportComponent implements OnInit {
       this.forms = forms.results;
       this.attachFormAttributes();
     });
-    this.initUserSettings();
-
-    this.hxlEnabled = !!this.sessionService.getFeatureConfigurations().hxl?.enabled;
     this.loadExportJobs();
-  }
-
-  initUserSettings() {
-    const userId = localStorage.getItem(`${CONST.LOCAL_STORAGE_PREFIX}userId`);
-    if (userId) {
-      this.usersService.getUserSettings(userId).subscribe({
-        next: (response) => {
-          this.hxlApiKey = response.results?.some((setting: any) => {
-            return setting.config_key === 'hdx_api_key';
-          });
-        },
-      });
-    }
   }
 
   loadExportJobs() {

@@ -47,7 +47,7 @@ export class RestorePasswordFormComponent implements OnInit {
     this.session.getCurrentUserData().subscribe((userData) => {
       if (userData.userId) {
         // redirect to settings if you are logged in
-        this.router.navigate(['/', 'settings', 'general']);
+        this.router.navigate(['/', 'settings', 'surveys']);
       }
     });
     this.route.queryParams.subscribe((params) => {

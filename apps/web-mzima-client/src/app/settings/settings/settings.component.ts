@@ -85,8 +85,8 @@ export class SettingsComponent implements OnInit {
       //     this.isAdmin || this.isManageUsers || this.isManageSettings || this.isManageImportExport,
       // },
       {
-        title: 'settings.settings_list.export_hxl',
-        description: 'settings.settings_list.export_desc_hxl',
+        title: 'settings.settings_list.export',
+        description: 'settings.settings_list.export_desc',
         icon: 'export',
         router: 'data-export',
         visible: this.isAdmin || this.isManageImportExport,

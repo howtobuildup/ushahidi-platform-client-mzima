@@ -52,7 +52,7 @@ export class SettingsLayoutComponent {
     switch (this.userData.role) {
       case Roles.Admin:
       case Roles.ManageSettings:
-        this.router.navigate(['settings/general']);
+        this.router.navigate(['settings/surveys']);
         break;
       case Roles.ManageUsers:
         this.router.navigate(['settings/user-settings']);

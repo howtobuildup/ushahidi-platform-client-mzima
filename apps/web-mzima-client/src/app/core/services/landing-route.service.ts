@@ -29,7 +29,7 @@ export class LandingRouteService {
     }
 
     if (permissions.includes(Permissions.ManageSettings)) {
-      return of(this.router.parseUrl('/settings/general'));
+      return of(this.router.parseUrl('/settings/surveys'));
     }
 
     if (permissions.includes(Permissions.ImportExport)) {

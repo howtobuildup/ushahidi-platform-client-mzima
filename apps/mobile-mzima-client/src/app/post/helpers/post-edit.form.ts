@@ -1,4 +1,5 @@
 import { FormBuilder, FormControl, ValidatorFn, Validators } from '@angular/forms';
+import { xlsFormRules } from '@mzima-client/sdk';
 import { AlphanumericValidator, FormValidator, PhotoRequiredValidator } from '@validators';
 
 export class PostEditForm {
@@ -38,13 +39,22 @@ export class PostEditForm {
         }
         break;
     }
+    validators.push(this.xlsFormConstraintValidator(field));
     return new FormControl(value, validators);
   }
 
   public addFormArray(value: string, field: any) {
-    return this.formBuilder.array(
-      [] || [new FormControl(value)],
+    const validators = [
       field.required ? Validators.required : null,
-    );
+      this.xlsFormConstraintValidator(field),
+    ].filter(Boolean) as ValidatorFn[];
+    return this.formBuilder.array([] || [new FormControl(value)], validators);
+  }
+
+  private xlsFormConstraintValidator(field: any): ValidatorFn {
+    return (control) =>
+      xlsFormRules.isFieldConstraintValid(field, control.value)
+        ? null
+        : { xlsFormConstraint: true };
   }
 }

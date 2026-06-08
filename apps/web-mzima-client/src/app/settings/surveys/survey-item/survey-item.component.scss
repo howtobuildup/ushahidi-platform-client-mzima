@@ -43,6 +43,12 @@
 
 .form-head-panel {
   width: 100%;
+
+  &__actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
 }
 
 .empty {

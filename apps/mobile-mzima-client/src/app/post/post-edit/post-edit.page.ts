@@ -4,7 +4,17 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { STORAGE_KEYS } from '@constants';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { EMPTY, from, lastValueFrom, map, Observable, of, switchMap, tap } from 'rxjs';
+import {
+  EMPTY,
+  from,
+  lastValueFrom,
+  map,
+  Observable,
+  of,
+  Subscription,
+  switchMap,
+  tap,
+} from 'rxjs';
 import {
   GeoJsonFilter,
   MediaService,
@@ -13,6 +23,7 @@ import {
   PostResult,
   PostsService,
   SurveysService,
+  xlsFormRules,
 } from '@mzima-client/sdk';
 import {
   AlertService,
@@ -66,6 +77,7 @@ export class PostEditPage {
   public formValidator = new FormValidator();
 
   public filters: any;
+  public xlsFormRules = xlsFormRules;
   public surveyList: any[] = [];
   public surveyListOptions: any;
   public selectedSurveyId: number | null;
@@ -77,6 +89,8 @@ export class PostEditPage {
   private queryParams: Params;
   private userRole = '';
   private userPermissions = '';
+  private dynamicRulesSubscription?: Subscription;
+  private hiddenFieldKeys = new Set<string>();
   private readonly postSuccessMessage = [
     'Thank you for submitting your report.',
     'The post is being reviewed by our team and soon will appear on the platform.',
@@ -225,6 +239,8 @@ export class PostEditPage {
     this.relatedPosts = [];
     this.fileToUpload = null;
     this.selectedSurvey = null;
+    this.hiddenFieldKeys.clear();
+    this.dynamicRulesSubscription?.unsubscribe();
 
     if (this.form?.controls) {
       for (const control in this.form.controls) {
@@ -263,9 +279,10 @@ export class PostEditPage {
 
     const fields: any = {};
     for (const task of this.tasks ?? []) {
-      task.fields
+      task.fields = task.fields
         .sort((a: any, b: any) => a.priority - b.priority)
         .map((field: any) => {
+          field = xlsFormRules.randomizeFieldOptions(field);
           switch (field.type) {
             case 'title':
               this.title = field.default;
@@ -292,6 +309,8 @@ export class PostEditPage {
               if (value.lat === '' || value.lng === '') this.emptyLocation = true;
             }
           }
+
+          return field;
         });
     }
 
@@ -303,6 +322,110 @@ export class PostEditPage {
     if (updateContent) {
       this.updateForm(updateContent);
     }
+
+    this.setupDynamicFormRules();
+  }
+
+  public isFieldVisible(field: any): boolean {
+    return !this.hiddenFieldKeys.has(String(field.key));
+  }
+
+  private setupDynamicFormRules(): void {
+    this.dynamicRulesSubscription?.unsubscribe();
+    this.applyDynamicFieldVisibility();
+    this.dynamicRulesSubscription = this.form.valueChanges
+      .pipe(untilDestroyed(this))
+      .subscribe(() => this.applyDynamicFieldVisibility());
+  }
+
+  private applyDynamicFieldVisibility(): void {
+    if (!this.form) return;
+
+    this.locationRequired = false;
+    this.emptyLocation = false;
+
+    for (const task of this.tasks) {
+      for (const field of task.fields) {
+        const control = this.form.get(field.key);
+        if (!control) continue;
+        const fieldKey = String(field.key);
+
+        const visible = xlsFormRules.isFieldVisible(field, this.form.getRawValue());
+        if (visible) {
+          this.hiddenFieldKeys.delete(fieldKey);
+          if (control.disabled) {
+            control.enable({ emitEvent: false });
+          }
+
+          if (field.type === 'point' && field.required) {
+            this.locationRequired = field.required;
+            const location = control.value;
+            if (!location?.lat || !location?.lng) {
+              this.emptyLocation = true;
+            }
+          }
+          this.clearInvalidChoiceFilterValue(field);
+        } else {
+          this.hiddenFieldKeys.add(fieldKey);
+          this.clearHiddenFieldValue(field);
+          if (control.enabled) {
+            control.disable({ emitEvent: false });
+          }
+        }
+      }
+    }
+
+    this.cdr.detectChanges();
+  }
+
+  private clearHiddenFieldValue(field: any): void {
+    const control = this.form.get(field.key);
+    if (!control) return;
+
+    const value = this.fieldsFormArray.includes(field.type)
+      ? []
+      : field.input === 'location'
+      ? { lat: '', lng: '' }
+      : null;
+
+    control.patchValue(value, { emitEvent: false });
+  }
+
+  private clearInvalidChoiceFilterValue(field: any): void {
+    if (!field.config?.choice_filter) return;
+    const control = this.form.get(field.key);
+    if (!control) return;
+
+    const validValues = this.getFieldOptions(field).map((option) => this.getOptionValue(option));
+    const value = control.value;
+    const nextValue = Array.isArray(value)
+      ? value.filter((item) => validValues.includes(item))
+      : validValues.includes(value)
+      ? value
+      : null;
+
+    if (JSON.stringify(value) !== JSON.stringify(nextValue)) {
+      control.patchValue(nextValue, { emitEvent: false });
+    }
+  }
+
+  public getFieldOptions(field: any): any[] {
+    return xlsFormRules.getFilteredOptions(field, this.form?.getRawValue?.() || {});
+  }
+
+  public getOptionValue(option: any): any {
+    return xlsFormRules.getOptionValue(option);
+  }
+
+  public getOptionLabel(option: any): string {
+    return xlsFormRules.getOptionLabel(option);
+  }
+
+  public getSelectOptions(field: any): any[] {
+    return this.getFieldOptions(field).map((option) => ({
+      value: this.getOptionValue(option),
+      label: this.getOptionLabel(option),
+    }));
   }
 
   public changeLocation(data: any, formKey: string) {
@@ -491,7 +614,17 @@ export class PostEditPage {
     for (const task of this.tasks) {
       task.fields = await Promise.all(
         task.fields.map(async (field: { key: string | number; input: string; type: string }) => {
-          const fieldValue: any = this.form.value[field.key];
+          const fieldKey = String(field.key);
+          const fieldValue: any = this.form.getRawValue()[field.key];
+
+          if (this.hiddenFieldKeys.has(fieldKey)) {
+            return {
+              ...field,
+              required: false,
+              value: { value: null },
+            };
+          }
+
           let value: any = { value: fieldValue };
 
           if (field.type === 'title') this.title = fieldValue;
@@ -500,22 +633,22 @@ export class PostEditPage {
           if (fieldHandlers.hasOwnProperty(field.input)) {
             value = fieldHandlers[field.input as keyof typeof fieldHandlers](fieldValue);
           } else if (field.input === 'upload') {
-            if (this.form.value[field.key]?.upload && this.form.value[field.key]?.photo) {
+            if (fieldValue?.upload && fieldValue?.photo) {
               this.fileToUpload = {
-                ...this.form.value[field.key]?.photo,
-                caption: this.form.value[field.key]?.caption,
-                upload: this.form.value[field.key]?.upload,
+                ...fieldValue?.photo,
+                caption: fieldValue?.caption,
+                upload: fieldValue?.upload,
               };
-            } else if (this.form.value[field.key]?.delete && this.form.value[field.key]?.id) {
+            } else if (fieldValue?.delete && fieldValue?.id) {
               this.fileToUpload = {
-                fileId: this.form.value[field.key]?.id,
-                delete: this.form.value[field.key]?.delete,
+                fileId: fieldValue?.id,
+                delete: fieldValue?.delete,
               };
             } else {
-              value.value = this.form.value[field.key]?.id || null;
+              value.value = fieldValue?.id || null;
             }
           } else {
-            value.value = this.form.value[field.key] || null;
+            value.value = fieldValue || null;
           }
 
           return {
@@ -738,12 +871,15 @@ export class PostEditPage {
     /** Extra check to prevent form submission beforehand
      * incase any field shows error but has no backend validation **/
     this.form.enable();
+    this.applyDynamicFieldVisibility();
     for (const task of this.tasks) {
       this.atLeastOneFieldHasValidationError = task.fields.some((field: any) => {
+        if (this.hiddenFieldKeys.has(String(field.key))) return false;
         return (
           this.form.get(field.key)?.hasError('required') ||
           this.form.get(field.key)?.hasError('minlength') ||
-          this.form.get(field.key)?.hasError('invalidvideourl')
+          this.form.get(field.key)?.hasError('invalidvideourl') ||
+          this.form.get(field.key)?.hasError('xlsFormConstraint')
         );
       });
     }

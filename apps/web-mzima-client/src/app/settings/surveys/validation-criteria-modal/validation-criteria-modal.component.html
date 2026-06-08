@@ -1,0 +1,124 @@
+<mzima-client-button
+  tabindex="-1"
+  fill="outline"
+  [iconOnly]="true"
+  color="light-gray"
+  [data-qa]="'btn-close-validation-criteria'"
+  class="modal__close-btn"
+  (buttonClick)="cancel()"
+  ariaLabel="{{ 'modal.button.close' | translate }}"
+>
+  <mat-icon icon svgIcon="close"></mat-icon>
+</mzima-client-button>
+
+<strong mat-dialog-title>{{ 'survey.validation_criteria' | translate }}</strong>
+
+<mat-dialog-content>
+  <div class="criteria">
+    <aside class="criteria__nav">
+      <button type="button" [class.active]="mode === 'choice'" (click)="mode = 'choice'">
+        {{ 'survey.question_options' | translate }}
+      </button>
+      <button type="button" [class.active]="mode === 'conditions'" (click)="selectConditionsMode()">
+        {{ 'survey.add_validation_condition' | translate }}
+      </button>
+      <button type="button" [class.active]="mode === 'manual'" (click)="selectManualMode()">
+        {{ 'survey.manual_xlsform_validation' | translate }}
+      </button>
+    </aside>
+
+    <section class="criteria__content">
+      <ng-container *ngIf="mode === 'choice'">
+        <button type="button" class="choice-button" (click)="selectConditionsMode()">
+          <strong>{{ 'survey.add_validation_condition' | translate }}</strong>
+          <span>{{ 'survey.add_validation_condition_desc' | translate }}</span>
+        </button>
+        <button type="button" class="choice-button" (click)="selectManualMode()">
+          <strong>{{ 'survey.manual_xlsform_validation' | translate }}</strong>
+          <span>{{ 'survey.manual_xlsform_validation_desc' | translate }}</span>
+        </button>
+      </ng-container>
+
+      <ng-container *ngIf="mode === 'conditions'">
+        <h3>{{ 'survey.validation_conditions_title' | translate }}</h3>
+
+        <div class="condition-row" *ngFor="let condition of conditions; let i = index">
+          <mat-form-field appearance="outline" class="operator">
+            <mat-select [(ngModel)]="condition.operator">
+              <mat-option [value]="'='">=</mat-option>
+              <mat-option [value]="'!='">!=</mat-option>
+              <mat-option [value]="'<'">&lt;</mat-option>
+              <mat-option [value]="'<='">&lt;=</mat-option>
+              <mat-option [value]="'>'">&gt;</mat-option>
+              <mat-option [value]="'>='">&gt;=</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-select
+              *ngIf="getFieldOptions().length; else freeTextValue"
+              [(ngModel)]="condition.value"
+              [placeholder]="'survey.accepted_response' | translate"
+            >
+              <mat-option *ngFor="let option of getFieldOptions()" [value]="option">
+                {{ option }}
+              </mat-option>
+            </mat-select>
+            <ng-template #freeTextValue>
+              <input
+                matInput
+                [(ngModel)]="condition.value"
+                placeholder="{{ 'survey.accepted_response' | translate }}"
+              />
+            </ng-template>
+          </mat-form-field>
+
+          <mzima-client-button
+            fill="clear"
+            color="danger"
+            [iconOnly]="true"
+            class="condition-delete"
+            (buttonClick)="removeCondition(i)"
+            [data-qa]="'btn-remove-validation-condition-' + i"
+          >
+            <mat-icon icon svgIcon="delete"></mat-icon>
+          </mzima-client-button>
+        </div>
+
+        <mzima-client-button
+          fill="solid"
+          color="primary"
+          (buttonClick)="addCondition()"
+          [data-qa]="'btn-add-validation-condition'"
+        >
+          {{ 'survey.add_another_condition' | translate }}
+        </mzima-client-button>
+      </ng-container>
+
+      <ng-container *ngIf="mode === 'manual'">
+        <h3>{{ 'survey.manual_xlsform_validation' | translate }}</h3>
+        <mat-form-field appearance="outline">
+          <textarea
+            matInput
+            rows="5"
+            [(ngModel)]="manualExpression"
+            placeholder="{{ 'survey.validation_rule_placeholder' | translate }}"
+          ></textarea>
+          <mat-hint>{{ 'survey.validation_rule_desc' | translate }}</mat-hint>
+        </mat-form-field>
+      </ng-container>
+    </section>
+  </div>
+</mat-dialog-content>
+
+<div mat-dialog-actions align="end">
+  <mzima-client-button fill="outline" color="danger" (buttonClick)="clear()">
+    {{ 'survey.clear_validation_rule' | translate }}
+  </mzima-client-button>
+  <mzima-client-button fill="outline" color="secondary" (buttonClick)="cancel()">
+    {{ 'app.cancel' | translate }}
+  </mzima-client-button>
+  <mzima-client-button (buttonClick)="save()" [disabled]="!canSave()">
+    {{ 'app.save' | translate }}
+  </mzima-client-button>
+</div>

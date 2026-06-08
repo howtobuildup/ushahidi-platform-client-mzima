@@ -148,6 +148,33 @@ export class SurveyTaskComponent implements OnInit, OnChanges {
     });
   }
 
+  public getFieldLogicLabels(field: FormAttributeInterface): string[] {
+    const config = !Array.isArray(field.config) && field.config ? field.config : {};
+    const labels: string[] = [];
+
+    if (config.relevant) {
+      labels.push(this.translate.instant('survey.skip_logic'));
+    }
+
+    if (config.constraint) {
+      labels.push(this.translate.instant('survey.validation_rule'));
+    }
+
+    if (
+      config.randomize_options ||
+      config.randomize ||
+      /randomize\s*=\s*true/i.test(config.parameters || '')
+    ) {
+      labels.push(this.translate.instant('survey.randomize_options'));
+    }
+
+    return labels;
+  }
+
+  public hasFieldLogic(field: FormAttributeInterface): boolean {
+    return this.getFieldLogicLabels(field).length > 0;
+  }
+
   getConfigOptions() {
     return {
       selectedRoles: this.selectedRoles,
@@ -260,6 +287,7 @@ export class SurveyTaskComponent implements OnInit, OnChanges {
       data: {
         surveyId: this.surveyId,
         isTranslateMode: !this.isDefaultLanguageSelected,
+        fields: _.cloneDeep(this.taskFields),
       },
     });
 
@@ -294,6 +322,7 @@ export class SurveyTaskComponent implements OnInit, OnChanges {
         surveyId: this.surveyId,
         isTranslateMode: !this.isDefaultLanguageSelected,
         selectLanguageCode: this.selectLanguageCode,
+        fields: _.cloneDeep(this.taskFields),
       },
     });
 

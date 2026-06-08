@@ -93,6 +93,9 @@
                 ? field.label
                 : field.translations[selectLanguageCode]?.label || field.label
             }}</span>
+            <span class="field-item__logic" *ngIf="hasFieldLogic(field)">
+              <span *ngFor="let label of getFieldLogicLabels(field)">{{ label }}</span>
+            </span>
           </div>
           <!-- <span class="field-item__type">{{ field.type }}</span> -->
           <div class="field-item__controls">
@@ -134,6 +137,9 @@
                 ? field.label
                 : field.translations[selectLanguageCode]?.label || field.label
             }}</span>
+            <span class="field-item__logic" *ngIf="hasFieldLogic(field)">
+              <span *ngFor="let label of getFieldLogicLabels(field)">{{ label }}</span>
+            </span>
           </div>
           <!-- <span class="field-item__type">{{ field.type }}</span> -->
           <div class="field-item__controls">

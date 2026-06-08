@@ -107,6 +107,68 @@
         </app-multilevel-select>
       </div>
 
+      <div class="form-row logic-panel">
+        <mat-label class="logic-label">{{ 'survey.skip_logic' | translate }}</mat-label>
+        <div class="logic-summary">
+          <span *ngIf="selectedFieldType.config.relevant; else noSkipLogic">
+            {{ selectedFieldType.config.relevant }}
+          </span>
+          <ng-template #noSkipLogic>
+            <span>{{ 'survey.no_skip_logic' | translate }}</span>
+          </ng-template>
+          <mzima-client-button
+            fill="outline"
+            color="secondary"
+            (buttonClick)="openSkipLogicModal()"
+            [data-qa]="'btn-configure-skip-logic'"
+          >
+            {{ 'survey.configure_skip_logic' | translate }}
+          </mzima-client-button>
+        </div>
+
+        <div class="toggle" *ngIf="canRandomizeOptions">
+          <mat-slide-toggle
+            [(ngModel)]="selectedFieldType.config.randomize_options"
+            [data-qa]="'toggle-randomize-options'"
+          >
+            {{ 'survey.randomize_options' | translate }}
+            <p class="init active" *ngIf="selectedFieldType.config.randomize_options">
+              <small>{{ 'survey.randomize_options_desc' | translate }}</small>
+            </p>
+          </mat-slide-toggle>
+        </div>
+
+        <ng-container *ngIf="canValidateValue">
+          <mat-label class="logic-label">{{ 'survey.validation_rule' | translate }}</mat-label>
+          <div class="logic-summary">
+            <span *ngIf="selectedFieldType.config.constraint; else noValidationRule">
+              {{ selectedFieldType.config.constraint }}
+            </span>
+            <ng-template #noValidationRule>
+              <span>{{ 'survey.no_validation_rule' | translate }}</span>
+            </ng-template>
+            <mzima-client-button
+              fill="outline"
+              color="secondary"
+              (buttonClick)="openValidationCriteriaModal()"
+              [data-qa]="'btn-configure-validation-criteria'"
+            >
+              {{ 'survey.configure_validation_criteria' | translate }}
+            </mzima-client-button>
+          </div>
+
+          <mat-label>{{ 'survey.validation_message' | translate }}</mat-label>
+          <mat-form-field appearance="outline">
+            <input
+              matInput
+              [(ngModel)]="selectedFieldType.config.constraint_message"
+              placeholder="{{ 'survey.validation_message_placeholder' | translate }}"
+              [data-qa]="'field-validation-message'"
+            />
+          </mat-form-field>
+        </ng-container>
+      </div>
+
       <div class="form-row" *ngIf="onlyOptional || canDisableCaption || canMakePrivate">
         <div class="toggle">
           <mat-slide-toggle

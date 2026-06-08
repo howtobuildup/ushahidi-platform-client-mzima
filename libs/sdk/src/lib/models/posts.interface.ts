@@ -1,5 +1,6 @@
 import { ApiNResponse } from './api-response.interface';
 import { CategoryInterface } from './category.interface';
+import { XlsFormFieldConfig } from '../helpers/xlsform-rules.helper';
 import * as GeoJSON from 'geojson';
 
 export interface GeoJsonPostsResponse extends ApiNResponse {
@@ -38,6 +39,7 @@ export interface GeoJsonFilter {
   created_before_by_id?: string;
   q?: string;
   page?: number;
+  user?: string;
 }
 
 export interface PostPropertiesInterface {
@@ -152,7 +154,7 @@ export interface PostStatsResponse {
 
 export interface PostContentField {
   cardinality: number;
-  config: any[];
+  config: XlsFormFieldConfig | any[];
   default: string;
   description?: string;
   form_stage_id: number;

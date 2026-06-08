@@ -39,13 +39,14 @@ import {
   PostResult,
   MediaService,
   postHelpers,
+  xlsFormRules,
 } from '@mzima-client/sdk';
 import { preparingVideoUrl } from '../../core/helpers/validators';
 import { ConfirmModalService } from '../../core/services/confirm-modal.service';
 import { isSubmitOnlyUser, objectHelpers, formValidators } from '@helpers';
 import { AlphanumericValidatorValidator } from '../../core/validators';
 import { PhotoRequired } from '../../core/validators/photo-required';
-import { lastValueFrom } from 'rxjs';
+import { lastValueFrom, Subscription } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { LanguageInterface } from '../../core/interfaces/language.interface';
 import { MatSelectChange } from '@angular/material/select';
@@ -94,8 +95,11 @@ export class PostEditComponent implements OnInit, OnChanges {
   public emptyLocation = false;
   public submitted = false;
   public filters;
+  public xlsFormRules = xlsFormRules;
   selectedLanguage: any;
   postLanguages: LanguageInterface[] = [];
+  private dynamicRulesSubscription?: Subscription;
+  private hiddenFieldKeys = new Set<string>();
 
   constructor(
     private route: ActivatedRoute,
@@ -168,6 +172,7 @@ export class PostEditComponent implements OnInit, OnChanges {
 
   private loadData(formId: number | null, updateContent?: any[]) {
     if (!formId) return;
+    this.hiddenFieldKeys.clear();
     this.surveysService.getSurveyById(formId).subscribe({
       next: (data) => {
         const { result } = data;
@@ -189,9 +194,10 @@ export class PostEditComponent implements OnInit, OnChanges {
 
         const fields: any = {};
         for (const task of this.tasks) {
-          task.fields
+          task.fields = task.fields
             .sort((a: any, b: any) => a.priority - b.priority)
             .map((field: any) => {
+              field = xlsFormRules.randomizeFieldOptions(field);
               switch (field.type) {
                 case 'title':
                   this.title = field.default;
@@ -234,6 +240,8 @@ export class PostEditComponent implements OnInit, OnChanges {
                   ? this.addFormArray(value, field)
                   : this.addFormControl(value, field);
               }
+
+              return field;
             });
         }
 
@@ -245,8 +253,112 @@ export class PostEditComponent implements OnInit, OnChanges {
         if (updateContent) {
           this.updateForm(updateContent);
         }
+
+        this.setupDynamicFormRules();
       },
     });
+  }
+
+  public isFieldVisible(field: any): boolean {
+    return !this.hiddenFieldKeys.has(String(field.key));
+  }
+
+  private setupDynamicFormRules(): void {
+    this.dynamicRulesSubscription?.unsubscribe();
+    this.applyDynamicFieldVisibility();
+    this.dynamicRulesSubscription = this.form.valueChanges
+      .pipe(untilDestroyed(this))
+      .subscribe(() => this.applyDynamicFieldVisibility());
+  }
+
+  private applyDynamicFieldVisibility(): void {
+    if (!this.form) return;
+
+    this.locationRequired = false;
+    this.emptyLocation = false;
+
+    for (const task of this.tasks) {
+      for (const field of task.fields) {
+        const control = this.form.get(field.key);
+        if (!control) continue;
+        const fieldKey = String(field.key);
+
+        const visible = xlsFormRules.isFieldVisible(field, this.form.getRawValue());
+        if (visible) {
+          this.hiddenFieldKeys.delete(fieldKey);
+          if (control.disabled) {
+            control.enable({ emitEvent: false });
+          }
+
+          if (field.type === 'point' && field.required) {
+            this.locationRequired = field.required;
+            const location = control.value;
+            if (!location?.lat || !location?.lng) {
+              this.emptyLocation = true;
+            }
+          }
+          this.clearInvalidChoiceFilterValue(field);
+        } else {
+          this.hiddenFieldKeys.add(fieldKey);
+          this.clearHiddenFieldValue(field);
+          if (control.enabled) {
+            control.disable({ emitEvent: false });
+          }
+        }
+      }
+    }
+
+    this.cdr.detectChanges();
+  }
+
+  private clearHiddenFieldValue(field: any): void {
+    const control = this.form.get(field.key);
+    if (!control) return;
+
+    const value = this.fieldsFormArray.includes(field.type)
+      ? []
+      : field.input === 'location'
+      ? { lat: '', lng: '' }
+      : null;
+
+    control.patchValue(value, { emitEvent: false });
+  }
+
+  private clearInvalidChoiceFilterValue(field: any): void {
+    if (!field.config?.choice_filter) return;
+    const control = this.form.get(field.key);
+    if (!control) return;
+
+    const validValues = this.getFieldOptions(field).map((option) => this.getOptionValue(option));
+    const value = control.value;
+    const nextValue = Array.isArray(value)
+      ? value.filter((item) => validValues.includes(item))
+      : validValues.includes(value)
+      ? value
+      : null;
+
+    if (JSON.stringify(value) !== JSON.stringify(nextValue)) {
+      control.patchValue(nextValue, { emitEvent: false });
+    }
+  }
+
+  public getFieldOptions(field: any): any[] {
+    return xlsFormRules.getFilteredOptions(field, this.form?.getRawValue?.() || {});
+  }
+
+  public getOptionValue(option: any): any {
+    return xlsFormRules.getOptionValue(option);
+  }
+
+  public getOptionLabel(option: any): string {
+    return xlsFormRules.getOptionLabel(option, this.activeLanguage || 'en');
+  }
+
+  public getDataQaValue(value: any): string {
+    return String(value || '')
+      .replace(/\s+/g, '-')
+      .replace(/[()]/g, '')
+      .toLowerCase();
   }
 
   public changeLocation(data: any, formKey: string) {
@@ -369,10 +481,11 @@ export class PostEditComponent implements OnInit, OnChanges {
   }
 
   private addFormArray(value: string, field: any) {
-    return this.formBuilder.array(
-      [] || [new FormControl(value)],
+    const validators = [
       field.required ? Validators.required : null,
-    );
+      this.xlsFormConstraintValidator(field),
+    ].filter(Boolean) as ValidatorFn[];
+    return this.formBuilder.array([] || [new FormControl(value)], validators);
   }
 
   private addFormControl(value: any, field: any): FormControl {
@@ -417,7 +530,15 @@ export class PostEditComponent implements OnInit, OnChanges {
         }
         break;
     }
+    validators.push(this.xlsFormConstraintValidator(field));
     return new FormControl(value, validators);
+  }
+
+  private xlsFormConstraintValidator(field: any): ValidatorFn {
+    return (control) =>
+      xlsFormRules.isFieldConstraintValid(field, control.value)
+        ? null
+        : { xlsFormConstraint: true };
   }
 
   public getOptionsByParentId(field: any, parent_id: number): any[] {
@@ -428,18 +549,29 @@ export class PostEditComponent implements OnInit, OnChanges {
     for (const task of this.tasks) {
       task.fields = await Promise.all(
         task.fields.map(async (field: { key: string | number; input: string; type: string }) => {
+          const fieldKey = String(field.key);
+          const fieldValue = this.form.getRawValue()[field.key];
+
+          if (this.hiddenFieldKeys.has(fieldKey)) {
+            return {
+              ...field,
+              required: false,
+              value: { value: null },
+            };
+          }
+
           let value: any = {
-            value: this.form.value[field.key],
+            value: fieldValue,
           };
 
-          if (field.type === 'title') this.title = this.form.value[field.key];
-          if (field.type === 'description') this.description = this.form.value[field.key];
+          if (field.type === 'title') this.title = fieldValue;
+          if (field.type === 'description') this.description = fieldValue;
 
           switch (field.input) {
             case 'date':
-              value = this.form.value[field.key]
+              value = fieldValue
                 ? {
-                    value: dateHelper.setDate(this.form.value[field.key], 'date'),
+                    value: dateHelper.setDate(fieldValue, 'date'),
                     value_meta: {
                       from_tz: dayjs.tz.guess(),
                     },
@@ -447,9 +579,9 @@ export class PostEditComponent implements OnInit, OnChanges {
                 : { value: null };
               break;
             case 'datetime':
-              value = this.form.value[field.key]
+              value = fieldValue
                 ? {
-                    value: dateHelper.setDate(this.form.value[field.key], 'datetime'),
+                    value: dateHelper.setDate(fieldValue, 'datetime'),
                     value_meta: {
                       from_tz: dayjs.tz.guess(),
                     },
@@ -457,55 +589,55 @@ export class PostEditComponent implements OnInit, OnChanges {
                 : { value: null };
               break;
             case 'location':
-              value = this.form.value[field.key].lat
+              value = fieldValue.lat
                 ? {
                     value: {
-                      lat: this.form.value[field.key].lat,
-                      lon: this.form.value[field.key].lng,
+                      lat: fieldValue.lat,
+                      lon: fieldValue.lng,
                     },
                   }
                 : { value: null };
               break;
             case 'tags':
             case 'checkbox':
-              value.value = this.form.value[field.key] || null;
+              value.value = fieldValue || null;
               break;
             case 'video':
-              value = this.form.value[field.key]
+              value = fieldValue
                 ? {
-                    value: preparingVideoUrl(this.form.value[field.key]),
+                    value: preparingVideoUrl(fieldValue),
                   }
                 : {};
               break;
             case 'relation':
-              value.value = this.form.value[field.key] || null;
+              value.value = fieldValue || null;
               break;
             case 'upload':
-              if (this.form.value[field.key]?.upload && this.form.value[field.key]?.photo) {
+              if (fieldValue?.upload && fieldValue?.photo) {
                 try {
                   const uploadObservable = this.mediaService.uploadFile(
-                    this.form.value[field.key]?.photo,
-                    this.form.value[field.key]?.caption,
+                    fieldValue?.photo,
+                    fieldValue?.caption,
                   );
                   const response: any = await lastValueFrom(uploadObservable);
                   value.value = response.id;
                 } catch (error: any) {
                   throw new Error(`Error uploading file: ${error.message}`);
                 }
-              } else if (this.form.value[field.key]?.delete && this.form.value[field.key]?.id) {
+              } else if (fieldValue?.delete && fieldValue?.id) {
                 try {
-                  const deleteObservable = this.mediaService.delete(this.form.value[field.key]?.id);
+                  const deleteObservable = this.mediaService.delete(fieldValue?.id);
                   await lastValueFrom(deleteObservable);
                   value.value = null;
                 } catch (error: any) {
                   throw new Error(`Error deleting file: ${error.message}`);
                 }
               } else {
-                value.value = this.form.value[field.key]?.id || null;
+                value.value = fieldValue?.id || null;
               }
               break;
             default:
-              value.value = this.form.value[field.key] || null;
+              value.value = fieldValue || null;
           }
           return {
             ...field,
@@ -624,12 +756,15 @@ export class PostEditComponent implements OnInit, OnChanges {
     /** Extra check to prevent form submission before hand
      * incase any field shows error but has no backend validation **/
     this.form.enable();
+    this.applyDynamicFieldVisibility();
     for (const task of this.tasks) {
       this.atLeastOneFieldHasValidationError = task.fields.some((field: any) => {
+        if (this.hiddenFieldKeys.has(String(field.key))) return false;
         return (
           this.form.get(field.key)?.hasError('required') ||
           this.form.get(field.key)?.hasError('minlength') ||
-          this.form.get(field.key)?.hasError('invalidvideourl')
+          this.form.get(field.key)?.hasError('invalidvideourl') ||
+          this.form.get(field.key)?.hasError('xlsFormConstraint')
         );
       });
     }

@@ -3,7 +3,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
-import { surveyHelper } from '@helpers';
+import { surveyHelper, xlsFormImportHelper } from '@helpers';
 import { LanguageInterface } from '@models';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BreakpointService } from '@services';
@@ -48,6 +48,7 @@ export class SurveyItemComponent implements OnInit {
   public isDesktop = false;
   public errorTaskField = false;
   public submitted = false;
+  public importingXlsForm = false;
   isDefaultLanguageSelected = true;
 
   constructor(
@@ -217,6 +218,38 @@ export class SurveyItemComponent implements OnInit {
           translations: translations,
         });
       }
+    }
+  }
+
+  public async importXlsForm(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    this.importingXlsForm = true;
+    try {
+      const imported = await xlsFormImportHelper.importXlsForm(file);
+      this.form.patchValue({
+        name: imported.name,
+        enabled_languages: imported.enabledLanguages,
+        translations: imported.translations,
+        tasks: imported.tasks,
+      });
+      this.initLanguages(imported.enabledLanguages);
+      this.initTasks();
+      this.notification.showSnackbar(
+        {
+          title: 'XLSForm imported',
+          message: 'Review the questions, then save the survey.',
+          buttons: [{ text: 'OK', color: 'success' }],
+        },
+        { duration: 3000 },
+      );
+    } catch (error: any) {
+      this.notification.showError(error?.message || 'Failed to import XLSForm.');
+    } finally {
+      this.importingXlsForm = false;
+      input.value = '';
     }
   }
 

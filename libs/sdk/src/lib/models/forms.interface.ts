@@ -1,4 +1,5 @@
 import { ApiResponse } from './api-response.interface';
+import { XlsFormFieldConfig } from '../helpers/xlsform-rules.helper';
 
 export interface FormsResponse extends ApiResponse {
   results: FormInterface[];
@@ -37,7 +38,7 @@ export interface FormTaskInterface {
 
 export interface FormAttributeInterface {
   cardinality?: number;
-  config?: any;
+  config?: XlsFormFieldConfig;
   default: string;
   form_stage_id: number;
   id: number;

@@ -1,5 +1,5 @@
 import { Component, Inject, OnInit } from '@angular/core';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { surveyHelper, regexHelper } from '@helpers';
 import { TranslateService } from '@ngx-translate/core';
 import { map } from 'rxjs';
@@ -13,6 +13,8 @@ import {
 } from '@mzima-client/sdk';
 import { NotificationService } from '@services';
 import _ from 'lodash';
+import { SkipLogicModalComponent } from '../skip-logic-modal/skip-logic-modal.component';
+import { ValidationCriteriaModalComponent } from '../validation-criteria-modal/validation-criteria-modal.component';
 
 @Component({
   selector: 'app-create-field-modal',
@@ -41,6 +43,7 @@ export class CreateFieldModalComponent implements OnInit {
     private categoriesService: CategoriesService,
     private surveysService: SurveysService,
     private notificationService: NotificationService,
+    private dialog: MatDialog,
   ) {}
 
   ngOnInit() {
@@ -55,6 +58,7 @@ export class CreateFieldModalComponent implements OnInit {
 
   private editField() {
     this.selectedFieldType = this.data.selectedFieldType;
+    this.ensureFieldConfig();
     if (
       this.selectedFieldType.input === 'tags' &&
       this.selectedFieldType.options?.length &&
@@ -157,6 +161,18 @@ export class CreateFieldModalComponent implements OnInit {
     return types.includes(this.selectedFieldType.type);
   }
 
+  get canRandomizeOptions() {
+    return surveyHelper.fieldCanHaveOptions(this.selectedFieldType);
+  }
+
+  get canValidateValue() {
+    const inputs = ['upload', 'tags', 'location', 'relation', 'markdown'];
+    const types = ['title', 'description'];
+    return (
+      !inputs.includes(this.selectedFieldType.input) && !types.includes(this.selectedFieldType.type)
+    );
+  }
+
   get canDisplay() {
     const inputs = [
       'upload',
@@ -191,6 +207,7 @@ export class CreateFieldModalComponent implements OnInit {
   }
 
   public addNewTask() {
+    this.normalizeFieldConfig();
     if (this.selectedFieldType.input === 'number') {
       if (this.isNumber(this.selectedFieldType)) {
         this.numberError = false;
@@ -215,8 +232,60 @@ export class CreateFieldModalComponent implements OnInit {
     });
   }
 
+  public openSkipLogicModal() {
+    this.ensureFieldConfig();
+    const dialogRef = this.dialog.open(SkipLogicModalComponent, {
+      width: '100%',
+      maxWidth: 980,
+      minWidth: 300,
+      panelClass: 'modal',
+      data: {
+        currentField: this.selectedFieldType,
+        fields: this.data?.fields || [],
+        expression: this.selectedFieldType.config.relevant || '',
+      },
+    });
+
+    dialogRef.afterClosed().subscribe({
+      next: (expression) => {
+        if (expression === null || expression === undefined) return;
+        if (expression) {
+          this.selectedFieldType.config.relevant = expression;
+        } else {
+          delete this.selectedFieldType.config.relevant;
+        }
+      },
+    });
+  }
+
+  public openValidationCriteriaModal() {
+    this.ensureFieldConfig();
+    const dialogRef = this.dialog.open(ValidationCriteriaModalComponent, {
+      width: '100%',
+      maxWidth: 840,
+      minWidth: 300,
+      panelClass: 'modal',
+      data: {
+        currentField: this.selectedFieldType,
+        expression: this.selectedFieldType.config.constraint || '',
+      },
+    });
+
+    dialogRef.afterClosed().subscribe({
+      next: (expression) => {
+        if (expression === null || expression === undefined) return;
+        if (expression) {
+          this.selectedFieldType.config.constraint = expression;
+        } else {
+          delete this.selectedFieldType.config.constraint;
+        }
+      },
+    });
+  }
+
   public selectField(field: Partial<FormAttributeInterface>) {
     this.selectedFieldType = _.cloneDeep(field);
+    this.ensureFieldConfig();
     this.selectedFieldType.label = this.translate.instant(this.selectedFieldType.label);
     this.selectedFieldType.instructions = this.translate.instant(
       this.selectedFieldType.instructions,
@@ -263,6 +332,34 @@ export class CreateFieldModalComponent implements OnInit {
     this.hasOptions = ['checkbox', 'radio', 'select'].some(
       (a) => a === this.selectedFieldType.input,
     );
+  }
+
+  private ensureFieldConfig() {
+    if (!this.selectedFieldType.config || Array.isArray(this.selectedFieldType.config)) {
+      this.selectedFieldType.config = {};
+    }
+
+    if (this.selectedFieldType.input === 'relation' && !this.selectedFieldType.config.input) {
+      this.selectedFieldType.config.input = { form: [] };
+    }
+  }
+
+  private normalizeFieldConfig() {
+    this.ensureFieldConfig();
+    const config = this.selectedFieldType.config;
+
+    ['relevant', 'constraint', 'constraint_message'].forEach((key) => {
+      if (typeof config[key] === 'string') {
+        config[key] = config[key].trim();
+      }
+      if (!config[key]) {
+        delete config[key];
+      }
+    });
+
+    if (!config.randomize_options) {
+      delete config.randomize_options;
+    }
   }
 
   public validateDuplicate() {

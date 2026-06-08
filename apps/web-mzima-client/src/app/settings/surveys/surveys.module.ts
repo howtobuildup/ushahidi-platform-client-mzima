@@ -29,6 +29,8 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { CreateTaskModalComponent } from './create-task-modal/create-task-modal.component';
 import { CreateFieldModalComponent } from './create-field-modal/create-field-modal.component';
+import { SkipLogicModalComponent } from './skip-logic-modal/skip-logic-modal.component';
+import { ValidationCriteriaModalComponent } from './validation-criteria-modal/validation-criteria-modal.component';
 import { ShareMenuComponent } from './share-menu/share-menu.component';
 import { QuillModule } from 'ngx-quill';
 import { MzimaUiModule } from '@mzima-client/mzima-ui';
@@ -40,6 +42,8 @@ import { MzimaUiModule } from '@mzima-client/mzima-ui';
     SurveyTaskComponent,
     CreateTaskModalComponent,
     CreateFieldModalComponent,
+    SkipLogicModalComponent,
+    ValidationCriteriaModalComponent,
     ShareMenuComponent,
     MultilevelSelectionComponent,
   ],

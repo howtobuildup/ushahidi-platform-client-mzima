@@ -64,336 +64,339 @@
             </div>
           </ng-container>
 
-          <div
-            class="form-row"
+          <ng-container
             *ngFor="let field of task.fields | sortByField : 'priority' : 'asc'; let i = index"
           >
-            <mat-label>
-              {{ field?.translations[activeLanguage]?.label || field?.label }}
-              <span class="color-accent" *ngIf="field?.required">*</span>
-            </mat-label>
-            <span
-              class="form-row__instruction"
-              *ngIf="field?.instructions"
-              [innerHTML]="field?.translations[activeLanguage]?.instructions || field?.instructions"
-            >
-            </span>
-
-            <ng-container
-              *ngIf="field.input === 'text' && (field.type === 'title' || field.type === 'varchar')"
-            >
-              <mat-form-field appearance="outline">
-                <input
-                  matInput
-                  [formControlName]="field.key"
-                  [data-qa]="field.label.replace(' ', '-') | lowercase"
-                />
-              </mat-form-field>
-            </ng-container>
-
-            <ng-container *ngIf="field.input === 'text' && field.type === 'description'">
-              <mat-form-field appearance="outline">
-                <textarea
-                  matInput
-                  cdkTextareaAutosize
-                  cdkAutosizeMinRows="2"
-                  cdkAutosizeMaxRows="5"
-                  [formControlName]="field.key"
-                  [data-qa]="field.label.replace(' ', '-') | lowercase"
-                >
-                </textarea>
-              </mat-form-field>
-            </ng-container>
-
-            <ng-container *ngIf="field.input === 'textarea'">
-              <mat-form-field appearance="outline">
-                <textarea
-                  matInput
-                  cdkTextareaAutosize
-                  cdkAutosizeMinRows="2"
-                  cdkAutosizeMaxRows="5"
-                  [formControlName]="field.key"
-                  [data-qa]="field.label.replace(' ', '-') | lowercase"
-                >
-                </textarea>
-              </mat-form-field>
-            </ng-container>
-
-            <ng-container *ngIf="field.input === 'tags'">
-              <span class="related-post-list" *ngIf="field.options?.length; else noOptions">
-                <ul>
-                  <li>
-                    <mat-checkbox
-                      [checked]="form.get(field.key)?.value.length === field.options.length"
-                      (change)="toggleAllSelection($event, task.fields, field.key)"
-                    >
-                      {{ 'nav.select_all' | translate }}
-                    </mat-checkbox>
-                  </li>
-                  <li *ngFor="let option of field.options; trackBy: trackById">
-                    <mat-checkbox
-                      [ngClass]="{ 'lvl-2': option.parent }"
-                      [checked]="form.get(field.key)?.value.includes(option.id)"
-                      (change)="
-                        onCheckChange(
-                          $event,
-                          field.key,
-                          option.id,
-                          field.options,
-                          option.parent?.id
-                        )
-                      "
-                    >
-                      {{ option.tag }}
-                    </mat-checkbox>
-                  </li>
-                </ul>
+            <div class="form-row" *ngIf="isFieldVisible(field)">
+              <mat-label>
+                {{ field?.translations[activeLanguage]?.label || field?.label }}
+                <span class="color-accent" *ngIf="field?.required">*</span>
+              </mat-label>
+              <span
+                class="form-row__instruction"
+                *ngIf="field?.instructions"
+                [innerHTML]="
+                  field?.translations[activeLanguage]?.instructions || field?.instructions
+                "
+              >
               </span>
-            </ng-container>
 
-            <ng-container *ngIf="field.input === 'date'">
-              <mat-form-field appearance="outline">
-                <input
-                  matInput
-                  [matDatepicker]="picker"
-                  [formControlName]="field.key"
-                  (focus)="picker.open()"
-                  [data-qa]="field.label.replaceAll(' ', '-') | lowercase"
-                  #input
-                />
-                <mat-datepicker-toggle
-                  matSuffix
-                  [for]="picker"
-                  [data-qa]="field.label.replaceAll(' ', '-') + '-toggle' | lowercase"
-                ></mat-datepicker-toggle>
-                <mat-datepicker #picker (closed)="input.blur()"></mat-datepicker>
-              </mat-form-field>
-            </ng-container>
-
-            <ng-container *ngIf="field.input === 'datetime'">
-              <mat-form-field appearance="outline">
-                <input
-                  matInput
-                  [ngxMatDatetimePicker]="picker"
-                  [formControlName]="field.key"
-                  (focus)="picker.open()"
-                  [data-qa]="field.label.replaceAll(' ', '-') | lowercase"
-                  #input
-                />
-                <mat-datepicker-toggle
-                  matSuffix
-                  [for]="$any(picker)"
-                  [data-qa]="field.label.replaceAll(' ', '-') + '-toggle' | lowercase"
-                ></mat-datepicker-toggle>
-                <ngx-mat-datetime-picker
-                  #picker
-                  [showSeconds]="true"
-                  (closed)="input.blur()"
-                ></ngx-mat-datetime-picker>
-              </mat-form-field>
-            </ng-container>
-
-            <ng-container *ngIf="field.input === 'radio'">
-              <mat-radio-group
-                [attr.aria-label]="field.label"
-                [formControlName]="field.key"
-                *ngIf="field.options?.length; else noOptions"
-                [data-qa]="
-                  field.label.replaceAll(' ', '-').replace('(', '').replace(')', '') | lowercase
-                "
-              >
-                <div class="radio-button" *ngFor="let option of field.options">
-                  <mat-radio-button
-                    [value]="option"
-                    [data-qa]="
-                      field.label.replaceAll(' ', '-').replace('(', '').replace(')', '') +
-                        '-' +
-                        option.replaceAll(' ', '-') | lowercase
-                    "
-                  >
-                    {{ option }}
-                  </mat-radio-button>
-                </div>
-              </mat-radio-group>
-            </ng-container>
-
-            <ng-container *ngIf="field.input === 'checkbox'">
-              <mat-selection-list
-                [formControlName]="field.key"
-                *ngIf="field.options?.length; else noOptions"
-                [data-qa]="
-                  field.label.replaceAll(' ', '-').replace('(', '').replace(')', '') | lowercase
-                "
-              >
-                <mat-list-option
-                  color="primary"
-                  [value]="option"
-                  class="list-option"
-                  checkboxPosition="before"
-                  *ngFor="let option of field.options"
-                  [data-qa]="
-                    field.label.replaceAll(' ', '-').replace('(', '').replace(')', '') +
-                      '-' +
-                      option.replaceAll(' ', '-') | lowercase
-                  "
-                >
-                  {{ option }}
-                </mat-list-option>
-              </mat-selection-list>
-            </ng-container>
-
-            <ng-container *ngIf="field.input === 'select'">
-              <mat-form-field appearance="outline" *ngIf="field.options?.length; else noOptions">
-                <mat-select
-                  [formControlName]="field.key"
-                  disableOptionCentering
-                  [data-qa]="'post-item-post-select' + field.key"
-                >
-                  <mat-option
-                    *ngFor="let option of field.options"
-                    [value]="option"
-                    [data-qa]="'post-item-post-select-option' + option"
-                  >
-                    {{ option }}
-                  </mat-option>
-                </mat-select>
-              </mat-form-field>
-            </ng-container>
-
-            <ng-container *ngIf="field.input === 'number'">
-              <mat-form-field appearance="outline">
-                <input
-                  matInput
-                  [formControlName]="field.key"
-                  type="number"
-                  [pattern]="field.type === 'int' ? '[0-9]*' : ''"
-                  [data-qa]="
-                    field.label.replace(' ', '-').replace('(', '').replace(')', '') | lowercase
-                  "
-                />
-              </mat-form-field>
-            </ng-container>
-
-            <ng-container *ngIf="field.input === 'upload'">
-              <app-image-uploader
-                [formControlName]="field.key"
-                [hasCaption]="field.config.hasCaption"
-                [requiredError]="
-                  form.get(field.key)?.touched && form.get(field.key)?.hasError('photoRequired')
-                "
-              >
-              </app-image-uploader>
-            </ng-container>
-
-            <ng-container *ngIf="field.input === 'video'">
-              <mat-form-field appearance="outline">
-                <input
-                  matInput
-                  [formControlName]="field.key"
-                  [data-qa]="field.label.replace(' ', '-') | lowercase"
-                  #videoInput
-                />
-              </mat-form-field>
-              <mat-error
+              <ng-container
                 *ngIf="
-                  form.get(field.key)?.hasError('invalidvideourl') &&
-                  !form.get(field.key)?.hasError('required')
+                  field.input === 'text' && (field.type === 'title' || field.type === 'varchar')
                 "
               >
-                Invalid video embed url
-              </mat-error>
-              <iframe
-                *ngIf="form.get(field.key)?.value"
-                width="400"
-                height="250"
-                [src]="generateSecurityTrustUrl(formValidator.videoUrlPreview(videoInput))"
-                [hidden]="!videoInput.value.length"
-              ></iframe>
-            </ng-container>
-
-            <ng-container *ngIf="field.input === 'location'">
-              <app-location-select
-                [zoom]="12"
-                [location]="form.get(field.key)?.value"
-                [required]="locationRequired"
-                (locationChange)="changeLocation($event, field.key)"
-              ></app-location-select>
-            </ng-container>
-
-            <ng-container *ngIf="field.input === 'relation'">
-              <p>{{ 'survey.related_post_info' | translate }}</p>
-              <div class="related-post-selected" *ngIf="selectedRelatedPost">
-                <div class="related-post-content">
-                  <span>{{ selectedRelatedPost.id }}: {{ selectedRelatedPost.title }}</span>
-                  <div
-                    class="related-post-delete"
-                    [data-qa]="'btn-post-item-delete-relation-post'"
-                    (click)="deleteRelatedPost(field, selectedRelatedPost.id)"
-                  >
-                    <mat-icon svgIcon="close"></mat-icon>
-                  </div>
-                </div>
-              </div>
-
-              <div class="relation-container" *ngIf="!selectedRelatedPost">
                 <mat-form-field appearance="outline">
                   <input
                     matInput
-                    type="text"
-                    [(ngModel)]="relationSearch"
-                    [ngModelOptions]="{ standalone: true }"
-                    [data-qa]="field.label.replaceAll(' ', '-') | lowercase"
+                    [formControlName]="field.key"
+                    [data-qa]="field.label.replace(' ', '-') | lowercase"
                   />
                 </mat-form-field>
-                <mzima-client-button
-                  fill="outline"
-                  color="secondary"
-                  class="relation-button-search"
-                  (buttonClick)="relationSearchPosts()"
-                  [data-qa]="field.label.replaceAll(' ', '-') + '-search' | lowercase"
-                >
-                  {{ 'post.relation.search' | translate }}
-                </mzima-client-button>
-              </div>
+              </ng-container>
 
-              <span class="related-post-list" *ngIf="relatedPosts?.length">
-                <ul>
-                  <li *ngFor="let post of relatedPosts">
-                    <mat-checkbox (change)="chooseRelatedPost($event, field, post)">
-                      {{ post.id }}: {{ post.title }}
-                    </mat-checkbox>
-                  </li>
-                </ul>
-              </span>
-            </ng-container>
+              <ng-container *ngIf="field.input === 'text' && field.type === 'description'">
+                <mat-form-field appearance="outline">
+                  <textarea
+                    matInput
+                    cdkTextareaAutosize
+                    cdkAutosizeMinRows="2"
+                    cdkAutosizeMaxRows="5"
+                    [formControlName]="field.key"
+                    [data-qa]="field.label.replace(' ', '-') | lowercase"
+                  >
+                  </textarea>
+                </mat-form-field>
+              </ng-container>
 
-            <ng-container *ngIf="field.input === 'markdown'">
-              <mat-form-field appearance="outline">
-                <textarea
-                  matInput
+              <ng-container *ngIf="field.input === 'textarea'">
+                <mat-form-field appearance="outline">
+                  <textarea
+                    matInput
+                    cdkTextareaAutosize
+                    cdkAutosizeMinRows="2"
+                    cdkAutosizeMaxRows="5"
+                    [formControlName]="field.key"
+                    [data-qa]="field.label.replace(' ', '-') | lowercase"
+                  >
+                  </textarea>
+                </mat-form-field>
+              </ng-container>
+
+              <ng-container *ngIf="field.input === 'tags'">
+                <span class="related-post-list" *ngIf="field.options?.length; else noOptions">
+                  <ul>
+                    <li>
+                      <mat-checkbox
+                        [checked]="form.get(field.key)?.value.length === field.options.length"
+                        (change)="toggleAllSelection($event, task.fields, field.key)"
+                      >
+                        {{ 'nav.select_all' | translate }}
+                      </mat-checkbox>
+                    </li>
+                    <li *ngFor="let option of field.options; trackBy: trackById">
+                      <mat-checkbox
+                        [ngClass]="{ 'lvl-2': option.parent }"
+                        [checked]="form.get(field.key)?.value.includes(option.id)"
+                        (change)="
+                          onCheckChange(
+                            $event,
+                            field.key,
+                            option.id,
+                            field.options,
+                            option.parent?.id
+                          )
+                        "
+                      >
+                        {{ option.tag }}
+                      </mat-checkbox>
+                    </li>
+                  </ul>
+                </span>
+              </ng-container>
+
+              <ng-container *ngIf="field.input === 'date'">
+                <mat-form-field appearance="outline">
+                  <input
+                    matInput
+                    [matDatepicker]="picker"
+                    [formControlName]="field.key"
+                    (focus)="picker.open()"
+                    [data-qa]="getDataQaValue(field.label)"
+                    #input
+                  />
+                  <mat-datepicker-toggle
+                    matSuffix
+                    [for]="picker"
+                    [data-qa]="getDataQaValue(field.label) + '-toggle'"
+                  ></mat-datepicker-toggle>
+                  <mat-datepicker #picker (closed)="input.blur()"></mat-datepicker>
+                </mat-form-field>
+              </ng-container>
+
+              <ng-container *ngIf="field.input === 'datetime'">
+                <mat-form-field appearance="outline">
+                  <input
+                    matInput
+                    [ngxMatDatetimePicker]="picker"
+                    [formControlName]="field.key"
+                    (focus)="picker.open()"
+                    [data-qa]="getDataQaValue(field.label)"
+                    #input
+                  />
+                  <mat-datepicker-toggle
+                    matSuffix
+                    [for]="$any(picker)"
+                    [data-qa]="getDataQaValue(field.label) + '-toggle'"
+                  ></mat-datepicker-toggle>
+                  <ngx-mat-datetime-picker
+                    #picker
+                    [showSeconds]="true"
+                    (closed)="input.blur()"
+                  ></ngx-mat-datetime-picker>
+                </mat-form-field>
+              </ng-container>
+
+              <ng-container *ngIf="field.input === 'radio'">
+                <mat-radio-group
+                  [attr.aria-label]="field.label"
                   [formControlName]="field.key"
-                  cdkTextareaAutosize
-                  cdkAutosizeMaxRows="5"
-                  [placeholder]="field.default"
-                  [data-qa]="field.label.replace(' ', '-') | lowercase"
-                ></textarea>
-              </mat-form-field>
-            </ng-container>
-            <mat-error *ngIf="form.get(field.key)?.invalid && form.get(field.key)?.touched">
-              <p *ngIf="form.get(field.key)?.hasError('required')">
-                {{ field.label }} field is a required field *
-              </p>
-              <p *ngIf="form.get(field.key)?.hasError('minlength')">
-                {{ field.label }} field is too short, use at least 2 characters
-              </p>
-              <p *ngIf="form.get(field.key)?.hasError('pattern')">
-                {{ field.label }} field is invalid
-              </p>
-              <p *ngIf="form.get(field.key)?.hasError('specialCharacters')">
-                {{ field.label }} field contains special characters
-              </p>
-            </mat-error>
-          </div>
+                  *ngIf="getFieldOptions(field)?.length; else noOptions"
+                  [data-qa]="getDataQaValue(field.label)"
+                >
+                  <div class="radio-button" *ngFor="let option of getFieldOptions(field)">
+                    <mat-radio-button
+                      [value]="getOptionValue(option)"
+                      [data-qa]="
+                        getDataQaValue(field.label) + '-' + getDataQaValue(getOptionLabel(option))
+                      "
+                    >
+                      {{ getOptionLabel(option) }}
+                    </mat-radio-button>
+                  </div>
+                </mat-radio-group>
+              </ng-container>
+
+              <ng-container *ngIf="field.input === 'checkbox'">
+                <mat-selection-list
+                  [formControlName]="field.key"
+                  *ngIf="getFieldOptions(field)?.length; else noOptions"
+                  [data-qa]="getDataQaValue(field.label)"
+                >
+                  <mat-list-option
+                    color="primary"
+                    [value]="getOptionValue(option)"
+                    class="list-option"
+                    checkboxPosition="before"
+                    *ngFor="let option of getFieldOptions(field)"
+                    [data-qa]="
+                      getDataQaValue(field.label) + '-' + getDataQaValue(getOptionLabel(option))
+                    "
+                  >
+                    {{ getOptionLabel(option) }}
+                  </mat-list-option>
+                </mat-selection-list>
+              </ng-container>
+
+              <ng-container *ngIf="field.input === 'select'">
+                <mat-form-field
+                  appearance="outline"
+                  *ngIf="getFieldOptions(field)?.length; else noOptions"
+                >
+                  <mat-select
+                    [formControlName]="field.key"
+                    disableOptionCentering
+                    [data-qa]="'post-item-post-select' + field.key"
+                  >
+                    <mat-option
+                      *ngFor="let option of getFieldOptions(field)"
+                      [value]="getOptionValue(option)"
+                      [data-qa]="'post-item-post-select-option' + getOptionLabel(option)"
+                    >
+                      {{ getOptionLabel(option) }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </ng-container>
+
+              <ng-container *ngIf="field.input === 'number'">
+                <mat-form-field appearance="outline">
+                  <input
+                    matInput
+                    [formControlName]="field.key"
+                    type="number"
+                    [pattern]="field.type === 'int' ? '[0-9]*' : ''"
+                    [data-qa]="
+                      field.label.replace(' ', '-').replace('(', '').replace(')', '') | lowercase
+                    "
+                  />
+                </mat-form-field>
+              </ng-container>
+
+              <ng-container *ngIf="field.input === 'upload'">
+                <app-image-uploader
+                  [formControlName]="field.key"
+                  [hasCaption]="field.config.hasCaption"
+                  [requiredError]="
+                    form.get(field.key)?.touched && form.get(field.key)?.hasError('photoRequired')
+                  "
+                >
+                </app-image-uploader>
+              </ng-container>
+
+              <ng-container *ngIf="field.input === 'video'">
+                <mat-form-field appearance="outline">
+                  <input
+                    matInput
+                    [formControlName]="field.key"
+                    [data-qa]="field.label.replace(' ', '-') | lowercase"
+                    #videoInput
+                  />
+                </mat-form-field>
+                <mat-error
+                  *ngIf="
+                    form.get(field.key)?.hasError('invalidvideourl') &&
+                    !form.get(field.key)?.hasError('required')
+                  "
+                >
+                  Invalid video embed url
+                </mat-error>
+                <iframe
+                  *ngIf="form.get(field.key)?.value"
+                  width="400"
+                  height="250"
+                  [src]="generateSecurityTrustUrl(formValidator.videoUrlPreview(videoInput))"
+                  [hidden]="!videoInput.value.length"
+                ></iframe>
+              </ng-container>
+
+              <ng-container *ngIf="field.input === 'location'">
+                <app-location-select
+                  [zoom]="12"
+                  [location]="form.get(field.key)?.value"
+                  [required]="locationRequired"
+                  (locationChange)="changeLocation($event, field.key)"
+                ></app-location-select>
+              </ng-container>
+
+              <ng-container *ngIf="field.input === 'relation'">
+                <p>{{ 'survey.related_post_info' | translate }}</p>
+                <div class="related-post-selected" *ngIf="selectedRelatedPost">
+                  <div class="related-post-content">
+                    <span>{{ selectedRelatedPost.id }}: {{ selectedRelatedPost.title }}</span>
+                    <div
+                      class="related-post-delete"
+                      [data-qa]="'btn-post-item-delete-relation-post'"
+                      (click)="deleteRelatedPost(field, selectedRelatedPost.id)"
+                    >
+                      <mat-icon svgIcon="close"></mat-icon>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="relation-container" *ngIf="!selectedRelatedPost">
+                  <mat-form-field appearance="outline">
+                    <input
+                      matInput
+                      type="text"
+                      [(ngModel)]="relationSearch"
+                      [ngModelOptions]="{ standalone: true }"
+                      [data-qa]="getDataQaValue(field.label)"
+                    />
+                  </mat-form-field>
+                  <mzima-client-button
+                    fill="outline"
+                    color="secondary"
+                    class="relation-button-search"
+                    (buttonClick)="relationSearchPosts()"
+                    [data-qa]="getDataQaValue(field.label) + '-search'"
+                  >
+                    {{ 'post.relation.search' | translate }}
+                  </mzima-client-button>
+                </div>
+
+                <span class="related-post-list" *ngIf="relatedPosts?.length">
+                  <ul>
+                    <li *ngFor="let post of relatedPosts">
+                      <mat-checkbox (change)="chooseRelatedPost($event, field, post)">
+                        {{ post.id }}: {{ post.title }}
+                      </mat-checkbox>
+                    </li>
+                  </ul>
+                </span>
+              </ng-container>
+
+              <ng-container *ngIf="field.input === 'markdown'">
+                <mat-form-field appearance="outline">
+                  <textarea
+                    matInput
+                    [formControlName]="field.key"
+                    cdkTextareaAutosize
+                    cdkAutosizeMaxRows="5"
+                    [placeholder]="field.default"
+                    [data-qa]="field.label.replace(' ', '-') | lowercase"
+                  ></textarea>
+                </mat-form-field>
+              </ng-container>
+              <mat-error *ngIf="form.get(field.key)?.invalid && form.get(field.key)?.touched">
+                <p *ngIf="form.get(field.key)?.hasError('required')">
+                  {{ field.label }} field is a required field *
+                </p>
+                <p *ngIf="form.get(field.key)?.hasError('minlength')">
+                  {{ field.label }} field is too short, use at least 2 characters
+                </p>
+                <p *ngIf="form.get(field.key)?.hasError('pattern')">
+                  {{ field.label }} field is invalid
+                </p>
+                <p *ngIf="form.get(field.key)?.hasError('specialCharacters')">
+                  {{ field.label }} field contains special characters
+                </p>
+                <p *ngIf="form.get(field.key)?.hasError('xlsFormConstraint')">
+                  {{ xlsFormRules.getFieldConstraintMessage(field) }}
+                </p>
+              </mat-error>
+            </div>
+          </ng-container>
         </div>
       </div>
 

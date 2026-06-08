@@ -10,7 +10,7 @@ import { SessionService } from './session.service';
   providedIn: 'root',
 })
 export class LanguageService {
-  private languages = new BehaviorSubject<LanguageInterface[]>(this.getLanguages());
+  private languages = new BehaviorSubject<LanguageInterface[]>(this.getConfiguredLanguages());
   public languages$ = this.languages.asObservable();
 
   private languageKey = `${CONST.LOCAL_STORAGE_PREFIX}language`;
@@ -23,7 +23,9 @@ export class LanguageService {
   constructor(private translate: TranslateService, private session: SessionService) {
     this.translate.setDefaultLang('en');
     if (this.initialLanguage === 'null' || this.initialLanguage === null) {
-      this.initialLanguage = this.session.getSiteConfigurations().language || 'en';
+      this.initialLanguage = this.resolveSupportedLanguage(
+        this.session.getSiteConfigurations().language || 'en',
+      );
       this.setLanguage(this.initialLanguage!);
     } else {
       this.setLanguage(this.initialLanguage!);
@@ -39,6 +41,10 @@ export class LanguageService {
   }
 
   getLanguages(): LanguageInterface[] {
+    return this.languages.value;
+  }
+
+  private getConfiguredLanguages(): LanguageInterface[] {
     if (LangJSON.languages && LangJSON.languages.length > 0) {
       return LangJSON.languages;
     } else {
@@ -55,19 +61,35 @@ export class LanguageService {
   }
 
   private setLanguage(lang: string) {
-    this.translate.use(lang);
-    this.selectedLanguage.next(lang);
-    this.changeDirection(lang);
+    const supportedLanguage = this.resolveSupportedLanguage(lang);
+    this.translate.use(supportedLanguage);
+    this.selectedLanguage.next(supportedLanguage);
+    this.changeDirection(supportedLanguage);
   }
 
   public changeLanguage(value: string) {
-    this.translate.use(value);
-    localStorage.setItem(this.languageKey, value);
-    this.selectedLanguage.next(value);
-    this.changeDirection(value);
+    const supportedLanguage = this.resolveSupportedLanguage(value);
+    this.translate.use(supportedLanguage);
+    localStorage.setItem(this.languageKey, supportedLanguage);
+    this.selectedLanguage.next(supportedLanguage);
+    this.changeDirection(supportedLanguage);
   }
 
   private changeDirection(value: string) {
     this.isRTL.next(!!this.languages.value.find((l) => l.code === value)?.rtl);
+  }
+
+  private resolveSupportedLanguage(locale: string): string {
+    const normalizedLocale = locale.replace('_', '-');
+    const exactLanguage = this.languages.value.find(
+      (language) => language.code.toLowerCase() === normalizedLocale.toLowerCase(),
+    );
+    if (exactLanguage) return exactLanguage.code;
+
+    const baseLanguageCode = normalizedLocale.split('-')[0].toLowerCase();
+    const baseLanguage = this.languages.value.find(
+      (language) => language.code.split('-')[0].toLowerCase() === baseLanguageCode,
+    );
+    return baseLanguage?.code || 'en';
   }
 }

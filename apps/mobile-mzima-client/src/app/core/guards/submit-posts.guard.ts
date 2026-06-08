@@ -1,10 +1,5 @@
 import { Injectable } from '@angular/core';
-import {
-  ActivatedRouteSnapshot,
-  CanActivate,
-  RouterStateSnapshot,
-  UrlTree,
-} from '@angular/router';
+import { ActivatedRouteSnapshot, CanActivate, RouterStateSnapshot, UrlTree } from '@angular/router';
 import { CONST } from '@constants';
 import { isSubmitOnlyUser } from '@helpers';
 import { LandingRouteService } from '@services';
@@ -27,7 +22,12 @@ export class SubmitPostsGuard implements CanActivate {
       return true;
     }
 
-    if (state.url.startsWith('/post-edit') || state.url.startsWith('/no-access')) {
+    if (
+      state.url.startsWith('/post-edit') ||
+      state.url.startsWith('/map') ||
+      state.url.startsWith('/activity') ||
+      state.url.startsWith('/no-access')
+    ) {
       return true;
     }
 

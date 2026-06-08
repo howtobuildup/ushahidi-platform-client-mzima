@@ -11,7 +11,7 @@ import {
   MarkerClusterGroupOptions,
   tileLayer,
 } from 'leaflet';
-import { mapHelper } from '@helpers';
+import { isSubmitOnlyUser, mapHelper } from '@helpers';
 import { GeoJsonPostsResponse, PostsService } from '@mzima-client/sdk';
 import { DatabaseService, SessionService } from '@services';
 import { MapConfigInterface } from '@models';
@@ -40,6 +40,8 @@ export class MapViewComponent implements AfterViewInit {
   private isDarkMode = false;
   private baseLayer: 'streets' | 'satellite' | 'hOSM' | 'MapQuestAerial' | 'MapQuest' | 'dark';
   public isConnection = true;
+  private currentUserId?: string | number;
+  private shouldScopeToOwnPosts = false;
 
   constructor(
     private postsService: PostsService,
@@ -51,6 +53,7 @@ export class MapViewComponent implements AfterViewInit {
     mediaDarkMode.addEventListener('change', (ev) => this.switchMode(ev));
     this.isDarkMode = mediaDarkMode.matches;
     this.initMapConfigListener();
+    this.initCurrentUserListener();
   }
 
   private initMapConfigListener() {
@@ -109,17 +112,20 @@ export class MapViewComponent implements AfterViewInit {
   }
 
   public getPostsGeoJson() {
+    const params = this.withPostAccessScope({ limit: 100000, offset: 0, page: 1 });
+    const cacheKey = this.getGeoJsonCacheKey();
+
     this.postsService
-      .getGeojson({ limit: 100000, offset: 0, page: 1 })
+      .getGeojson(params)
       .pipe(untilDestroyed(this))
       .subscribe({
         next: async (postsResponse) => {
-          await this.databaseService.set(STORAGE_KEYS.GEOJSONPOSTS, postsResponse);
+          await this.databaseService.set(cacheKey, postsResponse);
           this.geoJsonDataProcessor(postsResponse);
         },
         error: async (err) => {
           if (err.message.match(/Http failure response for/)) {
-            const posts = await this.databaseService.get(STORAGE_KEYS.GEOJSONPOSTS);
+            const posts = await this.databaseService.get(cacheKey);
             if (posts) {
               this.geoJsonDataProcessor(posts);
             }
@@ -168,5 +174,27 @@ export class MapViewComponent implements AfterViewInit {
   public destroy(): void {
     this.$destroy.next(null);
     this.$destroy.complete();
+  }
+
+  private initCurrentUserListener(): void {
+    this.sessionService.currentUserData$.pipe(untilDestroyed(this)).subscribe({
+      next: (userData) => {
+        this.currentUserId = userData.userId;
+        this.shouldScopeToOwnPosts = isSubmitOnlyUser(userData.permissions, userData.role);
+      },
+    });
+  }
+
+  private withPostAccessScope<T extends Record<string, any>>(params: T): T {
+    return {
+      ...params,
+      ...(this.shouldScopeToOwnPosts ? { user: 'me' } : {}),
+    };
+  }
+
+  private getGeoJsonCacheKey(): string {
+    if (!this.shouldScopeToOwnPosts) return STORAGE_KEYS.GEOJSONPOSTS;
+
+    return `${STORAGE_KEYS.GEOJSONPOSTS}_user_${this.currentUserId || 'me'}`;
   }
 }

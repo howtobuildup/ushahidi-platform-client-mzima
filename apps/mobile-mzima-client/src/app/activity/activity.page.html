@@ -1,5 +1,34 @@
-<ion-content class="main ion-padding">
-  <ion-img class="img" src="assets/images/coming-soon.svg"></ion-img>
-  <ion-text>Activity View coming soon</ion-text>
-</ion-content>
+<app-main-layout [title]="'navigation.activity' | translate" (back)="back()">
+  <div class="activity-summary" *ngIf="!isPostsLoading">
+    <ion-text color="medium">
+      {{ totalPosts }} {{ (totalPosts === 1 ? 'map.post_singular' : 'map.post_plural') | translate
+      }}
+    </ion-text>
+  </div>
+
+  <ng-container *ngIf="posts.length; else emptyBox">
+    <app-post-item
+      *ngFor="let post of posts"
+      [post]="post"
+      (click)="showPost(post.id.toString())"
+    ></app-post-item>
+
+    <ion-infinite-scroll
+      *ngIf="totalPosts > posts.length && isConnection"
+      (ionInfinite)="loadMorePosts($event)"
+    >
+      <ion-infinite-scroll-content loadingSpinner="lines-sharp"></ion-infinite-scroll-content>
+    </ion-infinite-scroll>
+  </ng-container>
+</app-main-layout>
+
 <app-menu></app-menu>
+
+<ng-template #emptyBox>
+  <div class="empty-box" [ngClass]="{ 'empty-box--loading': isPostsLoading }">
+    <ion-text color="medium" class="empty ion-text-center" *ngIf="!posts.length && !isPostsLoading">
+      {{ 'map.no_posts' | translate }}
+    </ion-text>
+    <app-spinner *ngIf="isPostsLoading"></app-spinner>
+  </div>
+</ng-template>

@@ -88,11 +88,13 @@ export class FeedViewComponent extends MainViewComponent {
 
   private async getPosts(params: any, add = false): Promise<void> {
     this.isPostsLoading = true;
+    const scopedParams = this.withPostAccessScope(params);
+    const cacheKey = this.getPostsCacheKey(STORAGE_KEYS.POSTS);
     try {
-      const response = await lastValueFrom(this.postsService.getPosts('', { ...params }));
+      const response = await lastValueFrom(this.postsService.getPosts('', scopedParams));
       await this.updateObjectsWithUploadInput(response);
 
-      const currentPosts = await this.databaseService.get(STORAGE_KEYS.POSTS);
+      const currentPosts = await this.databaseService.get(cacheKey);
       if (currentPosts && currentPosts.results) {
         const currentPostIds = currentPosts.results.map((post: any) => post.id);
         const newResults = response.results.filter(
@@ -102,15 +104,15 @@ export class FeedViewComponent extends MainViewComponent {
         currentPosts.results.sort((a: any, b: any) => b.id - a.id);
         currentPosts.count = currentPosts.results.length;
         currentPosts.meta.total = response.meta.total;
-        await this.databaseService.set(STORAGE_KEYS.POSTS, currentPosts);
+        await this.databaseService.set(cacheKey, currentPosts);
       } else {
-        await this.databaseService.set(STORAGE_KEYS.POSTS, response);
+        await this.databaseService.set(cacheKey, response);
       }
 
       this.postDisplayProcessing(response, add);
     } catch (error) {
       console.error('error: ', error);
-      const response = await this.databaseService.get(STORAGE_KEYS.POSTS);
+      const response = await this.databaseService.get(cacheKey);
       if (response) this.postDisplayProcessing(response, false);
     }
   }

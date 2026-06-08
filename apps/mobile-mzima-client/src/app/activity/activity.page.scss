@@ -1,18 +1,17 @@
-.main {
-  font-size: 22px;
-  line-height: 28px;
-  text-align: center;
-  --padding-top: calc(32px + var(--ion-safe-area-top));
-
-  &::part(scroll) {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
+.activity-summary {
+  padding: 0 16px 12px;
+  font-size: 14px;
+  line-height: 20px;
 }
 
-.img {
-  max-width: 480px;
-  overflow: hidden;
-  margin: 0 auto 24px;
+.empty-box {
+  height: 220px;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+
+  &--loading {
+    height: 100%;
+  }
 }

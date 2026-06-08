@@ -12,7 +12,7 @@ import {
 import { Subject, debounceTime, lastValueFrom, takeUntil } from 'rxjs';
 import { AlertService, EnvService, SearchService, SessionService } from '@services';
 import { FilterControl, FilterControlOption } from '@models';
-import { searchFormHelper, dateHelper } from '@helpers';
+import { searchFormHelper, dateHelper, isSubmitOnlyUser } from '@helpers';
 import { InfiniteScrollCustomEvent } from '@ionic/angular';
 import _ from 'lodash';
 import { Router } from '@angular/router';
@@ -106,6 +106,7 @@ export class FiltersFormComponent implements OnChanges, OnDestroy {
     page: 1,
   };
   public foundPosts: number = 0;
+  private shouldScopeToOwnPosts = false;
 
   public form = this.formBuilder.group({
     postsQuery: [''],
@@ -154,6 +155,12 @@ export class FiltersFormComponent implements OnChanges, OnDestroy {
       next: (totalPosts) => {
         this.totalPosts = totalPosts;
         this.isTotalLoading = false;
+      },
+    });
+
+    this.session.currentUserData$.pipe(takeUntil(this.destroy$)).subscribe({
+      next: (userData) => {
+        this.shouldScopeToOwnPosts = isSubmitOnlyUser(userData.permissions, userData.role);
       },
     });
   }
@@ -444,7 +451,7 @@ export class FiltersFormComponent implements OnChanges, OnDestroy {
   private async searchPosts(query: string, add?: boolean): Promise<void> {
     try {
       const response = await lastValueFrom(
-        this.postsService.searchPosts('', query, this.searchParams),
+        this.postsService.searchPosts('', query, this.withPostAccessScope(this.searchParams)),
       );
       this.posts = add ? [...this.posts, ...response.results] : response.results;
       this.isPostsLoading = false;
@@ -466,6 +473,13 @@ export class FiltersFormComponent implements OnChanges, OnDestroy {
   public resetSearchForm(): void {
     this.posts = [];
     this.searchParams.page = 1;
+  }
+
+  private withPostAccessScope<T extends Record<string, any>>(params: T): T {
+    return {
+      ...params,
+      ...(this.shouldScopeToOwnPosts ? { user: 'me' } : {}),
+    };
   }
 
   public applyFilter(

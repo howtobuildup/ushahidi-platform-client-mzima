@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, map, Observable, Subject, tap } from 'rxjs';
+import { BehaviorSubject, map, Observable, Subject, switchMap, take, tap } from 'rxjs';
 import { apiHelpers } from '../helpers';
 import { EnvLoader } from '../loader';
 import {
@@ -47,6 +47,15 @@ export class PostsService extends ResourceService<any> {
 
   getResourceUrl(): string {
     return 'posts';
+  }
+
+  getEwerDashboard(): Observable<any> {
+    return this.currentLoader.getApiUrl().pipe(
+      take(1),
+      switchMap((backendUrl) =>
+        this.httpClient.get(`${backendUrl}${apiHelpers.API_V_5}dashboard/ewer`),
+      ),
+    );
   }
 
   updateStatus(id: string | number, status: string) {

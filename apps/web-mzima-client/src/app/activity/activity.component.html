@@ -13,90 +13,435 @@
 -->
 
 <section class="dashboard-page">
-  <header class="report-header">
-    <div>
-      <h1>{{ 'dashboard.title' | translate }}</h1>
-    </div>
+  <div class="dashboard-shell">
+    <header class="dashboard-header">
+      <div>
+        <h1>{{ 'dashboard.title' | translate }}</h1>
+        <p>{{ 'dashboard.subtitle' | translate }}</p>
+      </div>
+      <div class="reporting-period">
+        <span>{{ 'dashboard.reporting_period' | translate }}</span>
+        <strong>{{ reportingPeriod }}</strong>
+      </div>
+    </header>
 
-    <div class="range-controls" [attr.aria-label]="'dashboard.date_range_label' | translate">
-      <mat-form-field appearance="outline">
-        <mat-select [(value)]="selectedRange" [attr.aria-label]="'dashboard.view_range' | translate">
-          <mat-option value="feb-mar-2026">{{ 'dashboard.view_range' | translate }}</mat-option>
-        </mat-select>
-      </mat-form-field>
-      <strong>{{ 'dashboard.display_range' | translate }}</strong>
-    </div>
-  </header>
+    <app-notification *ngIf="loading" type="info" id="dashboard-loading">
+      {{ 'dashboard.loading' | translate }}
+    </app-notification>
+    <app-notification *ngIf="loadError" type="danger" id="dashboard-load-error">
+      {{ 'dashboard.load_error' | translate }}
+    </app-notification>
 
-  <div class="summary-grid">
-    <article
-      class="summary-card"
-      *ngFor="let metric of summaryMetrics"
-      [class.summary-card--danger]="metric.tone === 'danger'"
-      [class.summary-card--primary]="metric.tone === 'primary'"
-    >
-      <strong>{{ metric.value }}</strong>
-      <span>{{ metric.labelKey | translate }}</span>
-    </article>
+    <section class="filter-panel" [attr.aria-label]="'dashboard.filters.title' | translate">
+      <strong class="filter-panel__title">{{ 'dashboard.filters.title' | translate }}</strong>
+      <div class="filter-grid">
+        <mat-form-field appearance="outline" *ngFor="let filter of filters">
+          <mat-label>{{ filter.labelKey | translate }}</mat-label>
+          <mat-select [(value)]="filter.value">
+            <mat-option *ngFor="let option of filter.options" [value]="option.value">
+              {{ option.labelKey | translate }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <mzima-client-button (buttonClick)="applyFilters()" [data-qa]="'dashboard-apply-filters'">
+        {{ (filtersApplied ? 'dashboard.filters.applied' : 'dashboard.filters.apply') | translate }}
+      </mzima-client-button>
+    </section>
+
+    <section class="kpi-grid" [attr.aria-label]="'dashboard.kpis.title' | translate">
+      <article
+        class="kpi-card"
+        *ngFor="let metric of kpis"
+        [class]="'kpi-card kpi-card--' + metric.tone"
+      >
+        <span>{{ metric.labelKey | translate }}</span>
+        <strong>{{ metric.value }}</strong>
+        <small>{{ metric.detail }}</small>
+      </article>
+    </section>
+
+    <section class="dashboard-section">
+      <h2>{{ 'dashboard.sections.overview' | translate }}</h2>
+      <div class="overview-grid">
+        <article class="chart-card district-map-card">
+          <header class="chart-card__header">
+            <h3>{{ 'dashboard.charts.incidents_by_district' | translate }}</h3>
+            <p>{{ 'dashboard.charts.geotagged_reports' | translate }}</p>
+          </header>
+          <div class="district-map-layout">
+            <div class="district-map" aria-hidden="true">
+              <div class="district-map__shape"></div>
+              <div
+                class="map-bubble"
+                *ngFor="let district of districts"
+                [style.left.%]="district.x"
+                [style.top.%]="district.y"
+                [style.width.px]="28 + district.value / 5"
+                [style.height.px]="28 + district.value / 5"
+                [style.background]="district.color + '66'"
+                [attr.title]="(district.labelKey | translate) + ': ' + district.value"
+              >
+                <span>{{ district.value }}</span>
+              </div>
+            </div>
+            <div class="district-ranking">
+              <strong>{{ 'dashboard.charts.ranking' | translate }}</strong>
+              <div class="ranking-row" *ngFor="let district of districts">
+                <span>{{ district.labelKey | translate }}</span>
+                <i>
+                  <b
+                    [style.width.%]="(district.value / maxValue(districts)) * 100"
+                    [style.background]="district.color"
+                  ></b>
+                </i>
+                <em>{{ district.value }}</em>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="chart-card incident-mix-card">
+          <header class="chart-card__header">
+            <h3>{{ 'dashboard.charts.incident_type_mix' | translate }}</h3>
+          </header>
+          <div class="donut-layout">
+            <div class="donut donut--large" [style.background]="donutBackground(incidentMix)">
+              <div class="donut__center">
+                <strong>{{ metricTotal(incidentMix) }}</strong>
+                <span>{{ 'dashboard.charts.reports' | translate }}</span>
+              </div>
+            </div>
+            <div class="chart-legend">
+              <div *ngFor="let item of incidentMix">
+                <i [style.background]="item.color"></i>
+                <span>{{ item.labelKey | translate }}</span>
+                <strong>
+                  {{ item.value }} ({{ percentage(item.value, metricTotal(incidentMix)) }}%)
+                </strong>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="chart-card district-type-card">
+          <header class="chart-card__header">
+            <h3>{{ 'dashboard.charts.incidents_by_district_type' | translate }}</h3>
+          </header>
+          <div class="compact-legend">
+            <span
+              ><i class="tone-conflict"></i>{{ 'dashboard.categories.conflict' | translate }}</span
+            >
+            <span><i class="tone-gbv"></i>{{ 'dashboard.categories.gbv' | translate }}</span>
+            <span><i class="tone-social"></i>{{ 'dashboard.categories.social' | translate }}</span>
+            <span
+              ><i class="tone-warning"></i
+              >{{ 'dashboard.categories.early_warning' | translate }}</span
+            >
+          </div>
+          <div class="stacked-chart">
+            <div class="stacked-chart__column" *ngFor="let district of districtTypes">
+              <strong>{{ district.total }}</strong>
+              <div class="stacked-chart__bar">
+                <i
+                  class="tone-conflict"
+                  [style.height.%]="stackHeight(district.values.conflict, district.total)"
+                ></i>
+                <i
+                  class="tone-gbv"
+                  [style.height.%]="stackHeight(district.values.gbv, district.total)"
+                ></i>
+                <i
+                  class="tone-social"
+                  [style.height.%]="stackHeight(district.values.social, district.total)"
+                ></i>
+                <i
+                  class="tone-warning"
+                  [style.height.%]="stackHeight(district.values.warning, district.total)"
+                ></i>
+              </div>
+              <span>{{ district.labelKey | translate }}</span>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="dashboard-section">
+      <h2>
+        {{ 'dashboard.sections.conflict_analysis' | translate }}
+        <span>- {{ conflictTotal }} {{ 'dashboard.sections.incidents' | translate }}</span>
+      </h2>
+      <div class="four-chart-grid">
+        <article class="chart-card">
+          <header class="chart-card__header">
+            <h3>{{ 'dashboard.charts.conflict_by_type' | translate }}</h3>
+          </header>
+          <div class="donut-layout donut-layout--compact">
+            <div class="donut" [style.background]="donutBackground(conflictTypes)">
+              <div class="donut__center">
+                <strong>{{ metricTotal(conflictTypes) }}</strong>
+                <span>{{ 'dashboard.charts.conflicts' | translate }}</span>
+              </div>
+            </div>
+            <div class="chart-legend">
+              <div *ngFor="let item of conflictTypes">
+                <i [style.background]="item.color"></i>
+                <span>{{ item.labelKey | translate }}</span>
+                <strong>{{ item.value }} ({{ percentage(item.value, conflictTotal) }}%)</strong>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="chart-card">
+          <header class="chart-card__header">
+            <h3>{{ 'dashboard.charts.conflict_drivers' | translate }}</h3>
+          </header>
+          <div class="horizontal-bars horizontal-bars--dense">
+            <div class="horizontal-bar" *ngFor="let item of conflictDrivers">
+              <span>{{ item.labelKey | translate }}</span>
+              <i
+                ><b
+                  [style.width.%]="(item.value / maxValue(conflictDrivers)) * 100"
+                  [style.background]="item.color"
+                ></b
+              ></i>
+              <strong>{{ item.value }}</strong>
+            </div>
+          </div>
+        </article>
+
+        <article class="chart-card">
+          <header class="chart-card__header">
+            <h3>{{ 'dashboard.charts.conflict_response_by_district' | translate }}</h3>
+          </header>
+          <div class="vertical-chart">
+            <div class="vertical-chart__item" *ngFor="let item of conflictResponse">
+              <strong>{{ item.value }}%</strong>
+              <i [style.height.%]="item.value" [style.background]="item.color"></i>
+              <span>{{ item.labelKey | translate }}</span>
+            </div>
+          </div>
+          <p class="chart-note">{{ 'dashboard.charts.conflict_response_note' | translate }}</p>
+        </article>
+
+        <article class="chart-card">
+          <header class="chart-card__header">
+            <h3>{{ 'dashboard.charts.escalation_signals' | translate }}</h3>
+          </header>
+          <div class="donut-layout donut-layout--vertical">
+            <div class="donut" [style.background]="donutBackground(escalationSignals)">
+              <div class="donut__center">
+                <strong>{{ escalationRate }}%</strong>
+                <span>{{ 'dashboard.escalation.at_risk' | translate }}</span>
+              </div>
+            </div>
+            <div class="chart-legend chart-legend--horizontal">
+              <div *ngFor="let item of escalationSignals">
+                <i [style.background]="item.color"></i>
+                <span>{{ item.labelKey | translate }}</span>
+                <strong>{{ item.value }}</strong>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="dashboard-section">
+      <h2>
+        {{ 'dashboard.sections.gbv' | translate }}
+        <span>- {{ gbvTotal }} {{ 'dashboard.sections.cases' | translate }}</span>
+      </h2>
+      <div class="gbv-grid">
+        <article class="chart-card">
+          <header class="chart-card__header">
+            <h3>{{ 'dashboard.charts.nature_of_gbv' | translate }}</h3>
+          </header>
+          <div class="horizontal-bars">
+            <div class="horizontal-bar" *ngFor="let item of gbvNature">
+              <span>{{ item.labelKey | translate }}</span>
+              <i><b [style.width.%]="item.value" [style.background]="item.color"></b></i>
+              <strong>{{ item.value }}%</strong>
+            </div>
+          </div>
+        </article>
+
+        <article class="chart-card">
+          <header class="chart-card__header">
+            <h3>{{ 'dashboard.charts.gbv_by_district' | translate }}</h3>
+          </header>
+          <div class="vertical-chart vertical-chart--count">
+            <div class="vertical-chart__item" *ngFor="let item of gbvDistricts">
+              <strong>{{ item.value }}</strong>
+              <i
+                [style.height.%]="(item.value / maxValue(gbvDistricts)) * 100"
+                [style.background]="item.color"
+              ></i>
+              <span>{{ item.labelKey | translate }}</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="chart-card">
+          <header class="chart-card__header">
+            <h3>{{ 'dashboard.charts.survivor_age' | translate }}</h3>
+          </header>
+          <div class="vertical-chart vertical-chart--count">
+            <div class="vertical-chart__item" *ngFor="let item of survivorAges">
+              <strong>{{ item.value }}%</strong>
+              <i
+                [style.height.%]="(item.value / maxValue(survivorAges)) * 100"
+                [style.background]="item.color"
+              ></i>
+              <span>{{ item.labelKey | translate }}</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="chart-card">
+          <header class="chart-card__header">
+            <h3>{{ 'dashboard.charts.gender_profile' | translate }}</h3>
+          </header>
+          <div class="gender-profile">
+            <div *ngFor="let item of genderProfiles">
+              <div
+                class="donut donut--small"
+                [style.background]="singleDonutBackground(item.value, item.color)"
+              >
+                <div class="donut__center">
+                  <strong>{{ item.value }}%</strong>
+                  <span>{{ item.detailKey | translate }}</span>
+                </div>
+              </div>
+              <span>{{ item.labelKey | translate }}</span>
+            </div>
+          </div>
+          <p class="chart-note">{{ 'dashboard.charts.gender_profile_note' | translate }}</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="dashboard-section">
+      <h2>{{ 'dashboard.sections.social_warning_response' | translate }}</h2>
+      <div class="coverage-grid">
+        <article class="chart-card">
+          <header class="chart-card__header">
+            <h3>{{ 'dashboard.charts.social_violence_types' | translate }}</h3>
+            <p>{{ socialTotal }} {{ 'dashboard.sections.incidents' | translate }}</p>
+          </header>
+          <div class="horizontal-bars">
+            <div class="horizontal-bar" *ngFor="let item of socialViolence">
+              <span>{{ item.labelKey | translate }}</span>
+              <i><b [style.width.%]="item.value" [style.background]="item.color"></b></i>
+              <strong>{{ item.value }}%</strong>
+            </div>
+          </div>
+        </article>
+
+        <article class="chart-card">
+          <header class="chart-card__header">
+            <h3>{{ 'dashboard.charts.response_coverage' | translate }}</h3>
+          </header>
+          <div class="gauge-grid">
+            <div class="gauge-item" *ngFor="let item of responseCoverage">
+              <div class="gauge" [style.background]="gaugeBackground(item)">
+                <div class="gauge__center"></div>
+                <strong>{{ item.value }}%</strong>
+              </div>
+              <span>{{ item.labelKey | translate }}</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="chart-card warning-card">
+          <header class="chart-card__header">
+            <h3>{{ 'dashboard.charts.early_warning_by_district' | translate }}</h3>
+            <p>{{ warningTotal }} {{ 'dashboard.charts.alert_signals' | translate }}</p>
+          </header>
+          <div class="vertical-chart vertical-chart--wide">
+            <div class="vertical-chart__item" *ngFor="let item of earlyWarningDistricts">
+              <strong>{{ item.value }}</strong>
+              <i
+                [style.height.%]="(item.value / maxValue(earlyWarningDistricts)) * 100"
+                [style.background]="item.color"
+              ></i>
+              <span>{{ item.labelKey | translate }}</span>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="dashboard-section">
+      <h2>{{ 'dashboard.sections.trend_responders' | translate }}</h2>
+      <div class="trend-grid">
+        <article class="chart-card timeline-card">
+          <header class="chart-card__header chart-card__header--split">
+            <div>
+              <h3>{{ 'dashboard.charts.monthly_timeline' | translate }}</h3>
+              <p>{{ 'dashboard.charts.monthly_timeline_detail' | translate }}</p>
+            </div>
+            <div class="compact-legend">
+              <span
+                ><i class="tone-conflict"></i
+                >{{ 'dashboard.categories.conflict' | translate }}</span
+              >
+              <span><i class="tone-gbv"></i>{{ 'dashboard.categories.gbv' | translate }}</span>
+              <span
+                ><i class="tone-social"></i>{{ 'dashboard.categories.social' | translate }}</span
+              >
+              <span
+                ><i class="tone-warning"></i
+                >{{ 'dashboard.categories.early_warning' | translate }}</span
+              >
+            </div>
+          </header>
+          <div class="stacked-chart stacked-chart--timeline">
+            <div class="stacked-chart__column" *ngFor="let month of timeline">
+              <strong>{{ month.total }}</strong>
+              <div class="stacked-chart__bar">
+                <i
+                  class="tone-conflict"
+                  [style.height.%]="stackHeight(month.values.conflict, month.total)"
+                ></i>
+                <i
+                  class="tone-gbv"
+                  [style.height.%]="stackHeight(month.values.gbv, month.total)"
+                ></i>
+                <i
+                  class="tone-social"
+                  [style.height.%]="stackHeight(month.values.social, month.total)"
+                ></i>
+                <i
+                  class="tone-warning"
+                  [style.height.%]="stackHeight(month.values.warning, month.total)"
+                ></i>
+              </div>
+              <span>{{ month.shortLabelKey | translate }}</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="chart-card">
+          <header class="chart-card__header">
+            <h3>{{ 'dashboard.charts.top_responding_actors' | translate }}</h3>
+            <p>{{ 'dashboard.charts.share_of_actioned' | translate }}</p>
+          </header>
+          <div class="horizontal-bars">
+            <div class="horizontal-bar" *ngFor="let item of respondingActors">
+              <span>{{ item.labelKey | translate }}</span>
+              <i><b [style.width.%]="item.value" [style.background]="item.color"></b></i>
+              <strong>{{ item.value }}%</strong>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <footer class="dashboard-footer">
+      <span>{{ 'dashboard.source' | translate }}</span>
+    </footer>
   </div>
-
-  <div class="chart-grid">
-    <article class="report-card location-card">
-      <h2>{{ 'dashboard.charts.total_incidents_by_location' | translate }}</h2>
-      <div class="location-chart" [attr.aria-label]="'dashboard.charts.total_incidents_by_location_aria' | translate">
-        <div class="plot-area">
-          <div
-            class="location-bar"
-            *ngFor="let item of locationMetrics"
-            [style.height.%]="(item.value / maxValue(locationMetrics)) * 100"
-            [style.background]="item.color"
-          ></div>
-        </div>
-        <div class="axis-labels">
-          <span *ngFor="let item of locationMetrics">{{ item.labelKey | translate }}</span>
-        </div>
-      </div>
-    </article>
-
-    <article class="report-card incident-type-card">
-      <h2>{{ 'dashboard.charts.incident_type' | translate }}</h2>
-      <div class="incident-type-chart" [attr.aria-label]="'dashboard.charts.incident_type_distribution_aria' | translate">
-        <div
-          class="type-bar"
-          *ngFor="let item of incidentTypeMetrics"
-          [style.height.%]="(item.value / maxValue(incidentTypeMetrics)) * 100"
-          [style.background]="item.color"
-          [attr.title]="(item.labelKey | translate) + ': ' + item.value"
-        ></div>
-      </div>
-    </article>
-  </div>
-
-  <article class="report-card timeline-card">
-    <div class="timeline-head">
-      <h2>{{ 'dashboard.charts.timeline_of_incidents' | translate }}</h2>
-      <div class="legend">
-        <span><i class="legend-dot legend-dot--conflict"></i>{{ 'dashboard.legend.conflict' | translate }}</span>
-        <span><i class="legend-dot legend-dot--gbv"></i>{{ 'dashboard.legend.gbv_incidents' | translate }}</span>
-        <span><i class="legend-dot legend-dot--environmental"></i>{{ 'dashboard.legend.environmental' | translate }}</span>
-      </div>
-    </div>
-
-    <div class="timeline-chart" [attr.aria-label]="'dashboard.charts.timeline_of_incidents_aria' | translate">
-      <div class="stacked-bar" *ngFor="let item of timeline" [attr.title]="item.day">
-        <span
-          class="stacked-bar__segment stacked-bar__segment--conflict"
-          [style.height.%]="(item.conflict / timelineTotal(item)) * 100"
-        ></span>
-        <span
-          class="stacked-bar__segment stacked-bar__segment--gbv"
-          [style.height.%]="(item.gbv / timelineTotal(item)) * 100"
-        ></span>
-        <span
-          class="stacked-bar__segment stacked-bar__segment--environmental"
-          [style.height.%]="(item.environmental / timelineTotal(item)) * 100"
-        ></span>
-      </div>
-    </div>
-  </article>
 </section>

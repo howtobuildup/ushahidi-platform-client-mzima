@@ -1,104 +1,162 @@
 @import 'helpers';
 
-$report-blue-dark: var(--color-primary-40);
-$report-blue-light: var(--color-primary-90);
-$report-pink: var(--color-accent-tint);
+$primary: #505596;
+$danger: #b7473d;
+$social: #cf8b4c;
+$success: #5d9f94;
+$warning: #e5a52f;
+$surface: #ffffff;
+$page: #f1f3f8;
+$border: #dfe3ec;
+$muted: #747d91;
+$text: #252a3b;
 
 .dashboard-page {
   height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 24px;
-  scroll-behavior: smooth;
-  background: var(--color-neutral-10);
-  color: var(--color-black);
+  overflow: auto;
+  padding: 20px;
+  color: $text;
+  background: $page;
   -webkit-overflow-scrolling: touch;
-
-  @include breakpoint-max($laptop-small) {
-    padding: 16px;
-  }
 
   @include breakpoint-max($tablet) {
     height: auto;
     min-height: 100%;
-    padding: 16px;
-    background: var(--color-light);
+    padding: 12px;
   }
 }
 
-.report-header {
+.dashboard-shell {
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.dashboard-header {
   display: flex;
-  align-items: flex-start;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 24px;
-  margin: 0 auto 16px;
-  max-width: 1054px;
+  margin-bottom: 16px;
+
+  h1 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: 0;
+  }
+
+  p {
+    margin: 3px 0 0;
+    font-size: 13px;
+    line-height: 1.4;
+    color: $muted;
+  }
 
   @include breakpoint-max($tablet) {
     display: block;
-  }
 
-  h1 {
-    margin-bottom: 4px;
-    font-size: 24px;
-    font-weight: 700;
-    line-height: 1.28;
-
-    @include breakpoint-max($tablet) {
+    h1 {
       font-size: 20px;
     }
   }
 }
 
-.range-controls {
+.reporting-period {
   display: flex;
-  align-items: center;
-  gap: 16px;
-  padding-top: 2px;
+  align-items: flex-end;
+  flex-direction: column;
+  flex: 0 0 auto;
+
+  span {
+    font-size: 11px;
+    color: $muted;
+  }
+
+  strong {
+    font-size: 15px;
+  }
 
   @include breakpoint-max($tablet) {
     align-items: flex-start;
-    flex-direction: column;
-    gap: 8px;
-    margin-top: 16px;
+    margin-top: 10px;
+  }
+}
+
+.filter-panel {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border: 1px solid $border;
+  border-radius: 6px;
+  background: $surface;
+
+  &__title {
+    font-size: 13px;
+    color: $muted;
   }
 
-  mat-form-field {
-    width: 160px;
+  mzima-client-button {
+    min-width: 90px;
+  }
 
-    @include breakpoint-max($tablet) {
-      width: 100%;
-      max-width: 280px;
+  @include breakpoint-max($laptop-small) {
+    grid-template-columns: 1fr auto;
+
+    &__title {
+      grid-column: 1 / -1;
     }
+  }
+
+  @include breakpoint-max($tablet) {
+    display: block;
+
+    &__title {
+      display: block;
+      margin-bottom: 16px;
+    }
+
+    mzima-client-button {
+      display: block;
+      margin-top: 8px;
+    }
+  }
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(110px, 1fr));
+  gap: 8px;
+
+  mat-form-field {
+    min-width: 0;
 
     &::ng-deep {
       .mat-form-field-wrapper {
         padding-bottom: 0;
       }
+
+      .mat-form-field-infix {
+        width: auto;
+        padding-top: 7px;
+        padding-bottom: 7px;
+        border-top-width: 4px;
+      }
+
+      .mat-form-field-label {
+        font-size: 11px;
+      }
+
+      .mat-select-value {
+        font-size: 12px;
+        font-weight: 500;
+      }
     }
   }
-
-  strong {
-    font-size: 14px;
-    font-weight: 500;
-    line-height: 1.3;
-    color: var(--color-black);
-  }
-}
-
-.summary-grid,
-.chart-grid,
-.timeline-card {
-  max-width: 1054px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.summary-grid {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(120px, 1fr));
-  gap: 8px;
-  margin-bottom: 16px;
 
   @include breakpoint-max($laptop-small) {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -107,261 +165,744 @@ $report-pink: var(--color-accent-tint);
   @include breakpoint-max($tablet) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  @media (max-width: 440px) {
+    grid-template-columns: 1fr;
+  }
 }
 
-.summary-card {
-  display: flex;
-  min-height: 88px;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  gap: 6px;
-  padding: 12px;
-  border-radius: 4px;
-  text-align: center;
-  background: var(--color-light);
-  box-shadow: inset 0 0 0 1px var(--color-neutral-30);
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(120px, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
 
-  strong {
-    font-size: 24px;
-    font-weight: 700;
-    line-height: 1;
-    color: var(--color-black);
-
-    @include breakpoint-max($tablet) {
-      font-size: 22px;
-    }
+  @include breakpoint-max($laptop-small) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
-  span {
-    max-width: 144px;
-    font-size: 13px;
-    font-weight: 500;
+  @include breakpoint-max($tablet) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.kpi-card {
+  position: relative;
+  min-height: 92px;
+  padding: 14px 14px 12px 18px;
+  overflow: hidden;
+  border: 1px solid $border;
+  border-radius: 6px;
+  background: $surface;
+
+  &::before {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 4px;
+    content: '';
+    background: $primary;
+  }
+
+  > span {
+    display: block;
+    min-height: 26px;
+    font-size: 10px;
+    font-weight: 700;
     line-height: 1.25;
-    color: var(--color-neutral-90);
+    text-transform: uppercase;
+    color: $muted;
+  }
+
+  strong {
+    display: block;
+    margin: 2px 0 3px;
+    font-size: 27px;
+    line-height: 1;
+    color: $primary;
+  }
+
+  small {
+    display: block;
+    font-size: 11px;
+    line-height: 1.25;
+    color: #929aad;
   }
 
   &--danger {
-    strong,
-    span {
-      color: var(--color-accent);
+    &::before {
+      background: $danger;
+    }
+
+    strong {
+      color: $danger;
     }
   }
 
-  &--primary {
-    strong,
-    span {
-      color: var(--color-primary-50);
+  &--social {
+    &::before {
+      background: $social;
+    }
+
+    strong {
+      color: $social;
+    }
+  }
+
+  &--success {
+    &::before {
+      background: $success;
+    }
+
+    strong {
+      color: $success;
+    }
+  }
+
+  &--warning {
+    &::before {
+      background: $warning;
+    }
+
+    strong {
+      color: $warning;
     }
   }
 }
 
-.chart-grid {
+.dashboard-section {
+  margin-bottom: 18px;
+
+  > h2 {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    margin: 0 0 10px;
+    padding-bottom: 7px;
+    border-bottom: 1px solid $border;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.3;
+    text-transform: uppercase;
+    color: $primary;
+
+    span {
+      font: inherit;
+    }
+  }
+}
+
+.overview-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 16px;
-  margin-bottom: 16px;
+  grid-template-columns: 1.25fr 0.9fr 1.7fr;
+  gap: 12px;
+
+  @include breakpoint-max($laptop-small) {
+    grid-template-columns: 1fr 1fr;
+
+    .district-type-card {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @include breakpoint-max($tablet) {
+    grid-template-columns: 1fr;
+
+    .district-type-card {
+      grid-column: auto;
+    }
+  }
+}
+
+.four-chart-grid {
+  display: grid;
+  grid-template-columns: 0.9fr 1.15fr 1.15fr 0.9fr;
+  gap: 12px;
+
+  @include breakpoint-max($laptop-small) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @include breakpoint-max($tablet) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.gbv-grid {
+  display: grid;
+  grid-template-columns: 1.25fr 0.9fr 0.9fr 1.2fr;
+  gap: 12px;
+
+  @include breakpoint-max($laptop-small) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @include breakpoint-max($tablet) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.coverage-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.65fr;
+  gap: 12px;
+
+  @include breakpoint-max($laptop-small) {
+    grid-template-columns: 1fr 1fr;
+
+    .warning-card {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @include breakpoint-max($tablet) {
+    grid-template-columns: 1fr;
+
+    .warning-card {
+      grid-column: auto;
+    }
+  }
+}
+
+.trend-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 12px;
 
   @include breakpoint-max($laptop-small) {
     grid-template-columns: 1fr;
   }
 }
 
-.report-card {
-  border-radius: 4px;
-  background: var(--color-light);
-  box-shadow: inset 0 0 0 1px var(--color-neutral-30);
+.chart-card {
+  min-width: 0;
+  min-height: 260px;
+  padding: 16px;
+  border: 1px solid $border;
+  border-radius: 6px;
+  background: $surface;
 
-  h2 {
-    margin: 0;
-    font-size: 16px;
-    font-weight: 500;
-    line-height: 1.28;
-    color: var(--color-black);
-  }
-}
+  &__header {
+    margin-bottom: 12px;
 
-.location-card,
-.incident-type-card,
-.timeline-card {
-  padding: 20px 24px 24px;
+    h3 {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.3;
+      color: $text;
+    }
 
-  @include breakpoint-max($tablet) {
-    padding: 16px;
-  }
-}
+    p {
+      margin: 2px 0 0;
+      font-size: 11px;
+      line-height: 1.35;
+      color: $muted;
+    }
 
-.location-card {
-  h2 {
-    margin-bottom: 20px;
-  }
-}
-
-.location-chart {
-  .plot-area {
-    display: grid;
-    height: 172px;
-    grid-template-columns: repeat(4, 1fr);
-    align-items: end;
-    gap: 24px;
-    padding: 0 32px;
-    border: 1px solid var(--color-neutral-20);
-    background:
-      linear-gradient(to bottom, transparent 24%, var(--color-neutral-20) 24% 25%, transparent 25%),
-      linear-gradient(to bottom, transparent 49%, var(--color-neutral-20) 49% 50%, transparent 50%),
-      linear-gradient(to bottom, transparent 74%, var(--color-neutral-20) 74% 75%, transparent 75%);
-
-    @include breakpoint-max($tablet) {
-      height: 150px;
+    &--split {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
       gap: 16px;
-      padding: 0 20px;
+
+      @include breakpoint-max($tablet) {
+        display: block;
+      }
     }
   }
 
-  .location-bar {
-    width: 16px;
-    min-height: 18px;
-    justify-self: center;
-    border-radius: 8px;
+  @include breakpoint-max($tablet) {
+    min-height: 240px;
+    padding: 14px;
   }
 }
 
-.axis-labels {
+.district-map-layout {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  padding-top: 12px;
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 1.3;
-  text-align: center;
-  color: var(--color-black);
-}
-
-.incident-type-card {
-  display: flex;
-  flex-direction: column;
-}
-
-.incident-type-chart {
-  display: grid;
-  height: 205px;
-  grid-template-columns: repeat(12, minmax(8px, 1fr));
-  align-items: end;
-  gap: 10px;
-  margin-top: 20px;
-  padding: 0 8px 8px;
-  border-bottom: 2px solid var(--color-neutral-100);
+  grid-template-columns: minmax(170px, 1fr) minmax(170px, 0.9fr);
+  align-items: center;
+  gap: 14px;
+  min-height: 205px;
 
   @include breakpoint-max($tablet) {
-    height: 160px;
-    gap: 7px;
+    grid-template-columns: 1fr;
   }
 }
 
-.type-bar {
-  min-height: 12px;
-  border-radius: 3px 3px 0 0;
+.district-map {
+  position: relative;
+  width: 100%;
+  max-width: 230px;
+  height: 200px;
+  margin: 0 auto;
+
+  &__shape {
+    position: absolute;
+    inset: 8px 22px;
+    border: 2px solid #989dcc;
+    background: #f0f1f8;
+    clip-path: polygon(28% 5%, 72% 0, 68% 30%, 85% 49%, 65% 72%, 42% 92%, 25% 100%, 16% 61%);
+  }
 }
 
-.timeline-card {
-  overflow-x: auto;
-  padding-bottom: 20px;
-  --scrollbar-background: var(--color-light);
-}
-
-.timeline-head {
+.map-bubble {
+  position: absolute;
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 18px;
+  align-items: center;
+  justify-content: center;
+  max-width: 68px;
+  max-height: 68px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  color: $text;
 
-  @include breakpoint-max($tablet) {
+  span {
+    font-size: 10px;
+    font-weight: 700;
+  }
+}
+
+.district-ranking {
+  > strong {
     display: block;
+    margin-bottom: 12px;
+    font-size: 10px;
+    text-transform: uppercase;
+    color: #9aa1b2;
+  }
+
+  .ranking-row {
+    grid-template-columns: 58px minmax(42px, 1fr) 24px;
+    gap: 5px;
+
+    span,
+    em {
+      font-size: 10px;
+    }
   }
 }
 
-.legend {
+.ranking-row,
+.horizontal-bar {
+  display: grid;
+  grid-template-columns: minmax(96px, 1fr) minmax(70px, 1.45fr) 34px;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+
+  span {
+    font-size: 11px;
+    line-height: 1.2;
+  }
+
+  i {
+    display: block;
+    height: 16px;
+    overflow: hidden;
+    border-radius: 4px;
+    background: #eef0f5;
+
+    b {
+      display: block;
+      height: 100%;
+      min-width: 4px;
+      border-radius: inherit;
+    }
+  }
+
+  em,
+  strong {
+    font-size: 11px;
+    font-style: normal;
+    font-weight: 700;
+  }
+}
+
+.horizontal-bars {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+
+  &--dense {
+    gap: 2px;
+
+    .horizontal-bar {
+      min-height: 25px;
+      grid-template-columns: minmax(120px, 1.3fr) minmax(80px, 1.6fr) 28px;
+    }
+  }
+
+  @media (max-width: 440px) {
+    .horizontal-bar {
+      grid-template-columns: minmax(105px, 1.1fr) minmax(70px, 1fr) 34px;
+    }
+  }
+}
+
+.donut-layout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  min-height: 205px;
+
+  &--compact {
+    align-items: center;
+    flex-direction: column;
+    gap: 14px;
+
+    .chart-legend {
+      width: 100%;
+    }
+  }
+
+  &--vertical {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  @include breakpoint-max($tablet) {
+    flex-wrap: wrap;
+  }
+}
+
+.incident-mix-card {
+  .donut-layout {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .chart-legend {
+    width: 100%;
+  }
+}
+
+.donut {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  flex: 0 0 150px;
+  border-radius: 50%;
+
+  &::after {
+    position: absolute;
+    inset: 29px;
+    border-radius: 50%;
+    content: '';
+    background: $surface;
+  }
+
+  &--large {
+    width: 170px;
+    height: 170px;
+    flex-basis: 170px;
+
+    &::after {
+      inset: 34px;
+    }
+  }
+
+  &--small {
+    width: 112px;
+    height: 112px;
+    flex-basis: 112px;
+
+    &::after {
+      inset: 21px;
+    }
+  }
+
+  &__center {
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+
+    strong {
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    span {
+      margin-top: 4px;
+      font-size: 11px;
+      color: $muted;
+    }
+  }
+}
+
+.chart-legend {
+  display: grid;
+  min-width: 150px;
+  gap: 9px;
+
+  div {
+    display: grid;
+    grid-template-columns: 10px minmax(70px, 1fr) auto;
+    align-items: center;
+    gap: 7px;
+    font-size: 11px;
+  }
+
+  i {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+  }
+
+  strong {
+    white-space: nowrap;
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  &--horizontal {
+    width: 100%;
+  }
+}
+
+.compact-legend {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: flex-end;
-  gap: 8px 16px;
-  font-size: 12px;
-  line-height: 1.3;
-  color: var(--color-neutral-90);
-
-  @include breakpoint-max($tablet) {
-    justify-content: flex-start;
-    margin-top: 12px;
-  }
+  gap: 7px 16px;
+  font-size: 11px;
+  color: $text;
 
   span {
     display: inline-flex;
     align-items: center;
     gap: 6px;
   }
-}
 
-.legend-dot {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-
-  &--conflict {
-    background: $report-blue-dark;
-  }
-
-  &--gbv {
-    background: $report-pink;
-  }
-
-  &--environmental {
-    background: $report-blue-light;
+  i {
+    width: 9px;
+    height: 9px;
+    border-radius: 2px;
   }
 }
 
-.timeline-chart {
+.tone-conflict {
+  background: $primary;
+}
+
+.tone-gbv {
+  background: $danger;
+}
+
+.tone-social {
+  background: $social;
+}
+
+.tone-warning {
+  background: $success;
+}
+
+.stacked-chart {
   display: grid;
-  height: 176px;
-  min-width: 760px;
-  grid-template-columns: repeat(31, minmax(8px, 1fr));
+  height: 185px;
+  grid-template-columns: repeat(4, minmax(54px, 1fr));
   align-items: end;
-  gap: 8px;
-  padding-bottom: 8px;
-  border-bottom: 2px solid var(--color-neutral-100);
+  gap: 26px;
+  margin-top: 12px;
+  padding: 0 22px;
+
+  &__column {
+    display: grid;
+    height: 100%;
+    grid-template-rows: 18px minmax(0, 1fr) 20px;
+    align-items: end;
+    justify-items: center;
+
+    > strong {
+      font-size: 11px;
+    }
+
+    > span {
+      padding-top: 6px;
+      font-size: 11px;
+      color: $muted;
+    }
+  }
+
+  &__bar {
+    display: flex;
+    width: 56px;
+    height: 100%;
+    max-height: 145px;
+    align-self: end;
+    justify-content: flex-end;
+    flex-direction: column-reverse;
+
+    i {
+      display: block;
+      width: 100%;
+      min-height: 2px;
+    }
+  }
+
+  &--timeline {
+    height: 210px;
+    grid-template-columns: repeat(6, minmax(62px, 1fr));
+    gap: 36px;
+    margin-top: 4px;
+    overflow-x: auto;
+
+    .stacked-chart__bar {
+      width: 64px;
+      max-height: 165px;
+    }
+  }
 
   @include breakpoint-max($tablet) {
-    height: 160px;
-    min-width: 640px;
-    gap: 6px;
+    min-width: 520px;
+    overflow-x: auto;
   }
 }
 
-.stacked-bar {
+.vertical-chart {
+  display: grid;
+  height: 190px;
+  grid-template-columns: repeat(4, minmax(44px, 1fr));
+  align-items: end;
+  gap: 14px;
+  margin-top: 12px;
+
+  &__item {
+    display: grid;
+    height: 100%;
+    grid-template-rows: 18px minmax(0, 1fr) 30px;
+    align-items: end;
+    justify-items: center;
+
+    strong {
+      font-size: 11px;
+    }
+
+    i {
+      display: block;
+      width: min(48px, 76%);
+      min-height: 4px;
+      border-radius: 4px 4px 2px 2px;
+    }
+
+    span {
+      padding-top: 7px;
+      font-size: 10px;
+      line-height: 1.15;
+      text-align: center;
+      color: $muted;
+    }
+  }
+
+  &--count {
+    height: 205px;
+  }
+
+  &--wide {
+    height: 200px;
+    gap: 44px;
+
+    .vertical-chart__item i {
+      width: min(70px, 70%);
+    }
+  }
+}
+
+.chart-note {
+  margin: 5px 0 0;
+  font-size: 10px;
+  line-height: 1.3;
+  color: $muted;
+}
+
+.gender-profile {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-top: 24px;
+
+  > div {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    gap: 8px;
+
+    > span {
+      font-size: 11px;
+      color: $muted;
+    }
+  }
+}
+
+.gauge-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px 24px;
+  margin-top: 20px;
+}
+
+.gauge-item {
+  text-align: center;
+
+  > span {
+    display: block;
+    margin-top: -2px;
+    font-size: 11px;
+    color: $muted;
+  }
+}
+
+.gauge {
+  position: relative;
+  width: 126px;
+  height: 66px;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 126px 126px 0 0;
+
+  &__center {
+    position: absolute;
+    right: 22px;
+    bottom: 0;
+    left: 22px;
+    height: 42px;
+    border-radius: 84px 84px 0 0;
+    background: $surface;
+  }
+
+  strong {
+    position: absolute;
+    z-index: 1;
+    right: 0;
+    bottom: 2px;
+    left: 0;
+    font-size: 22px;
+    line-height: 1;
+  }
+}
+
+.timeline-card {
+  overflow-x: auto;
+}
+
+.dashboard-footer {
   display: flex;
-  height: 100%;
-  min-width: 8px;
-  align-items: stretch;
-  justify-content: flex-end;
-  flex-direction: column-reverse;
-}
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 0 0 8px;
+  font-size: 10px;
+  line-height: 1.4;
+  color: #949bad;
 
-.stacked-bar__segment {
-  display: block;
-  min-height: 4px;
-
-  &--conflict {
-    background: $report-blue-dark;
-  }
-
-  &--gbv {
-    background: $report-pink;
-  }
-
-  &--environmental {
-    background: $report-blue-light;
+  @include breakpoint-max($tablet) {
+    flex-direction: column;
+    gap: 4px;
   }
 }

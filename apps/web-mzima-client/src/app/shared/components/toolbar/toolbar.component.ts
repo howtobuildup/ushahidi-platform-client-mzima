@@ -129,7 +129,7 @@ export class ToolbarComponent implements OnInit {
         label: 'views.activity',
         icon: 'activity',
         visible: this.isLoggedIn && !this.isFieldMonitor,
-        router: 'activity',
+        router: 'dashboard',
       },
       {
         label: 'nav.settings',

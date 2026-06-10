@@ -62,13 +62,18 @@ const routes: Routes = [
     },
   },
   {
-    path: 'activity',
+    path: 'dashboard',
     loadChildren: () => import('./activity/activity.module').then((m) => m.ActivityModule),
     canActivate: [AuthGuard, SubmitPostsGuard],
     data: {
       breadcrumb: 'nav.activity',
       ogTitle: 'nav.activity',
     },
+  },
+  {
+    path: 'activity',
+    redirectTo: 'dashboard',
+    pathMatch: 'full',
   },
   {
     path: 'settings',

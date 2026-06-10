@@ -48,7 +48,7 @@ export class OnboardingComponent implements AfterViewInit {
         }
 
         if (data.order === 4) {
-          this.router.navigate(['/activity']);
+          this.router.navigate(['/dashboard']);
         }
 
         if (data.order === 6) {

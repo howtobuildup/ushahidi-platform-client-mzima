@@ -47,7 +47,7 @@ export class GtmTrackingService {
 
     if (tokens[0] == 'settings') {
       return 'deployment-settings';
-    } else if (tokens[0] == 'activity') {
+    } else if (tokens[0] == 'dashboard' || tokens[0] == 'activity') {
       return 'deployment-activity';
     } else {
       return 'deployment-other';

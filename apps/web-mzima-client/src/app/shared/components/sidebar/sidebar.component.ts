@@ -86,9 +86,9 @@ export class SidebarComponent implements OnInit {
     this.menu = [
       {
         label: 'views.activity',
-        router: 'activity',
+        router: 'dashboard',
         icon: 'activity',
-        ref: 'activity',
+        ref: 'dashboard',
         hidden: this.isFieldMonitor,
       },
       {

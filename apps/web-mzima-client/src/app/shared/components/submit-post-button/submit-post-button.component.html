@@ -1,4 +1,5 @@
 <mzima-client-button
+  *ngIf="canSubmit"
   (buttonClick)="addPost()"
   class="submit-post-button"
   [rounded]="!(isDesktop$ | async)!"

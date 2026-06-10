@@ -3,9 +3,15 @@ import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { CONST } from '@constants';
-import { isSubmitOnlyUser } from '@helpers';
+import { isSaferworldPartner, isSubmitOnlyUser } from '@helpers';
 import { AddPostModalComponent } from '@post';
-import { EventBusService, EventType, BreakpointService, LandingRouteService } from '@services';
+import {
+  EventBusService,
+  EventType,
+  BreakpointService,
+  LandingRouteService,
+  SessionService,
+} from '@services';
 import { Observable } from 'rxjs';
 
 @UntilDestroy()
@@ -16,6 +22,7 @@ import { Observable } from 'rxjs';
 })
 export class SubmitPostButtonComponent implements OnInit {
   public isDesktop$: Observable<boolean>;
+  public canSubmit = true;
 
   constructor(
     private dialog: MatDialog,
@@ -23,11 +30,16 @@ export class SubmitPostButtonComponent implements OnInit {
     private breakpointService: BreakpointService,
     private landingRouteService: LandingRouteService,
     private router: Router,
+    private sessionService: SessionService,
   ) {
     this.isDesktop$ = this.breakpointService.isDesktop$.pipe(untilDestroyed(this));
   }
 
   ngOnInit() {
+    this.sessionService.currentUserData$.pipe(untilDestroyed(this)).subscribe((userData) => {
+      this.canSubmit = !isSaferworldPartner(userData.role);
+    });
+
     this.eventBusService.on(EventType.AddPostButtonSubmit).subscribe({
       next: () => this.addPost(),
     });
@@ -36,6 +48,10 @@ export class SubmitPostButtonComponent implements OnInit {
   public async addPost(): Promise<void> {
     const role = localStorage.getItem(`${CONST.LOCAL_STORAGE_PREFIX}role`);
     const permissions = localStorage.getItem(`${CONST.LOCAL_STORAGE_PREFIX}permissions`);
+
+    if (isSaferworldPartner(role)) {
+      return;
+    }
 
     if (isSubmitOnlyUser(permissions, role)) {
       this.landingRouteService.getLandingUrl().subscribe((url) => this.router.navigateByUrl(url));

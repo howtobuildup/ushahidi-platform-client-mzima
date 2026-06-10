@@ -10,10 +10,11 @@ import {
   PostsService,
   SavedsearchesService,
 } from '@mzima-client/sdk';
-import { UntilDestroy } from '@ngneat/until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DatabaseService, EnvService, SessionService } from '@services';
 import { lastValueFrom, Subject } from 'rxjs';
 import { MainViewComponent } from '../main-view.component';
+import { isSaferworldPartner } from '@helpers';
 
 @UntilDestroy()
 @Component({
@@ -35,6 +36,7 @@ export class FeedViewComponent extends MainViewComponent {
   public destroy$ = new Subject();
   public isConnection = true;
   public sorting = 'created?desc';
+  public canCreatePost = true;
   public sortingOptions = [
     {
       label: 'map.date_created_newest',
@@ -73,6 +75,9 @@ export class FeedViewComponent extends MainViewComponent {
     private envService: EnvService,
   ) {
     super(router, route, postsService, savedSearchesService, sessionService);
+    this.sessionService.currentUserData$.pipe(untilDestroyed(this)).subscribe((userData) => {
+      this.canCreatePost = !isSaferworldPartner(userData.role);
+    });
     this.envService.deployment$.subscribe({
       next: () => {
         this.posts = [];
@@ -192,6 +197,8 @@ export class FeedViewComponent extends MainViewComponent {
   }
 
   public createPost() {
+    if (!this.canCreatePost) return;
+
     this.router.navigate(['/post-edit']);
   }
 

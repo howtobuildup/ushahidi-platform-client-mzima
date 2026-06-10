@@ -8,6 +8,7 @@ import { FeedViewComponent } from './components/feed-view/feed-view.component';
 import { DraggableLayoutComponent } from './components/draggable-layout/draggable-layout.component';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { untilDestroyed } from '@ngneat/until-destroy';
+import { isSaferworldPartner } from '@helpers';
 
 @Component({
   selector: 'app-map',
@@ -20,6 +21,7 @@ export class MapPage extends MainViewComponent implements OnDestroy {
   @ViewChild('feed') public feed: FeedViewComponent;
   public mode: number | 'fullscreen';
   public isConnection = true;
+  public canCreatePost = true;
   private destroy$: Subject<void> = new Subject<void>();
   private getPost$: Subject<boolean> = new Subject<boolean>();
 
@@ -32,6 +34,9 @@ export class MapPage extends MainViewComponent implements OnDestroy {
     private networkService: NetworkService,
   ) {
     super(router, route, postsService, savedSearchesService, sessionService);
+    this.sessionService.currentUserData$.pipe(untilDestroyed(this)).subscribe((userData) => {
+      this.canCreatePost = !isSaferworldPartner(userData.role);
+    });
     this.route.params.subscribe(() => {
       this.initCollection();
     });
@@ -91,6 +96,8 @@ export class MapPage extends MainViewComponent implements OnDestroy {
   }
 
   public createPost() {
+    if (!this.canCreatePost) return;
+
     this.router.navigate(['/post-edit']);
   }
 }

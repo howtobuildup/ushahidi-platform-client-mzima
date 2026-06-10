@@ -47,7 +47,12 @@
       <ion-text color="medium" class="empty ion-text-center">
         {{ 'map.no_posts' | translate }}
       </ion-text>
-      <app-button class="create-post-btn" (buttonClick)="createPost()" iconName="plus">
+      <app-button
+        *ngIf="canCreatePost"
+        class="create-post-btn"
+        (buttonClick)="createPost()"
+        iconName="plus"
+      >
         {{ 'map.add_post' | translate }}
       </app-button>
     </ng-container>

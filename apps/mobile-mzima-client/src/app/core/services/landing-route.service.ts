@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Router, UrlTree } from '@angular/router';
 import { CONST } from '@constants';
-import { isSubmitOnlyUser } from '@helpers';
+import { isSaferworldPartner, isSubmitOnlyUser } from '@helpers';
 import { SurveyItem, SurveysService } from '@mzima-client/sdk';
 import { catchError, map, Observable, of } from 'rxjs';
 
@@ -14,6 +14,10 @@ export class LandingRouteService {
   public getLandingUrl(): Observable<UrlTree> {
     const role = localStorage.getItem(`${CONST.LOCAL_STORAGE_PREFIX}role`) || '';
     const permissions = localStorage.getItem(`${CONST.LOCAL_STORAGE_PREFIX}permissions`) || '';
+
+    if (isSaferworldPartner(role)) {
+      return of(this.router.parseUrl('/map'));
+    }
 
     if (isSubmitOnlyUser(permissions, role)) {
       return this.getSubmitPostsLandingUrl(role);

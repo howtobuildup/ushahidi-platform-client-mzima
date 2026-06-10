@@ -11,6 +11,11 @@ const PRIVILEGED_PERMISSIONS = [
 ];
 
 export const SUBMIT_POSTS_PERMISSION = 'Submit Posts';
+export const SAFERWORLD_PARTNER_ROLE = 'saferworld_partner';
+
+export function isSaferworldPartner(role?: string | null): boolean {
+  return role === SAFERWORLD_PARTNER_ROLE;
+}
 
 export function normalizePermissions(permissions: string[] | string | null | undefined): string[] {
   if (Array.isArray(permissions)) {
@@ -18,7 +23,10 @@ export function normalizePermissions(permissions: string[] | string | null | und
   }
 
   if (typeof permissions === 'string') {
-    return permissions.split(',').map((permission) => permission.trim()).filter(Boolean);
+    return permissions
+      .split(',')
+      .map((permission) => permission.trim())
+      .filter(Boolean);
   }
 
   return [];

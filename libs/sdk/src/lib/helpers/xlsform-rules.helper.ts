@@ -79,18 +79,55 @@ export function getFilteredOptions(field: XlsFormFieldLike, values: XlsFormValue
     return options;
   }
 
-  const match = choiceFilter.match(/^\$\{([^}]+)\}\s*=\s*([A-Za-z0-9_ -]+)$/);
-  if (!match) {
+  const filter = parseChoiceFilter(choiceFilter);
+  if (!filter) {
     return options;
   }
 
-  const parentValue = values[match[1]];
-  const optionProperty = match[2].trim();
+  const parentValue = values[filter.questionKey];
   if (!isFilled(parentValue)) {
     return [];
   }
 
-  return options.filter((option) => valueEquals(option?.[optionProperty], parentValue));
+  return options.filter((option) => {
+    if (!hasOptionProperty(option, filter.optionProperty)) {
+      return true;
+    }
+
+    return valueEquals(option[filter.optionProperty], parentValue);
+  });
+}
+
+function parseChoiceFilter(
+  expression: string,
+): { questionKey: string; optionProperty: string } | null {
+  const questionFirst = expression.match(
+    /^\s*\$\{([^}]+)\}\s*={1,2}\s*['"]?([A-Za-z0-9_ -]+)['"]?\s*$/,
+  );
+  if (questionFirst) {
+    return {
+      questionKey: questionFirst[1].trim(),
+      optionProperty: questionFirst[2].trim(),
+    };
+  }
+
+  const propertyFirst = expression.match(
+    /^\s*['"]?([A-Za-z0-9_ -]+)['"]?\s*={1,2}\s*\$\{([^}]+)\}\s*$/,
+  );
+  if (propertyFirst) {
+    return {
+      questionKey: propertyFirst[2].trim(),
+      optionProperty: propertyFirst[1].trim(),
+    };
+  }
+
+  return null;
+}
+
+function hasOptionProperty(option: any, property: string): boolean {
+  return (
+    !!option && typeof option === 'object' && Object.prototype.hasOwnProperty.call(option, property)
+  );
 }
 
 export function getOptionValue(option: any): any {

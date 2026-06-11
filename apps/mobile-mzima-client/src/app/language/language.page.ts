@@ -1,10 +1,9 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 
-import { STORAGE_KEYS } from '@constants';
 import { LanguageInterface } from '@models';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { DeploymentService, LanguageService, StorageService } from '@services';
+import { LanguageService } from '@services';
 
 @UntilDestroy()
 @Component({
@@ -16,12 +15,7 @@ export class LanguagePage {
   public languages: LanguageInterface[] = this.languageService.getLanguages();
   public selectedLanguage = 'en';
 
-  constructor(
-    private router: Router,
-    private deploymentService: DeploymentService,
-    private languageService: LanguageService,
-    private storageService: StorageService,
-  ) {
+  constructor(private router: Router, private languageService: LanguageService) {
     this.languageService.selectedLanguage$.pipe(untilDestroyed(this)).subscribe((language) => {
       this.selectedLanguage = language;
     });
@@ -33,14 +27,6 @@ export class LanguagePage {
 
   public continue(): void {
     this.languageService.changeLanguage(this.selectedLanguage);
-
-    if (!this.storageService.getStorage(STORAGE_KEYS.INTRO_DONE)) {
-      this.router.navigate(['/walkthrough']);
-      return;
-    }
-
-    this.deploymentService.isDeployment()
-      ? this.router.navigate(['/auth/login'])
-      : this.router.navigate(['/deployment']);
+    this.router.navigateByUrl('/auth/login', { replaceUrl: true });
   }
 }

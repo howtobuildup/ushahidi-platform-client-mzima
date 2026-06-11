@@ -1,12 +1,12 @@
 import { NgModule } from '@angular/core';
 import { PreloadAllModules, RouterModule, Routes } from '@angular/router';
-import { AuthorizedGuard, LanguageGuard, NotAuthorizedGuard, SubmitPostsGuard } from '@guards';
+import { AuthorizedGuard, LanguageGuard, SubmitPostsGuard } from '@guards';
 import { PageNotFoundComponent } from '@components';
 
 const routes: Routes = [
   {
     path: '',
-    redirectTo: 'auth/login',
+    redirectTo: 'language',
     pathMatch: 'full',
   },
   {
@@ -21,25 +21,26 @@ const routes: Routes = [
   {
     path: 'auth',
     loadChildren: () => import('./auth/auth.module').then((m) => m.AuthPageModule),
-    canActivate: [LanguageGuard, NotAuthorizedGuard],
   },
   {
     path: 'profile',
     loadChildren: () => import('./profile/profile.module').then((m) => m.ProfilePageModule),
     canActivate: [LanguageGuard, AuthorizedGuard, SubmitPostsGuard],
   },
-  {
-    path: 'walkthrough',
-    loadChildren: () =>
-      import('./walkthrough/walkthrough.module').then((m) => m.WalkthroughPageModule),
-    canActivate: [LanguageGuard],
-  },
-  {
-    path: 'deployment',
-    loadChildren: () =>
-      import('./deployment/deployment.module').then((m) => m.DeploymentPageModule),
-    canActivate: [LanguageGuard],
-  },
+  // The Saferworld app uses the backend configured in env.json, so the generic
+  // Ushahidi walkthrough and deployment picker are intentionally disabled.
+  // {
+  //   path: 'walkthrough',
+  //   loadChildren: () =>
+  //     import('./walkthrough/walkthrough.module').then((m) => m.WalkthroughPageModule),
+  //   canActivate: [LanguageGuard],
+  // },
+  // {
+  //   path: 'deployment',
+  //   loadChildren: () =>
+  //     import('./deployment/deployment.module').then((m) => m.DeploymentPageModule),
+  //   canActivate: [LanguageGuard],
+  // },
   {
     path: 'post-edit',
     loadChildren: () => import('./post/post-edit/post-edit.module').then((m) => m.PostEditModule),

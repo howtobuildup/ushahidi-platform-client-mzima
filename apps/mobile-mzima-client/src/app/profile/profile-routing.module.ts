@@ -1,11 +1,11 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { LanguageGuard, NotDeploymentGuard, WalkthroughGuard } from '@guards';
+import { LanguageGuard } from '@guards';
 
 const routes: Routes = [
   {
     path: '',
-    canActivate: [LanguageGuard, WalkthroughGuard, NotDeploymentGuard],
+    canActivate: [LanguageGuard],
     children: [
       {
         path: '',
@@ -16,11 +16,13 @@ const routes: Routes = [
         loadChildren: () =>
           import('./information/information.module').then((m) => m.InformationPageModule),
       },
-      {
-        path: 'deployment',
-        loadChildren: () =>
-          import('./deployment/deployment.module').then((m) => m.DeploymentPageModule),
-      },
+      // Deployment switching is disabled because Saferworld uses the backend
+      // configured at build/deployment time.
+      // {
+      //   path: 'deployment',
+      //   loadChildren: () =>
+      //     import('./deployment/deployment.module').then((m) => m.DeploymentPageModule),
+      // },
       {
         path: 'posts',
         loadChildren: () => import('./posts/posts.module').then((m) => m.PostsPageModule),

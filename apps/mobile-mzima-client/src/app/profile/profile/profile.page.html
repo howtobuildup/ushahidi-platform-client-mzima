@@ -1,6 +1,7 @@
 <app-main-layout [header]="false" class="main">
-  <ion-title class="title">{{ 'profile.switch_deployment' | translate }}</ion-title>
-  <app-deployment-info (deploymentClick)="goTo(['/profile/deployment'])"></app-deployment-info>
+  <!-- Deployment switching is disabled for the fixed Saferworld backend. -->
+  <!-- <ion-title class="title">{{ 'profile.switch_deployment' | translate }}</ion-title>
+  <app-deployment-info (deploymentClick)="goTo(['/profile/deployment'])"></app-deployment-info> -->
 
   <ion-title class="title">{{ 'navigation.profile' | translate }}</ion-title>
   <ion-list class="profile-menu">

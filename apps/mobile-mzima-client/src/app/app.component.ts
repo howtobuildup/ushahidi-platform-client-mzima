@@ -24,6 +24,7 @@ import {
 import { BaseComponent } from './base.component';
 import { UploadFileHelper } from './post/helpers';
 import { Location } from '@angular/common';
+import { Capacitor } from '@capacitor/core';
 
 @UntilDestroy()
 @Component({
@@ -33,6 +34,7 @@ import { Location } from '@angular/common';
 })
 export class AppComponent extends BaseComponent {
   private toastMessage$ = new Subject<string>();
+  public showWebSplash = !Capacitor.isNativePlatform();
 
   constructor(
     override router: Router,
@@ -56,6 +58,11 @@ export class AppComponent extends BaseComponent {
     this.initNetworkListener();
     this.listenerService.changeDeploymentListener();
     this.loadInitialData();
+    if (this.showWebSplash) {
+      window.setTimeout(() => {
+        this.showWebSplash = false;
+      }, 1000);
+    }
   }
 
   private initLanguageListener(): void {

@@ -1,0 +1,14 @@
+.web-splash {
+  position: fixed;
+  z-index: 10000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 32px;
+  background: #7075ad;
+}
+
+.web-splash img {
+  width: min(280px, 78vw);
+  height: auto;
+}

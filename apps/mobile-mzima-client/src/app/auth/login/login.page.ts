@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { regexHelper } from '@helpers';
-import { AlertService, AuthService, DeploymentService, LandingRouteService } from '@services';
+import { AlertService, AuthService, LandingRouteService } from '@services';
 import { fieldErrorMessages } from '@helpers';
 
 @Component({
@@ -13,7 +13,7 @@ import { fieldErrorMessages } from '@helpers';
 export class LoginPage {
   public form = this.formBuilder.group({
     email: ['', [Validators.required, Validators.pattern(regexHelper.emailValidate())]],
-    password: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(64)]],
+    password: ['', [Validators.required]],
   });
   public forgotPasswordForm = this.formBuilder.group({
     email: ['', [Validators.required, Validators.pattern(regexHelper.emailValidate())]],
@@ -28,7 +28,6 @@ export class LoginPage {
     private alertService: AlertService,
     private authService: AuthService,
     private router: Router,
-    private deploymentService: DeploymentService,
     private landingRouteService: LandingRouteService,
   ) {}
 
@@ -39,9 +38,7 @@ export class LoginPage {
     this.authService.login(email, password).subscribe({
       next: () => {
         this.form.enable();
-        this.landingRouteService
-          .getLandingUrl()
-          .subscribe((url) => this.router.navigateByUrl(url));
+        this.landingRouteService.getLandingUrl().subscribe((url) => this.router.navigateByUrl(url));
       },
       error: (err) => {
         this.loginError = err.error.message;
@@ -75,10 +72,5 @@ export class LoginPage {
 
   public openForgotPasswordModal(): void {
     this.isForgotPasswordModalOpen = true;
-  }
-
-  public chooseDeployment(): void {
-    this.deploymentService.removeDeployment();
-    this.router.navigate(['deployment']);
   }
 }

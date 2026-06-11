@@ -133,7 +133,7 @@ export class ProfilePage {
       localStorage.clear();
       this.authService.logout();
       this.dataBaseService.clear();
-      this.router.navigate(['/walkthrough']);
+      this.router.navigate(['/auth/login']);
     }
   }
 

@@ -116,12 +116,6 @@ export class ActivityComponent implements OnInit {
 
   public readonly filters: DashboardFilter[] = [
     {
-      key: 'date',
-      labelKey: 'dashboard.filters.date_range',
-      value: 'all',
-      options: [{ labelKey: 'dashboard.filters.all', value: 'all' }],
-    },
-    {
       key: 'region',
       labelKey: 'dashboard.filters.region',
       value: 'all',

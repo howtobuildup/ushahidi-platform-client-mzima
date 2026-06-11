@@ -32,6 +32,7 @@
       {{ 'dashboard.load_error' | translate }}
     </app-notification>
 
+    <!-- Dashboard filters are hidden until backend filtering is implemented.
     <section class="filter-panel" [attr.aria-label]="'dashboard.filters.title' | translate">
       <strong class="filter-panel__title">{{ 'dashboard.filters.title' | translate }}</strong>
       <div class="filter-grid">
@@ -48,6 +49,7 @@
         {{ (filtersApplied ? 'dashboard.filters.applied' : 'dashboard.filters.apply') | translate }}
       </mzima-client-button>
     </section>
+    -->
 
     <section class="kpi-grid" [attr.aria-label]="'dashboard.kpis.title' | translate">
       <article

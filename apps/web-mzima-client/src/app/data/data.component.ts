@@ -3,7 +3,10 @@ import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
 import { SessionService } from '@services';
 import { PostsService, GeoJsonFilter, PostResult } from '@mzima-client/sdk';
+import { shouldScopePostsToCurrentUser } from '@helpers';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy()
 @Component({
   selector: 'app-data',
   templateUrl: './data.component.html',
@@ -18,6 +21,7 @@ export class DataComponent implements OnInit, AfterViewInit {
   pageIndex = 0;
   showFirstLastButtons = false;
   isLoading = false;
+  private shouldScopeToOwnPosts = false;
   params: GeoJsonFilter = {
     has_location: 'all',
     limit: 20,
@@ -32,7 +36,13 @@ export class DataComponent implements OnInit, AfterViewInit {
   constructor(public sessionService: SessionService, private postsService: PostsService) {}
 
   ngOnInit() {
-    this.getPosts();
+    this.sessionService.currentUserData$.pipe(untilDestroyed(this)).subscribe((userData) => {
+      this.shouldScopeToOwnPosts = shouldScopePostsToCurrentUser(
+        userData.permissions,
+        userData.role,
+      );
+      this.getPosts();
+    });
   }
 
   ngAfterViewInit() {
@@ -41,7 +51,11 @@ export class DataComponent implements OnInit, AfterViewInit {
 
   getPosts() {
     this.isLoading = true;
-    this.postsService.getPosts('', this.params).subscribe({
+    const params = {
+      ...this.params,
+      ...(this.shouldScopeToOwnPosts ? { user: 'me' } : {}),
+    };
+    this.postsService.getPosts('', params).subscribe({
       next: (response) => {
         this.length = response.count;
         this.dataSource = new MatTableDataSource<PostResult>(response.results);

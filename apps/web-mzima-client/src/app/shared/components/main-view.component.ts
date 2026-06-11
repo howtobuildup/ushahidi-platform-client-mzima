@@ -8,6 +8,7 @@ import {
 } from '@mzima-client/sdk';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { EventBusService, EventType, SessionService } from '@services';
+import { shouldScopePostsToCurrentUser } from '@helpers';
 
 @UntilDestroy()
 @Component({
@@ -23,6 +24,7 @@ export abstract class MainViewComponent {
   };
   filters;
   public user: UserInterface;
+  protected shouldScopeToOwnPosts = false;
 
   constructor(
     protected router: Router,
@@ -90,9 +92,20 @@ export abstract class MainViewComponent {
     this.sessionService.currentUserData$.pipe(untilDestroyed(this)).subscribe({
       next: (userData) => {
         this.user = userData;
+        this.shouldScopeToOwnPosts = shouldScopePostsToCurrentUser(
+          userData.permissions,
+          userData.role,
+        );
         this.loadData();
       },
     });
+  }
+
+  protected withPostAccessScope<T extends Record<string, any>>(params: T): T {
+    return {
+      ...params,
+      ...(this.shouldScopeToOwnPosts ? { user: 'me' } : {}),
+    };
   }
 
   initCollectionRemoveListener() {

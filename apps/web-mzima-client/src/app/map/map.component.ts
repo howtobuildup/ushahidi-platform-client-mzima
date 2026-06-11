@@ -153,7 +153,7 @@ export class MapComponent extends MainViewComponent implements OnInit {
 
   getPostsGeoJson() {
     this.postsService
-      .getGeojson(this.params)
+      .getGeojson(this.withPostAccessScope(this.params))
       .pipe(untilDestroyed(this))
       .subscribe({
         next: (posts) => {

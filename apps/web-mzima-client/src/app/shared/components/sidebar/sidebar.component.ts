@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { LoginComponent } from '@auth';
 import { CollectionsComponent } from '@data';
 import { EnumGtmEvent, EnumGtmSource, Roles, Permissions } from '@enums';
-import { isSubmitOnlyUser, takeUntilDestroy$ } from '@helpers';
+import { isFieldMonitor, isSubmitOnlyUser, takeUntilDestroy$ } from '@helpers';
 import { MenuInterface, UserMenuInterface } from '@models';
 import { UserInterface } from '@mzima-client/sdk';
 import { TranslateService } from '@ngx-translate/core';
@@ -66,7 +66,8 @@ export class SidebarComponent implements OnInit {
   ngOnInit() {
     this.userData$.subscribe((userData) => {
       this.isLoggedIn = !!userData.userId;
-      this.isFieldMonitor = isSubmitOnlyUser(userData.permissions, userData.role);
+      this.isFieldMonitor =
+        isFieldMonitor(userData.role) || isSubmitOnlyUser(userData.permissions, userData.role);
       const hostRoles = [
         Permissions.ManageUsers,
         Permissions.ManageSettings,

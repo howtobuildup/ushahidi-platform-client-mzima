@@ -250,23 +250,25 @@ export class FeedComponent extends MainViewComponent implements OnInit {
       this.currentPage = 1;
     }
     this.isLoading = true;
-    this.postsService.getPosts('', { ...params, ...this.activeSorting }).subscribe({
-      next: (data) => {
-        this.posts = add ? [...this.posts, ...data.results] : data.results;
-        this.postCurrentLength =
-          data.count < Number(data.meta.per_page)
-            ? data.meta.total
-            : data.meta.current_page * data.count;
-        this.eventBusService.next({
-          type: EventType.FeedPostsLoaded,
-          payload: true,
-        });
-        setTimeout(() => {
-          this.isLoading = false;
-          this.masonry?.layout();
-        }, 500);
-      },
-    });
+    this.postsService
+      .getPosts('', this.withPostAccessScope({ ...params, ...this.activeSorting }))
+      .subscribe({
+        next: (data) => {
+          this.posts = add ? [...this.posts, ...data.results] : data.results;
+          this.postCurrentLength =
+            data.count < Number(data.meta.per_page)
+              ? data.meta.total
+              : data.meta.current_page * data.count;
+          this.eventBusService.next({
+            type: EventType.FeedPostsLoaded,
+            payload: true,
+          });
+          setTimeout(() => {
+            this.isLoading = false;
+            this.masonry?.layout();
+          }, 500);
+        },
+      });
   }
 
   public pageChanged(page: any): void {

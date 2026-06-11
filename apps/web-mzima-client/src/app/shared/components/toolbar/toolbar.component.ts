@@ -5,7 +5,7 @@ import { NavigationEnd, Router } from '@angular/router';
 import { LoginComponent } from '@auth';
 import { CollectionsComponent } from '@data';
 import { EnumGtmEvent, EnumGtmSource, Permissions, Roles } from '@enums';
-import { isSubmitOnlyUser } from '@helpers';
+import { isFieldMonitor, isSubmitOnlyUser } from '@helpers';
 import { UserMenuInterface } from '@models';
 import { UserInterface } from '@mzima-client/sdk';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -87,7 +87,8 @@ export class ToolbarComponent implements OnInit {
       this.profile = userData;
       this.isLoggedIn = !!userData.userId;
       this.isAdmin = userData.role === 'admin';
-      this.isFieldMonitor = isSubmitOnlyUser(userData.permissions, userData.role);
+      this.isFieldMonitor =
+        isFieldMonitor(userData.role) || isSubmitOnlyUser(userData.permissions, userData.role);
       const hostRoles = [
         Permissions.ManageUsers,
         Permissions.ManageSettings,

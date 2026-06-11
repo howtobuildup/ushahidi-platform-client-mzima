@@ -11,7 +11,13 @@ const PRIVILEGED_PERMISSIONS = [
 ];
 
 export const SUBMIT_POSTS_PERMISSION = 'Submit Posts';
+export const FIELD_MONITOR_ROLE = 'field_monitor';
+export const SAFERWORLD_STAFF_ROLE = 'saferworld_staff';
 export const SAFERWORLD_PARTNER_ROLE = 'saferworld_partner';
+
+export function isFieldMonitor(role?: string | null): boolean {
+  return role === FIELD_MONITOR_ROLE;
+}
 
 export function isSaferworldPartner(role?: string | null): boolean {
   return role === SAFERWORLD_PARTNER_ROLE;
@@ -50,4 +56,15 @@ export function isSubmitOnlyUser(
     normalizedPermissions.includes(SUBMIT_POSTS_PERMISSION) &&
     !PRIVILEGED_PERMISSIONS.some((permission) => normalizedPermissions.includes(permission))
   );
+}
+
+export function shouldScopePostsToCurrentUser(
+  permissions: string[] | string | null | undefined,
+  role?: string | null,
+): boolean {
+  if (role === 'admin' || role === SAFERWORLD_STAFF_ROLE) {
+    return false;
+  }
+
+  return isFieldMonitor(role) || isSaferworldPartner(role) || isSubmitOnlyUser(permissions, role);
 }

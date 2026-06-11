@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { STORAGE_KEYS } from '@constants';
 import { InfiniteScrollCustomEvent } from '@ionic/angular';
-import { isSubmitOnlyUser } from '@helpers';
+import { shouldScopePostsToCurrentUser } from '@helpers';
 import { GeoJsonFilter, PostApiResponse, PostResult, PostsService } from '@mzima-client/sdk';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DatabaseService, NetworkService, SessionService } from '@services';
@@ -38,7 +38,10 @@ export class ActivityPage {
     this.sessionService.currentUserData$.pipe(untilDestroyed(this)).subscribe({
       next: (userData) => {
         this.currentUserId = userData.userId;
-        this.shouldScopeToOwnPosts = isSubmitOnlyUser(userData.permissions, userData.role);
+        this.shouldScopeToOwnPosts = shouldScopePostsToCurrentUser(
+          userData.permissions,
+          userData.role,
+        );
       },
     });
     this.initNetworkListener();

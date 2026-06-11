@@ -12,7 +12,7 @@ import {
 import { Subject, debounceTime, lastValueFrom, takeUntil } from 'rxjs';
 import { AlertService, EnvService, SearchService, SessionService } from '@services';
 import { FilterControl, FilterControlOption } from '@models';
-import { searchFormHelper, dateHelper, isSubmitOnlyUser } from '@helpers';
+import { searchFormHelper, dateHelper, shouldScopePostsToCurrentUser } from '@helpers';
 import { InfiniteScrollCustomEvent } from '@ionic/angular';
 import _ from 'lodash';
 import { Router } from '@angular/router';
@@ -160,7 +160,10 @@ export class FiltersFormComponent implements OnChanges, OnDestroy {
 
     this.session.currentUserData$.pipe(takeUntil(this.destroy$)).subscribe({
       next: (userData) => {
-        this.shouldScopeToOwnPosts = isSubmitOnlyUser(userData.permissions, userData.role);
+        this.shouldScopeToOwnPosts = shouldScopePostsToCurrentUser(
+          userData.permissions,
+          userData.role,
+        );
       },
     });
   }

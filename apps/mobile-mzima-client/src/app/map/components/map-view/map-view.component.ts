@@ -11,7 +11,7 @@ import {
   MarkerClusterGroupOptions,
   tileLayer,
 } from 'leaflet';
-import { isSubmitOnlyUser, mapHelper } from '@helpers';
+import { mapHelper, shouldScopePostsToCurrentUser } from '@helpers';
 import { GeoJsonPostsResponse, PostsService } from '@mzima-client/sdk';
 import { DatabaseService, SessionService } from '@services';
 import { MapConfigInterface } from '@models';
@@ -180,7 +180,10 @@ export class MapViewComponent implements AfterViewInit {
     this.sessionService.currentUserData$.pipe(untilDestroyed(this)).subscribe({
       next: (userData) => {
         this.currentUserId = userData.userId;
-        this.shouldScopeToOwnPosts = isSubmitOnlyUser(userData.permissions, userData.role);
+        this.shouldScopeToOwnPosts = shouldScopePostsToCurrentUser(
+          userData.permissions,
+          userData.role,
+        );
       },
     });
   }

@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { SavedsearchesService, PostsService, UserInterface } from '@mzima-client/sdk';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { SessionService } from '@services';
-import { isSubmitOnlyUser } from '@helpers';
+import { shouldScopePostsToCurrentUser } from '@helpers';
 import { Subject } from 'rxjs';
 
 @UntilDestroy()
@@ -35,7 +35,10 @@ export abstract class MainViewComponent {
       next: (userData) => {
         this.user = userData;
         this.currentUserId = userData.userId;
-        this.shouldScopeToOwnPosts = isSubmitOnlyUser(userData.permissions, userData.role);
+        this.shouldScopeToOwnPosts = shouldScopePostsToCurrentUser(
+          userData.permissions,
+          userData.role,
+        );
       },
     });
     this.updateFilters();

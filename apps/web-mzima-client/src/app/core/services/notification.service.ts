@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { MatSnackBar, MatSnackBarConfig } from '@angular/material/snack-bar';
 import { SnackbarComponent, SnackbarData } from '../../shared/components';
+import { getErrorMessage } from '../helpers/error-message.helper';
 
 export interface SnackbarOptions extends MatSnackBarConfig {
   wide?: boolean;
@@ -12,8 +13,11 @@ export interface SnackbarOptions extends MatSnackBarConfig {
 export class NotificationService {
   constructor(public snackBar: MatSnackBar) {}
 
-  showError(message: string) {
-    this.snackBar.open(message, 'Close', { panelClass: ['error'], duration: 3000 });
+  showError(error: unknown) {
+    this.snackBar.open(getErrorMessage(error), 'Close', {
+      panelClass: ['error'],
+      duration: 8000,
+    });
   }
 
   showSnackbar(data?: SnackbarData, options?: SnackbarOptions) {

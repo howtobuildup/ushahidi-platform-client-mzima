@@ -84,10 +84,12 @@ export class DataImportComponent implements OnInit {
         next: (csv) => {
           this.uploadedCSV = csv;
 
-          if (this.uploadedCSV.columns?.every((c: any) => c === ''))
+          if (this.uploadedCSV.columns?.every((c: any) => c === '')) {
+            this.loader.hide();
             return this.notification.showError(
               this.translateService.instant('notify.data_import.empty_mapping_empty'),
             );
+          }
 
           forkJoin([
             this.formsService.getStages(this.selectedForm.id.toString()),
@@ -100,16 +102,34 @@ export class DataImportComponent implements OnInit {
               this.hasRequiredTask = this.selectedForm.tasks.some((task) => task.required);
               this.setRequiredFields(this.selectedForm.attributes);
             },
+            error: (err) => {
+              this.loader.hide();
+              this.notification.showError(err);
+            },
           });
           this.uploadErrors = [];
         },
         error: (err) => {
-          this.uploadErrors = err.error.errors;
-          this.notification.showError(err);
           this.loader.hide();
+          this.uploadErrors = this.getUploadErrors(err);
+          this.notification.showError(err);
         },
       });
     }
+  }
+
+  private getUploadErrors(error: any): Array<{ message: string }> {
+    const errors = error?.error?.errors;
+
+    if (!errors) {
+      return [];
+    }
+
+    const values = Array.isArray(errors) ? errors : Object.values(errors);
+
+    return values.map((value: any) => ({
+      message: typeof value === 'string' ? value : value?.message || JSON.stringify(value),
+    }));
   }
 
   formChanged() {

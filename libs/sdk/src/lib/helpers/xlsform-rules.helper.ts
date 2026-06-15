@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 export interface XlsFormFieldConfig {
+  xlsform_name?: string;
   relevant?: string;
   constraint?: string;
   constraint_message?: string;
@@ -17,6 +18,39 @@ export interface XlsFormFieldLike {
 }
 
 export type XlsFormValueMap = Record<string, any>;
+
+export function buildXlsFormValueMap(
+  fields: XlsFormFieldLike[],
+  values: XlsFormValueMap,
+): XlsFormValueMap {
+  const mappedValues = { ...values };
+  const labelAliases = new Map<string, string[]>();
+
+  for (const field of fields) {
+    if (!field?.key) continue;
+
+    const fieldKey = String(field.key);
+    const config = getXlsFormConfig(field);
+    if (config.xlsform_name) {
+      mappedValues[config.xlsform_name] = values[fieldKey];
+    }
+
+    const normalizedLabel = normalizeRuleKey((field as any).label);
+    if (!normalizedLabel) continue;
+
+    mappedValues[normalizedLabel] = values[fieldKey];
+    const firstWord = normalizedLabel.split('_')[0];
+    labelAliases.set(firstWord, [...(labelAliases.get(firstWord) || []), fieldKey]);
+  }
+
+  for (const [alias, fieldKeys] of labelAliases) {
+    if (fieldKeys.length === 1 && !(alias in mappedValues)) {
+      mappedValues[alias] = values[fieldKeys[0]];
+    }
+  }
+
+  return mappedValues;
+}
 
 export function getXlsFormConfig(field: XlsFormFieldLike): XlsFormFieldConfig {
   if (!field?.config || Array.isArray(field.config)) {
@@ -128,6 +162,14 @@ function hasOptionProperty(option: any, property: string): boolean {
   return (
     !!option && typeof option === 'object' && Object.prototype.hasOwnProperty.call(option, property)
   );
+}
+
+function normalizeRuleKey(value: any): string {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
 }
 
 export function getOptionValue(option: any): any {

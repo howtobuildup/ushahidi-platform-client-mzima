@@ -151,7 +151,7 @@ function mapSurveyRowToField(
     return null;
   }
 
-  const config: any = {};
+  const config: any = { xlsform_name: name };
   ['relevant', 'parameters', 'choice_filter'].forEach((key) => {
     const value = String(row[key] || '').trim();
     if (value) config[key] = value;

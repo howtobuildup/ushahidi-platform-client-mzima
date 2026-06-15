@@ -91,6 +91,7 @@ export class PostEditPage {
   private userPermissions = '';
   private dynamicRulesSubscription?: Subscription;
   private hiddenFieldKeys = new Set<string>();
+  private dynamicRuleValues: Record<string, any> = {};
   private readonly postSuccessMessage = [
     'Thank you for submitting your report.',
     'The post is being reviewed by our team and soon will appear on the platform.',
@@ -343,6 +344,8 @@ export class PostEditPage {
 
     this.locationRequired = false;
     this.emptyLocation = false;
+    const fields = this.tasks.flatMap((task) => task.fields);
+    this.dynamicRuleValues = xlsFormRules.buildXlsFormValueMap(fields, this.form.getRawValue());
 
     for (const task of this.tasks) {
       for (const field of task.fields) {
@@ -350,7 +353,7 @@ export class PostEditPage {
         if (!control) continue;
         const fieldKey = String(field.key);
 
-        const visible = xlsFormRules.isFieldVisible(field, this.form.getRawValue());
+        const visible = xlsFormRules.isFieldVisible(field, this.dynamicRuleValues);
         if (visible) {
           this.hiddenFieldKeys.delete(fieldKey);
           if (control.disabled) {
@@ -410,7 +413,7 @@ export class PostEditPage {
   }
 
   public getFieldOptions(field: any): any[] {
-    return xlsFormRules.getFilteredOptions(field, this.form?.getRawValue?.() || {});
+    return xlsFormRules.getFilteredOptions(field, this.dynamicRuleValues);
   }
 
   public getOptionValue(option: any): any {

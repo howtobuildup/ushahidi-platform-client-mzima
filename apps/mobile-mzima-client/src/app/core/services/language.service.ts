@@ -41,6 +41,12 @@ export class LanguageService {
     return this.resolveSupportedLanguage(storedLanguage) === storedLanguage;
   }
 
+  public ensureSelectedLanguage(): void {
+    if (this.hasSelectedLanguage()) return;
+
+    this.changeLanguage(this.selectedLanguage.value || this.initialLanguage);
+  }
+
   private get initialLanguage(): string {
     const storedLanguage = localStorage.getItem(this.languageKey);
     if (storedLanguage) return this.resolveSupportedLanguage(storedLanguage);

@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { regexHelper } from '@helpers';
-import { AlertService, AuthService, LandingRouteService } from '@services';
+import { AlertService, AuthService, LandingRouteService, LanguageService } from '@services';
 import { fieldErrorMessages } from '@helpers';
 
 @Component({
@@ -29,6 +29,7 @@ export class LoginPage {
     private authService: AuthService,
     private router: Router,
     private landingRouteService: LandingRouteService,
+    private languageService: LanguageService,
   ) {}
 
   public login(): void {
@@ -38,6 +39,7 @@ export class LoginPage {
     this.authService.login(email, password).subscribe({
       next: () => {
         this.form.enable();
+        this.languageService.ensureSelectedLanguage();
         this.landingRouteService.getLandingUrl().subscribe((url) => this.router.navigateByUrl(url));
       },
       error: (err) => {

@@ -10,11 +10,7 @@
   </div>
 
   <div class="form-controls-panel">
-    <mzima-client-button
-      fill="outline"
-      color="secondary"
-      [routerLink]="['/feed/collections', collectionId]"
-    >
+    <mzima-client-button fill="outline" color="secondary" [routerLink]="['/dashboard']">
       {{ 'data_import.see_imported_posts' | translate }}
     </mzima-client-button>
     <mzima-client-button [routerLink]="['/settings/data-import']">

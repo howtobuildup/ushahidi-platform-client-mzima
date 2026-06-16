@@ -39,6 +39,7 @@ export class DataImportComponent implements OnInit {
   requiredFields = new Map<string, string>();
   maps_to: any = {};
   uploadErrors: any[] = [];
+  isImporting = false;
 
   statusOption: string;
   selectedStatus: PostStatus;
@@ -169,11 +170,18 @@ export class DataImportComponent implements OnInit {
     attribute: FormAttributeInterface,
     usedColumns: Set<number>,
   ): number | null {
-    const fieldNames = this.getAttributeMatchNames(attribute);
+    const fieldKeys = this.getAttributeKeyMatchNames(attribute);
+    const fieldNames = this.getAttributeLabelMatchNames(attribute);
     const columns = this.uploadedCSV.columns || [];
     const availableColumns = columns
       .map((column, index) => ({ column, index }))
       .filter(({ index }) => !usedColumns.has(index));
+
+    const keyExactMatch = this.findExactColumnMatch(availableColumns, fieldKeys);
+    if (keyExactMatch !== null) return keyExactMatch;
+
+    const keyCompactMatch = this.findCompactColumnMatch(availableColumns, fieldKeys);
+    if (keyCompactMatch !== null) return keyCompactMatch;
 
     const exactMatch = availableColumns.find(({ column }) =>
       fieldNames.some((name) => this.normalizeMatchName(name) === this.normalizeMatchName(column)),
@@ -193,15 +201,41 @@ export class DataImportComponent implements OnInit {
     return fuzzyMatch?.index ?? null;
   }
 
-  private getAttributeMatchNames(attribute: FormAttributeInterface): string[] {
+  private getAttributeKeyMatchNames(attribute: FormAttributeInterface): string[] {
+    return [attribute.key].filter(Boolean).map((name) => String(name));
+  }
+
+  private getAttributeLabelMatchNames(attribute: FormAttributeInterface): string[] {
     const translations = attribute.translations || {};
     const translationLabels = Object.values(translations)
       .map((translation: any) => translation?.label)
       .filter(Boolean);
 
-    return [attribute.key, attribute.label, ...translationLabels]
-      .filter(Boolean)
-      .map((name) => String(name));
+    return [attribute.label, ...translationLabels].filter(Boolean).map((name) => String(name));
+  }
+
+  private findExactColumnMatch(
+    columns: Array<{ column: string; index: number }>,
+    fieldNames: string[],
+  ): number | null {
+    const match = columns.find(({ column }) =>
+      fieldNames.some((name) => this.normalizeMatchName(name) === this.normalizeMatchName(column)),
+    );
+
+    return match?.index ?? null;
+  }
+
+  private findCompactColumnMatch(
+    columns: Array<{ column: string; index: number }>,
+    fieldNames: string[],
+  ): number | null {
+    const match = columns.find(({ column }) =>
+      fieldNames.some(
+        (name) => this.normalizeCompactName(name) === this.normalizeCompactName(column),
+      ),
+    );
+
+    return match?.index ?? null;
   }
 
   private normalizeMatchName(value: string): string {
@@ -293,19 +327,36 @@ export class DataImportComponent implements OnInit {
   }
 
   updateAndImport() {
-    this.importService.update(this.uploadedCSV.id, this.uploadedCSV).subscribe(() => {
-      this.importService.import({ id: this.uploadedCSV.id, action: 'import' }).subscribe({
-        next: () => {
-          // this.pollingService.getImportJobs();
-          this.router.navigate(['results'], {
-            relativeTo: this.route,
-            queryParams: { job: this.uploadedCSV.id },
-          });
-        },
-        error: (err) => {
-          this.notification.showError(err);
-        },
-      });
+    this.isImporting = true;
+    this.loader.show();
+
+    this.importService.update(this.uploadedCSV.id, this.uploadedCSV).subscribe({
+      next: () => {
+        this.importService.import({ id: this.uploadedCSV.id, action: 'import' }).subscribe({
+          next: () => {
+            // this.pollingService.getImportJobs();
+            this.router
+              .navigate(['results'], {
+                relativeTo: this.route,
+                queryParams: { job: this.uploadedCSV.id },
+              })
+              .finally(() => {
+                this.isImporting = false;
+                this.loader.hide();
+              });
+          },
+          error: (err) => {
+            this.isImporting = false;
+            this.loader.hide();
+            this.notification.showError(err);
+          },
+        });
+      },
+      error: (err) => {
+        this.isImporting = false;
+        this.loader.hide();
+        this.notification.showError(err);
+      },
     });
   }
 }

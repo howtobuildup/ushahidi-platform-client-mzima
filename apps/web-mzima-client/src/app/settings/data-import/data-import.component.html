@@ -178,7 +178,11 @@
       >
         {{ 'app.cancel' | translate }}
       </mzima-client-button>
-      <mzima-client-button (buttonClick)="finish()" [data-qa]="'btn-finish'">
+      <mzima-client-button
+        (buttonClick)="finish()"
+        [disabled]="isImporting"
+        [data-qa]="'btn-finish'"
+      >
         {{ 'app.import' | translate }}
       </mzima-client-button>
     </div>

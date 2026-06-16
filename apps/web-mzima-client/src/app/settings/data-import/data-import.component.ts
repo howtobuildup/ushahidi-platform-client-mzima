@@ -79,6 +79,7 @@ export class DataImportComponent implements OnInit {
 
   private checkFormAndFile() {
     if (this.selectedFile && this.selectedForm) {
+      this.maps_to = {};
       this.loader.show();
       this.importService.uploadFile(this.selectedFile, this.selectedForm.id).subscribe({
         next: (csv) => {
@@ -101,6 +102,7 @@ export class DataImportComponent implements OnInit {
               this.selectedForm.attributes = result[1];
               this.hasRequiredTask = this.selectedForm.tasks.some((task) => task.required);
               this.setRequiredFields(this.selectedForm.attributes);
+              this.autoMapColumns(this.selectedForm.attributes);
             },
             error: (err) => {
               this.loader.hide();
@@ -139,11 +141,113 @@ export class DataImportComponent implements OnInit {
   }
 
   setRequiredFields(attributes: FormAttributeInterface[]) {
+    this.requiredFields.clear();
+
     attributes.forEach((attr) => {
       if (attr.required) {
         this.requiredFields.set(attr.key, attr.label);
       }
     });
+  }
+
+  private autoMapColumns(attributes: FormAttributeInterface[]) {
+    if (!this.uploadedCSV?.columns?.length) return;
+
+    const usedColumns = new Set<number>();
+
+    attributes.forEach((attribute) => {
+      const matchedColumnIndex = this.findMatchingColumn(attribute, usedColumns);
+
+      if (matchedColumnIndex !== null) {
+        this.maps_to[attribute.key] = matchedColumnIndex;
+        usedColumns.add(matchedColumnIndex);
+      }
+    });
+  }
+
+  private findMatchingColumn(
+    attribute: FormAttributeInterface,
+    usedColumns: Set<number>,
+  ): number | null {
+    const fieldNames = this.getAttributeMatchNames(attribute);
+    const columns = this.uploadedCSV.columns || [];
+    const availableColumns = columns
+      .map((column, index) => ({ column, index }))
+      .filter(({ index }) => !usedColumns.has(index));
+
+    const exactMatch = availableColumns.find(({ column }) =>
+      fieldNames.some((name) => this.normalizeMatchName(name) === this.normalizeMatchName(column)),
+    );
+    if (exactMatch) return exactMatch.index;
+
+    const compactMatch = availableColumns.find(({ column }) =>
+      fieldNames.some(
+        (name) => this.normalizeCompactName(name) === this.normalizeCompactName(column),
+      ),
+    );
+    if (compactMatch) return compactMatch.index;
+
+    const fuzzyMatch = availableColumns.find(({ column }) =>
+      fieldNames.some((name) => this.isNearColumnNameMatch(name, column)),
+    );
+    return fuzzyMatch?.index ?? null;
+  }
+
+  private getAttributeMatchNames(attribute: FormAttributeInterface): string[] {
+    const translations = attribute.translations || {};
+    const translationLabels = Object.values(translations)
+      .map((translation: any) => translation?.label)
+      .filter(Boolean);
+
+    return [attribute.key, attribute.label, ...translationLabels]
+      .filter(Boolean)
+      .map((name) => String(name));
+  }
+
+  private normalizeMatchName(value: string): string {
+    return value
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\*/g, '')
+      .replace(/[_/\\-]+/g, ' ')
+      .replace(/[^\w\s]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase();
+  }
+
+  private normalizeCompactName(value: string): string {
+    return this.normalizeMatchName(value).replace(/[^a-z0-9]/g, '');
+  }
+
+  private isNearColumnNameMatch(fieldName: string, columnName: string): boolean {
+    const field = this.normalizeCompactName(fieldName);
+    const column = this.normalizeCompactName(columnName);
+
+    if (field.length < 8 || column.length < 8) return false;
+    if (Math.abs(field.length - column.length) > 1) return false;
+
+    return this.getLevenshteinDistance(field, column) <= 1;
+  }
+
+  private getLevenshteinDistance(source: string, target: string): number {
+    const distances = Array.from({ length: source.length + 1 }, (_, index) => index);
+
+    for (let targetIndex = 1; targetIndex <= target.length; targetIndex++) {
+      let previousDistance = distances[0];
+      distances[0] = targetIndex;
+
+      for (let sourceIndex = 1; sourceIndex <= source.length; sourceIndex++) {
+        const currentDistance = distances[sourceIndex];
+        distances[sourceIndex] =
+          source[sourceIndex - 1] === target[targetIndex - 1]
+            ? previousDistance
+            : Math.min(previousDistance, distances[sourceIndex - 1], distances[sourceIndex]) + 1;
+        previousDistance = currentDistance;
+      }
+    }
+
+    return distances[source.length];
   }
 
   cancelImport() {

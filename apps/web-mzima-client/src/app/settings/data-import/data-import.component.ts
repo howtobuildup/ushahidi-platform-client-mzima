@@ -23,6 +23,8 @@ enum PostStatus {
   Archived = 'archived',
 }
 
+type ImportStatusOption = 'mark_as' | 'defined_column';
+
 @UntilDestroy()
 @Component({
   selector: 'app-data-import',
@@ -42,8 +44,8 @@ export class DataImportComponent implements OnInit {
   isImporting = false;
   useXlsFormFieldNames = false;
 
-  statusOption: string;
-  selectedStatus: PostStatus;
+  statusOption: ImportStatusOption = 'mark_as';
+  selectedStatus: PostStatus | number | null = PostStatus.Published;
   displayedColumns: string[] = ['survey', 'csv'];
   public isDesktop = false;
 
@@ -82,6 +84,8 @@ export class DataImportComponent implements OnInit {
   private checkFormAndFile() {
     if (this.selectedFile && this.selectedForm) {
       this.maps_to = {};
+      this.statusOption = 'mark_as';
+      this.selectedStatus = PostStatus.Published;
       this.loader.show();
       this.importService.uploadFile(this.selectedFile, this.selectedForm.id).subscribe({
         next: (csv) => {
@@ -203,17 +207,66 @@ export class DataImportComponent implements OnInit {
   }
 
   private getAttributeKeyMatchNames(attribute: FormAttributeInterface): string[] {
-    return [attribute.key, attribute.config?.xlsform_name]
+    const key = String(attribute.key || '');
+
+    return [attribute.config?.xlsform_name, this.isGeneratedFieldKey(key) ? '' : key]
       .filter(Boolean)
       .map((name) => String(name));
   }
 
   getSurveyFieldDisplayName(attribute: FormAttributeInterface): string {
     if (this.useXlsFormFieldNames) {
-      return String(attribute.config?.xlsform_name || attribute.key || attribute.label || '');
+      const xlsFormName = String(attribute.config?.xlsform_name || '').trim();
+      const mappedColumnName = this.getMappedCsvColumnName(attribute);
+      const key = String(attribute.key || '').trim();
+
+      if (xlsFormName) return xlsFormName;
+      if (mappedColumnName) return mappedColumnName;
+      if (key && !this.isGeneratedFieldKey(key)) return key;
+
+      return String(attribute.label || '');
     }
 
     return String(attribute.label || attribute.config?.xlsform_name || attribute.key || '');
+  }
+
+  private getMappedCsvColumnName(attribute: FormAttributeInterface): string {
+    const mappedColumnIndex = this.maps_to?.[attribute.key];
+
+    if (mappedColumnIndex === '' || mappedColumnIndex === null || mappedColumnIndex === undefined) {
+      return '';
+    }
+
+    return String(this.uploadedCSV?.columns?.[mappedColumnIndex] || '').trim();
+  }
+
+  private isGeneratedFieldKey(value: string): boolean {
+    return (
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value) ||
+      /^interim_id_\d+$/i.test(value)
+    );
+  }
+
+  statusOptionChanged(option: ImportStatusOption) {
+    if (option === 'mark_as' && typeof this.selectedStatus === 'number') {
+      this.selectedStatus = PostStatus.Published;
+    }
+
+    if (option === 'defined_column' && typeof this.selectedStatus === 'string') {
+      this.selectedStatus = null;
+    }
+  }
+
+  isImportReady(): boolean {
+    if (this.isImporting || !this.uploadedCSV || !this.selectedForm) {
+      return false;
+    }
+
+    if (this.statusOption === 'mark_as') {
+      return typeof this.selectedStatus === 'string' && this.selectedStatus.length > 0;
+    }
+
+    return typeof this.selectedStatus === 'number';
   }
 
   private getAttributeLabelMatchNames(attribute: FormAttributeInterface): string[] {
@@ -325,13 +378,17 @@ export class DataImportComponent implements OnInit {
   }
 
   finish() {
+    if (!this.isImportReady()) {
+      return;
+    }
+
     this.uploadedCSV.maps_to = this.remapColumns();
     this.uploadedCSV.fixed = { form: this.selectedForm.id };
 
     if (this.statusOption === 'mark_as') {
       this.uploadedCSV.fixed.status = this.selectedStatus;
     } else {
-      this.uploadedCSV.maps_to[this.selectedStatus] = 'status';
+      this.uploadedCSV.maps_to[this.selectedStatus as number] = 'status';
     }
 
     this.updateAndImport();
@@ -346,20 +403,18 @@ export class DataImportComponent implements OnInit {
         this.importService.import({ id: this.uploadedCSV.id, action: 'import' }).subscribe({
           next: () => {
             // this.pollingService.getImportJobs();
-            this.router
-              .navigate(['results'], {
-                relativeTo: this.route,
-                queryParams: { job: this.uploadedCSV.id },
-              })
-              .finally(() => {
-                this.isImporting = false;
-                this.loader.hide();
-              });
+            this.navigateToResults();
           },
           error: (err) => {
+            if (err?.status === 0) {
+              this.notification.showError(this.getImportRequestError(err));
+              this.navigateToResults();
+              return;
+            }
+
             this.isImporting = false;
             this.loader.hide();
-            this.notification.showError(err);
+            this.notification.showError(this.getImportRequestError(err));
           },
         });
       },
@@ -369,5 +424,25 @@ export class DataImportComponent implements OnInit {
         this.notification.showError(err);
       },
     });
+  }
+
+  private navigateToResults() {
+    this.router
+      .navigate(['results'], {
+        relativeTo: this.route,
+        queryParams: { job: this.uploadedCSV.id },
+      })
+      .finally(() => {
+        this.isImporting = false;
+        this.loader.hide();
+      });
+  }
+
+  private getImportRequestError(error: any): unknown {
+    if (error?.status === 0) {
+      return this.translateService.instant('notify.data_import.import_request_incomplete');
+    }
+
+    return error;
   }
 }

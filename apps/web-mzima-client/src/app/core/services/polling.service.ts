@@ -26,6 +26,8 @@ export class PollingService implements OnDestroy {
   stopExportPolling = new Subject();
   private importFinished = new Subject();
   importFinished$ = this.importFinished.asObservable();
+  private importFailed = new Subject();
+  importFailed$ = this.importFailed.asObservable();
   private renderer;
 
   constructor(
@@ -63,12 +65,12 @@ export class PollingService implements OnDestroy {
         takeUntil(this.stopImportPolling),
       )
       .subscribe((result) => {
-        result.forEach((job: ExportJobInterface) => {
+        result.forEach((job: any) => {
           if (job.status === 'SUCCESS') {
-            this.notificationService.showError('JOB SUCCESS SUCCESS');
             this.importFinished.next(job);
           } else if (job.status === 'FAILED') {
-            this.notificationService.showError('JOB FAILED');
+            this.importFailed.next(job);
+            this.notificationService.showError(job.errors || 'Import failed');
           } else {
             nextQueries.push(this.dataImportService.getById(job.id));
           }

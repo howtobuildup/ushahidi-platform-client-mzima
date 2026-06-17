@@ -1613,6 +1613,7 @@
     "see_imported_posts": "See imported posts",
     "import_another_csv": "Import another CSV file",
     "import_complete": "Your import is complete",
+    "import_failed": "Your import failed",
     "complete_info": "The data from your CSV spreadsheet, <em>{{filename}}</em>, was successfully imported.",
     "get_polling_info": "Get Polling Info",
     "import_another": "Import another CSV file",
@@ -1866,7 +1867,8 @@
       "empty_mapping_empty": "The CSV file does not contain column names. Please check your CSV file and try again",
       "no_mappings": "No fields have been assigned mappings - at least one field must be mapped to continue",
       "csv_import_cancel": "CSV import cancelled",
-      "csv_import_cancel_confirm": "Are you sure you want to cancel importing?"
+      "csv_import_cancel_confirm": "Are you sure you want to cancel importing?",
+      "import_request_incomplete": "The import request did not complete. This can happen when a large CSV is still processing or the server connection times out. Please check the import results before trying again."
     },
     "general_settings": {
       "save_success": "General settings saved"

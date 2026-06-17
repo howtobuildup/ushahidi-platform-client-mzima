@@ -48,6 +48,7 @@
       <mat-radio-group
         [data-qa]="'radio-option'"
         [(ngModel)]="statusOption"
+        (ngModelChange)="statusOptionChanged($event)"
         [attr.aria-label]="'data_import.imported_posts_status' | translate"
       >
         <div class="radio-button">
@@ -187,7 +188,7 @@
       </mzima-client-button>
       <mzima-client-button
         (buttonClick)="finish()"
-        [disabled]="isImporting"
+        [disabled]="!isImportReady()"
         [data-qa]="'btn-finish'"
       >
         {{ 'app.import' | translate }}

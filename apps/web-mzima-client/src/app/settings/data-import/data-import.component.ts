@@ -202,7 +202,9 @@ export class DataImportComponent implements OnInit {
   }
 
   private getAttributeKeyMatchNames(attribute: FormAttributeInterface): string[] {
-    return [attribute.key].filter(Boolean).map((name) => String(name));
+    return [attribute.key, attribute.config?.xlsform_name]
+      .filter(Boolean)
+      .map((name) => String(name));
   }
 
   private getAttributeLabelMatchNames(attribute: FormAttributeInterface): string[] {

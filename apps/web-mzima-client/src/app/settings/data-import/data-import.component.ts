@@ -406,12 +406,6 @@ export class DataImportComponent implements OnInit {
             this.navigateToResults();
           },
           error: (err) => {
-            if (err?.status === 0) {
-              this.notification.showError(this.getImportRequestError(err));
-              this.navigateToResults();
-              return;
-            }
-
             this.isImporting = false;
             this.loader.hide();
             this.notification.showError(this.getImportRequestError(err));

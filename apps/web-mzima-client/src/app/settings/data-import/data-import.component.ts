@@ -40,6 +40,7 @@ export class DataImportComponent implements OnInit {
   maps_to: any = {};
   uploadErrors: any[] = [];
   isImporting = false;
+  useXlsFormFieldNames = false;
 
   statusOption: string;
   selectedStatus: PostStatus;
@@ -205,6 +206,14 @@ export class DataImportComponent implements OnInit {
     return [attribute.key, attribute.config?.xlsform_name]
       .filter(Boolean)
       .map((name) => String(name));
+  }
+
+  getSurveyFieldDisplayName(attribute: FormAttributeInterface): string {
+    if (this.useXlsFormFieldNames) {
+      return String(attribute.config?.xlsform_name || attribute.key || attribute.label || '');
+    }
+
+    return String(attribute.label || attribute.config?.xlsform_name || attribute.key || '');
   }
 
   private getAttributeLabelMatchNames(attribute: FormAttributeInterface): string[] {

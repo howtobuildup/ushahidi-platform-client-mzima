@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatSelectModule } from '@angular/material/select';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTableModule } from '@angular/material/table';
 import { TranslateModule } from '@ngx-translate/core';
 import { DirectiveModule, LottieAnimationModule } from '@shared';
@@ -26,6 +27,7 @@ import { MzimaUiModule } from '@mzima-client/mzima-ui';
     MatSelectModule,
     MatIconModule,
     MatRadioModule,
+    MatSlideToggleModule,
     FormsModule,
     MatTableModule,
     LottieAnimationModule,

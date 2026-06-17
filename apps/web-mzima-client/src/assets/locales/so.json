@@ -1605,6 +1605,7 @@
     "csv_column": "CSV column",
     "choose_which_column": "Choose which CSV column should be assigned to each survey field",
     "each_survey_field": "Each of the survey's fields are listed below. Choose the column from your CSV file that you'd like to use to populate each of those fields.",
+    "show_xlsform_field_names": "Show XLSForm field names",
     "status_explanation": "Ushahidi recognizes one of three post statuses: Published, Under review, and Archived. So be sure that each entry in the column you select has one of those three values.",
     "defined_column": "Defined by a column in your CSV file...",
     "imported_posts_status": "Imported posts should have their status...",

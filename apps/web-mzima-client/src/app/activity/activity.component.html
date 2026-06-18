@@ -13,15 +13,40 @@
 -->
 
 <section class="dashboard-page">
-  <div class="dashboard-shell">
+  <ng-template #chartExportActions>
+    <div class="chart-actions" [attr.aria-label]="'dashboard.download.chart' | translate">
+      <button type="button" (click)="downloadChart($event, 'png')">
+        {{ 'dashboard.download.png' | translate }}
+      </button>
+      <button type="button" (click)="downloadChart($event, 'jpg')">
+        {{ 'dashboard.download.jpg' | translate }}
+      </button>
+      <button type="button" (click)="downloadChart($event, 'pdf')">
+        {{ 'dashboard.download.pdf' | translate }}
+      </button>
+    </div>
+  </ng-template>
+
+  <div class="dashboard-shell" #dashboardContent>
     <header class="dashboard-header">
       <div>
         <h1>{{ 'dashboard.title' | translate }}</h1>
         <p>{{ 'dashboard.subtitle' | translate }}</p>
       </div>
-      <div class="reporting-period">
-        <span>{{ 'dashboard.reporting_period' | translate }}</span>
-        <strong>{{ reportingPeriod }}</strong>
+      <div class="dashboard-header__meta">
+        <div class="reporting-period">
+          <span>{{ 'dashboard.reporting_period' | translate }}</span>
+          <strong>{{ reportingPeriod }}</strong>
+        </div>
+        <mzima-client-button
+          class="dashboard-export"
+          fill="outline"
+          color="secondary"
+          (buttonClick)="downloadDashboardPdf()"
+          [data-qa]="'dashboard-download-pdf'"
+        >
+          {{ 'dashboard.download.full_pdf' | translate }}
+        </mzima-client-button>
       </div>
     </header>
 
@@ -32,24 +57,38 @@
       {{ 'dashboard.load_error' | translate }}
     </app-notification>
 
-    <!-- Dashboard filters are hidden until backend filtering is implemented.
     <section class="filter-panel" [attr.aria-label]="'dashboard.filters.title' | translate">
       <strong class="filter-panel__title">{{ 'dashboard.filters.title' | translate }}</strong>
       <div class="filter-grid">
-        <mat-form-field appearance="outline" *ngFor="let filter of filters">
-          <mat-label>{{ filter.labelKey | translate }}</mat-label>
-          <mat-select [(value)]="filter.value">
-            <mat-option *ngFor="let option of filter.options" [value]="option.value">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'dashboard.filters.date_from' | translate }}</mat-label>
+          <input matInput type="date" [(ngModel)]="dateFrom" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'dashboard.filters.date_to' | translate }}</mat-label>
+          <input matInput type="date" [(ngModel)]="dateTo" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ incidentFilters[0].labelKey | translate }}</mat-label>
+          <mat-select [(value)]="selectedIncidentType">
+            <mat-option *ngFor="let option of incidentFilters[0].options" [value]="option.value">
               {{ option.labelKey | translate }}
             </mat-option>
           </mat-select>
         </mat-form-field>
       </div>
+      <mzima-client-button
+        fill="outline"
+        color="secondary"
+        (buttonClick)="clearFilters()"
+        [data-qa]="'dashboard-clear-filters'"
+      >
+        {{ 'dashboard.filters.clear' | translate }}
+      </mzima-client-button>
       <mzima-client-button (buttonClick)="applyFilters()" [data-qa]="'dashboard-apply-filters'">
         {{ (filtersApplied ? 'dashboard.filters.applied' : 'dashboard.filters.apply') | translate }}
       </mzima-client-button>
     </section>
-    -->
 
     <section class="kpi-grid" [attr.aria-label]="'dashboard.kpis.title' | translate">
       <article
@@ -70,6 +109,7 @@
           <header class="chart-card__header">
             <h3>{{ 'dashboard.charts.incidents_by_district' | translate }}</h3>
             <p>{{ 'dashboard.charts.geotagged_reports' | translate }}</p>
+            <ng-container *ngTemplateOutlet="chartExportActions"></ng-container>
           </header>
           <div class="district-map-layout">
             <div class="district-map" aria-hidden="true">
@@ -106,6 +146,7 @@
         <article class="chart-card incident-mix-card">
           <header class="chart-card__header">
             <h3>{{ 'dashboard.charts.incident_type_mix' | translate }}</h3>
+            <ng-container *ngTemplateOutlet="chartExportActions"></ng-container>
           </header>
           <div class="donut-layout">
             <div class="donut donut--large" [style.background]="donutBackground(incidentMix)">
@@ -129,6 +170,7 @@
         <article class="chart-card district-type-card">
           <header class="chart-card__header">
             <h3>{{ 'dashboard.charts.incidents_by_district_type' | translate }}</h3>
+            <ng-container *ngTemplateOutlet="chartExportActions"></ng-container>
           </header>
           <div class="compact-legend">
             <span
@@ -178,6 +220,7 @@
         <article class="chart-card">
           <header class="chart-card__header">
             <h3>{{ 'dashboard.charts.conflict_by_type' | translate }}</h3>
+            <ng-container *ngTemplateOutlet="chartExportActions"></ng-container>
           </header>
           <div class="donut-layout donut-layout--compact">
             <div class="donut" [style.background]="donutBackground(conflictTypes)">
@@ -199,6 +242,7 @@
         <article class="chart-card">
           <header class="chart-card__header">
             <h3>{{ 'dashboard.charts.conflict_drivers' | translate }}</h3>
+            <ng-container *ngTemplateOutlet="chartExportActions"></ng-container>
           </header>
           <div class="horizontal-bars horizontal-bars--dense">
             <div class="horizontal-bar" *ngFor="let item of conflictDrivers">
@@ -217,6 +261,7 @@
         <article class="chart-card">
           <header class="chart-card__header">
             <h3>{{ 'dashboard.charts.conflict_response_by_district' | translate }}</h3>
+            <ng-container *ngTemplateOutlet="chartExportActions"></ng-container>
           </header>
           <div class="vertical-chart">
             <div class="vertical-chart__item" *ngFor="let item of conflictResponse">
@@ -231,6 +276,7 @@
         <article class="chart-card">
           <header class="chart-card__header">
             <h3>{{ 'dashboard.charts.escalation_signals' | translate }}</h3>
+            <ng-container *ngTemplateOutlet="chartExportActions"></ng-container>
           </header>
           <div class="donut-layout donut-layout--vertical">
             <div class="donut" [style.background]="donutBackground(escalationSignals)">
@@ -260,6 +306,7 @@
         <article class="chart-card">
           <header class="chart-card__header">
             <h3>{{ 'dashboard.charts.nature_of_gbv' | translate }}</h3>
+            <ng-container *ngTemplateOutlet="chartExportActions"></ng-container>
           </header>
           <div class="horizontal-bars">
             <div class="horizontal-bar" *ngFor="let item of gbvNature">
@@ -273,6 +320,7 @@
         <article class="chart-card">
           <header class="chart-card__header">
             <h3>{{ 'dashboard.charts.gbv_by_district' | translate }}</h3>
+            <ng-container *ngTemplateOutlet="chartExportActions"></ng-container>
           </header>
           <div class="vertical-chart vertical-chart--count">
             <div class="vertical-chart__item" *ngFor="let item of gbvDistricts">
@@ -289,6 +337,7 @@
         <article class="chart-card">
           <header class="chart-card__header">
             <h3>{{ 'dashboard.charts.survivor_age' | translate }}</h3>
+            <ng-container *ngTemplateOutlet="chartExportActions"></ng-container>
           </header>
           <div class="vertical-chart vertical-chart--count">
             <div class="vertical-chart__item" *ngFor="let item of survivorAges">
@@ -305,6 +354,7 @@
         <article class="chart-card">
           <header class="chart-card__header">
             <h3>{{ 'dashboard.charts.gender_profile' | translate }}</h3>
+            <ng-container *ngTemplateOutlet="chartExportActions"></ng-container>
           </header>
           <div class="gender-profile">
             <div *ngFor="let item of genderProfiles">
@@ -332,6 +382,7 @@
           <header class="chart-card__header">
             <h3>{{ 'dashboard.charts.social_violence_types' | translate }}</h3>
             <p>{{ socialTotal }} {{ 'dashboard.sections.incidents' | translate }}</p>
+            <ng-container *ngTemplateOutlet="chartExportActions"></ng-container>
           </header>
           <div class="horizontal-bars">
             <div class="horizontal-bar" *ngFor="let item of socialViolence">
@@ -345,6 +396,7 @@
         <article class="chart-card">
           <header class="chart-card__header">
             <h3>{{ 'dashboard.charts.response_coverage' | translate }}</h3>
+            <ng-container *ngTemplateOutlet="chartExportActions"></ng-container>
           </header>
           <div class="gauge-grid">
             <div class="gauge-item" *ngFor="let item of responseCoverage">
@@ -361,6 +413,7 @@
           <header class="chart-card__header">
             <h3>{{ 'dashboard.charts.early_warning_by_district' | translate }}</h3>
             <p>{{ warningTotal }} {{ 'dashboard.charts.alert_signals' | translate }}</p>
+            <ng-container *ngTemplateOutlet="chartExportActions"></ng-container>
           </header>
           <div class="vertical-chart vertical-chart--wide">
             <div class="vertical-chart__item" *ngFor="let item of earlyWarningDistricts">
@@ -385,6 +438,7 @@
               <h3>{{ 'dashboard.charts.monthly_timeline' | translate }}</h3>
               <p>{{ 'dashboard.charts.monthly_timeline_detail' | translate }}</p>
             </div>
+            <ng-container *ngTemplateOutlet="chartExportActions"></ng-container>
             <div class="compact-legend">
               <span
                 ><i class="tone-conflict"></i
@@ -430,6 +484,7 @@
           <header class="chart-card__header">
             <h3>{{ 'dashboard.charts.top_responding_actors' | translate }}</h3>
             <p>{{ 'dashboard.charts.share_of_actioned' | translate }}</p>
+            <ng-container *ngTemplateOutlet="chartExportActions"></ng-container>
           </header>
           <div class="horizontal-bars">
             <div class="horizontal-bar" *ngFor="let item of respondingActors">

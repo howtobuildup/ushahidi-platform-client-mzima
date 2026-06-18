@@ -759,6 +759,8 @@
     "filters": {
       "title": "Filters",
       "date_range": "Date range",
+      "date_from": "From",
+      "date_to": "To",
       "jan_jun_2025": "Jan-Jun 2025",
       "last_30_days": "Last 30 days",
       "region": "Region",
@@ -772,7 +774,15 @@
       "response_status": "Response status",
       "all": "All",
       "apply": "Apply",
-      "applied": "Applied"
+      "applied": "Applied",
+      "clear": "Clear"
+    },
+    "download": {
+      "chart": "Download chart",
+      "full_pdf": "Download dashboard PDF",
+      "png": "PNG",
+      "jpg": "JPG",
+      "pdf": "PDF"
     },
     "kpis": {
       "title": "Headline indicators",

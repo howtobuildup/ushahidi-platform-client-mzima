@@ -759,6 +759,8 @@
     "filters": {
       "title": "Shaandheeyeyaasha",
       "date_range": "Muddada taariikhda",
+      "date_from": "Laga bilaabo",
+      "date_to": "Ilaa",
       "jan_jun_2025": "Jan-Jun 2025",
       "last_30_days": "30-kii maalmood ee u dambeeyay",
       "region": "Gobol",
@@ -772,7 +774,15 @@
       "response_status": "Xaaladda jawaabta",
       "all": "Dhammaan",
       "apply": "Adeegso",
-      "applied": "La adeegsaday"
+      "applied": "La adeegsaday",
+      "clear": "Nadiifi"
+    },
+    "download": {
+      "chart": "Soo dejiso jaantuska",
+      "full_pdf": "Soo dejiso dashboard PDF",
+      "png": "PNG",
+      "jpg": "JPG",
+      "pdf": "PDF"
     },
     "kpis": {
       "title": "Tilmaamayaasha muhiimka ah",

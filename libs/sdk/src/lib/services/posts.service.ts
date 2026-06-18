@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, map, Observable, Subject, switchMap, take, tap } from 'rxjs';
 import { apiHelpers } from '../helpers';
@@ -49,12 +49,21 @@ export class PostsService extends ResourceService<any> {
     return 'posts';
   }
 
-  getEwerDashboard(): Observable<any> {
+  getEwerDashboard(filters: Record<string, string> = {}): Observable<any> {
     return this.currentLoader.getApiUrl().pipe(
       take(1),
-      switchMap((backendUrl) =>
-        this.httpClient.get(`${backendUrl}${apiHelpers.API_V_5}dashboard/ewer`),
-      ),
+      switchMap((backendUrl) => {
+        let params = new HttpParams();
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value) {
+            params = params.set(key, value);
+          }
+        });
+
+        return this.httpClient.get(`${backendUrl}${apiHelpers.API_V_5}dashboard/ewer`, {
+          params,
+        });
+      }),
     );
   }
 

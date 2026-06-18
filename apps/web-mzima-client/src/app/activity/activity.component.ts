@@ -1,5 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { PostsService } from '@mzima-client/sdk';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
+import { NotificationService } from '../core/services/notification.service';
 
 interface FilterOption {
   labelKey: string;
@@ -12,6 +15,8 @@ interface DashboardFilter {
   value: string;
   options: FilterOption[];
 }
+
+type ExportFormat = 'png' | 'jpg' | 'pdf';
 
 interface KpiMetric {
   labelKey: string;
@@ -104,46 +109,33 @@ interface DashboardResponse {
   styleUrls: ['./activity.component.scss'],
 })
 export class ActivityComponent implements OnInit {
+  @ViewChild('dashboardContent') dashboardContent!: ElementRef<HTMLElement>;
+
   public filtersApplied = false;
   public loading = true;
   public loadError = false;
   public reportingPeriod = '';
+  public selectedIncidentType = 'all';
+  public dateFrom = '';
+  public dateTo = '';
   public conflictTotal = 0;
   public gbvTotal = 0;
   public socialTotal = 0;
   public warningTotal = 0;
   public escalationRate = 0;
 
-  public readonly filters: DashboardFilter[] = [
-    {
-      key: 'region',
-      labelKey: 'dashboard.filters.region',
-      value: 'all',
-      options: [{ labelKey: 'dashboard.filters.all_regions', value: 'all' }],
-    },
-    {
-      key: 'district',
-      labelKey: 'dashboard.filters.district',
-      value: 'all',
-      options: [{ labelKey: 'dashboard.filters.all_districts', value: 'all' }],
-    },
+  public readonly incidentFilters: DashboardFilter[] = [
     {
       key: 'incident',
       labelKey: 'dashboard.filters.incident_type',
       value: 'all',
-      options: [{ labelKey: 'dashboard.filters.all_types', value: 'all' }],
-    },
-    {
-      key: 'monitor',
-      labelKey: 'dashboard.filters.field_monitor',
-      value: 'all',
-      options: [{ labelKey: 'dashboard.filters.all', value: 'all' }],
-    },
-    {
-      key: 'response',
-      labelKey: 'dashboard.filters.response_status',
-      value: 'all',
-      options: [{ labelKey: 'dashboard.filters.all', value: 'all' }],
+      options: [
+        { labelKey: 'dashboard.filters.all_types', value: 'all' },
+        { labelKey: 'dashboard.categories.conflict', value: 'conflict' },
+        { labelKey: 'dashboard.categories.gbv', value: 'gbv' },
+        { labelKey: 'dashboard.categories.social', value: 'social' },
+        { labelKey: 'dashboard.categories.early_warning', value: 'warning' },
+      ],
     },
   ];
 
@@ -173,7 +165,7 @@ export class ActivityComponent implements OnInit {
     warning: '#e5a52f',
   };
 
-  constructor(private postsService: PostsService) {}
+  constructor(private postsService: PostsService, private notification: NotificationService) {}
 
   public ngOnInit(): void {
     this.loadDashboard();
@@ -185,6 +177,13 @@ export class ActivityComponent implements OnInit {
     window.setTimeout(() => {
       this.filtersApplied = false;
     }, 1800);
+  }
+
+  public clearFilters(): void {
+    this.selectedIncidentType = 'all';
+    this.dateFrom = '';
+    this.dateTo = '';
+    this.applyFilters();
   }
 
   public maxValue(items: ChartMetric[]): number {
@@ -225,10 +224,35 @@ export class ActivityComponent implements OnInit {
     return total ? (value / total) * 100 : 0;
   }
 
+  public async downloadChart(event: Event, format: ExportFormat): Promise<void> {
+    const card = (event.currentTarget as HTMLElement).closest('.chart-card') as HTMLElement;
+    if (!card) return;
+
+    const title = card.querySelector('h3')?.textContent || 'dashboard-chart';
+    try {
+      await this.downloadElement(card, this.fileName(title), format);
+    } catch {
+      this.notification.showError('Dashboard chart export could not be generated.');
+    }
+  }
+
+  public async downloadDashboardPdf(): Promise<void> {
+    if (!this.dashboardContent?.nativeElement) return;
+    try {
+      await this.downloadElement(
+        this.dashboardContent.nativeElement,
+        'ewer-monitoring-dashboard',
+        'pdf',
+      );
+    } catch {
+      this.notification.showError('Dashboard PDF export could not be generated.');
+    }
+  }
+
   private loadDashboard(): void {
     this.loading = true;
     this.loadError = false;
-    this.postsService.getEwerDashboard().subscribe({
+    this.postsService.getEwerDashboard(this.dashboardParams()).subscribe({
       next: (response: DashboardResponse) => {
         this.populateDashboard(response.result);
         this.loading = false;
@@ -238,6 +262,14 @@ export class ActivityComponent implements OnInit {
         this.loadError = true;
       },
     });
+  }
+
+  private dashboardParams(): Record<string, string> {
+    return {
+      incident_type: this.selectedIncidentType === 'all' ? '' : this.selectedIncidentType,
+      date_from: this.dateFrom,
+      date_to: this.dateTo,
+    };
   }
 
   private populateDashboard(data: DashboardResponse['result']): void {
@@ -456,8 +488,14 @@ export class ActivityComponent implements OnInit {
     keyMapper: (value: string) => string = (value) => value,
     colors: string[] = [],
   ): ChartMetric[] {
-    return values.map((item, index) =>
-      this.metric(keyMapper.call(this, item.name), item.value, colors[index] || '#979bcc'),
+    const grouped = new Map<string, number>();
+    values.forEach((item) => {
+      const key = keyMapper.call(this, item.name);
+      grouped.set(key, (grouped.get(key) || 0) + item.value);
+    });
+
+    return Array.from(grouped.entries()).map(([key, value], index) =>
+      this.metric(key, value, colors[index] || '#979bcc'),
     );
   }
 
@@ -482,7 +520,15 @@ export class ActivityComponent implements OnInit {
   }
 
   private districtKey(value: string): string {
-    return `dashboard.districts.${this.normalize(value)}`;
+    const keys: Record<string, string> = {
+      baidoa: 'dashboard.districts.baidoa',
+      hudur: 'dashboard.districts.hudur',
+      kismayo: 'dashboard.districts.kismayo',
+      dhobley: 'dashboard.districts.dhobley',
+    };
+    const normalizedValue = this.normalize(value);
+
+    return keys[normalizedValue] || value || 'Unknown';
   }
 
   private conflictTypeKey(value: string): string {
@@ -592,5 +638,94 @@ export class ActivityComponent implements OnInit {
       'dec',
     ];
     return `dashboard.months.${keys[month]}`;
+  }
+
+  private async downloadElement(
+    element: HTMLElement,
+    fileName: string,
+    format: ExportFormat,
+  ): Promise<void> {
+    const canvas = await html2canvas(element, {
+      backgroundColor: '#ffffff',
+      scale: Math.min(2, window.devicePixelRatio || 1),
+      useCORS: true,
+      ignoreElements: (ignoredElement) =>
+        ignoredElement.classList.contains('chart-actions') ||
+        ignoredElement.classList.contains('dashboard-export'),
+    });
+
+    if (format === 'pdf') {
+      this.downloadCanvasPdf(canvas, fileName);
+      return;
+    }
+
+    const mimeType = format === 'jpg' ? 'image/jpeg' : 'image/png';
+    const extension = format === 'jpg' ? 'jpg' : 'png';
+    const blob = await this.canvasToBlob(canvas, mimeType);
+    this.downloadBlob(blob, `${fileName}.${extension}`);
+  }
+
+  private canvasToBlob(canvas: HTMLCanvasElement, mimeType: string): Promise<Blob> {
+    return new Promise((resolve, reject) => {
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            resolve(blob);
+            return;
+          }
+
+          reject(new Error('Canvas export failed.'));
+        },
+        mimeType,
+        0.95,
+      );
+    });
+  }
+
+  private downloadCanvasPdf(canvas: HTMLCanvasElement, fileName: string): void {
+    const imageData = canvas.toDataURL('image/jpeg', 0.95);
+    const pdf = new jsPDF({
+      orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
+      unit: 'pt',
+      format: 'a4',
+    });
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const margin = 24;
+    const imageWidth = pageWidth - margin * 2;
+    const imageHeight = (canvas.height * imageWidth) / canvas.width;
+    let y = margin;
+    let remainingHeight = imageHeight;
+
+    pdf.addImage(imageData, 'JPEG', margin, y, imageWidth, imageHeight);
+    remainingHeight -= pageHeight - margin * 2;
+
+    while (remainingHeight > 0) {
+      y -= pageHeight - margin * 2;
+      pdf.addPage();
+      pdf.addImage(imageData, 'JPEG', margin, y, imageWidth, imageHeight);
+      remainingHeight -= pageHeight - margin * 2;
+    }
+
+    pdf.save(`${fileName}.pdf`);
+  }
+
+  private downloadBlob(blob: Blob, fileName: string): void {
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(link.href), 0);
+  }
+
+  private fileName(value: string): string {
+    return (
+      value
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '') || 'dashboard-chart'
+    );
   }
 }

@@ -45,7 +45,14 @@
           "types-wm",
           "lottie-web",
           "ev-emitter/ev-emitter",
-          "xregexp"
+          "xregexp",
+          "html2canvas",
+          "jspdf",
+          "canvg",
+          "core-js",
+          "dompurify",
+          "raf",
+          "rgbcolor"
         ]
       },
       "configurations": {

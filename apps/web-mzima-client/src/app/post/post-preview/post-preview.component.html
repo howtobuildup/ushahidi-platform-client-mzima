@@ -33,20 +33,78 @@
     <app-twitter-widget [id]="post.data_source_message_id"></app-twitter-widget>
   </div>
 
-  <div class="post__main">
-    <div class="post__visual" *ngIf="media && post.source !== 'Twitter'">
-      <img [src]="media.original_file_url" [alt]="post.title" />
+  <ng-container *ngIf="feedView && ewerTile as tile; else defaultPreview">
+    <div
+      class="post__ewer"
+      [ngClass]="{
+        'post__ewer--escalation': tile.escalationRisk
+      }"
+    >
+      <div class="post__ewer-topline">
+        <span class="post__pill post__pill--incident">{{ tile.incidentType }}</span>
+        <span
+          class="post__pill"
+          [ngClass]="tile.escalationRisk ? 'post__pill--risk' : 'post__pill--safe'"
+        >
+          {{ tile.escalationLabel }}
+        </span>
+      </div>
+
+      <h3 class="post__ewer-location">{{ tile.location }}</h3>
+      <p class="post__ewer-site" *ngIf="tile.site">{{ tile.site }}</p>
+
+      <div
+        class="post__ewer-media"
+        *ngIf="media?.original_file_url || tile.hasMedia"
+        [ngClass]="{ 'post__ewer-media--placeholder': !media?.original_file_url }"
+      >
+        <img *ngIf="media?.original_file_url" [src]="media.original_file_url" [alt]="post.title" />
+        <span>Attached media</span>
+      </div>
+
+      <div class="post__ewer-tags">
+        <span class="post__pill post__pill--status" *ngIf="tile.status">
+          {{ tile.status }}
+        </span>
+        <span class="post__pill post__pill--muted" *ngIf="tile.sourcesLabel">
+          {{ tile.sourcesLabel }}
+        </span>
+      </div>
+
+      <p class="post__ewer-actors" *ngIf="tile.actors">{{ tile.actors }}</p>
+
+      <span
+        class="post__pill post__pill--response"
+        [ngClass]="tile.responseActive ? 'post__pill--response-active' : 'post__pill--muted'"
+      >
+        {{ tile.responseLabel }}
+      </span>
+
+      <div class="post__ewer-footer">
+        <span>{{ post.post_date | dateAgo }} &middot; via {{ post.source || 'Web' }}</span>
+        <span class="post__pill post__pill--code" *ngIf="tile.monitorCode">
+          {{ tile.monitorCode }}
+        </span>
+      </div>
     </div>
-    <div class="post__content">
-      <h3 *ngIf="post.title?.length || post.content?.length">{{ post.title || post.content }}</h3>
-      <p *ngIf="post.title?.length && post.content?.length">{{ post.content }}</p>
+  </ng-container>
+
+  <ng-template #defaultPreview>
+    <div class="post__main">
+      <div class="post__visual" *ngIf="media && post.source !== 'Twitter'">
+        <img [src]="media.original_file_url" [alt]="post.title" />
+      </div>
+      <div class="post__content">
+        <h3 *ngIf="post.title?.length || post.content?.length">{{ post.title || post.content }}</h3>
+        <p *ngIf="post.title?.length && post.content?.length">{{ post.content }}</p>
+      </div>
     </div>
-  </div>
+  </ng-template>
   <div class="post__more" *ngIf="!feedView">
     <mzima-client-button size="small" fill="clear" [expand]="false" (buttonClick)="showDetails()">
       {{ 'post.read_more' | translate }}
     </mzima-client-button>
   </div>
 
-  <app-post-metadata [post]="post"></app-post-metadata>
+  <app-post-metadata *ngIf="!(feedView && ewerTile)" [post]="post"></app-post-metadata>
 </div>

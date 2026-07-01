@@ -16,6 +16,7 @@
       }}</mat-error>
     </mat-form-field>
   </div>
+
   <div class="form-row">
     <mat-label>{{ 'user.email' | translate }} *</mat-label>
     <mat-form-field appearance="outline">
@@ -59,6 +60,7 @@
       }}</mat-error>
     </mat-form-field>
   </div>
+
   <div class="form-row">
     <mat-label>{{ 'user.role' | translate }} *</mat-label>
     <mat-form-field appearance="outline" *ngIf="roles?.length">
@@ -68,6 +70,28 @@
         </mat-option>
       </mat-select>
     </mat-form-field>
+  </div>
+
+  <div class="form-row" *ngIf="form.get('role')?.value === 'saferworld_partner'">
+    <mat-label>{{ 'user.field_monitors' | translate }} *</mat-label>
+    <mat-form-field appearance="outline">
+      <mat-select
+        formControlName="field_monitor_ids"
+        multiple
+        disableOptionCentering
+        [placeholder]="'user.select_field_monitors' | translate"
+        [data-qa]="'partner-field-monitor-select'"
+      >
+        <mat-option *ngFor="let monitor of fieldMonitors" [value]="monitor.id">
+          {{ monitor.code }}
+          <ng-container *ngIf="monitor.district"> — {{ monitor.district }}</ng-container>
+        </mat-option>
+      </mat-select>
+      <mat-error *ngIf="form.get('field_monitor_ids')?.hasError('required')">
+        {{ 'user.field_monitors_required' | translate }}
+      </mat-error>
+    </mat-form-field>
+    <mat-hint>{{ 'user.field_monitors_help' | translate }}</mat-hint>
   </div>
 
   <div class="form-controls-spacer" *ngIf="!isDesktop"></div>

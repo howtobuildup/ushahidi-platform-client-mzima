@@ -6,7 +6,13 @@ import { CONST } from '@constants';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
-import { RolesService, RoleResult, UsersService, UserInterface } from '@mzima-client/sdk';
+import {
+  FieldMonitorInterface,
+  RolesService,
+  RoleResult,
+  UsersService,
+  UserInterface,
+} from '@mzima-client/sdk';
 import { ConfirmModalService } from '../../../core/services/confirm-modal.service';
 import { BreakpointService } from '@services';
 import { regexHelper } from '@helpers';
@@ -26,6 +32,7 @@ export class UserItemComponent implements OnInit {
   public isDesktop = false;
   public createUserErrors: any[] = [];
   public submitted = false;
+  public fieldMonitors: FieldMonitorInterface[] = [];
 
   constructor(
     private route: ActivatedRoute,
@@ -57,11 +64,23 @@ export class UserItemComponent implements OnInit {
         ],
       ],
       role: ['', [Validators.required]],
+      field_monitor_ids: [[]],
+    });
+    this.form.controls['role'].valueChanges.pipe(untilDestroyed(this)).subscribe((role) => {
+      const monitorControl = this.form.controls['field_monitor_ids'];
+      if (role === 'saferworld_partner') {
+        monitorControl.addValidators(Validators.required);
+      } else {
+        monitorControl.clearValidators();
+        monitorControl.setValue([]);
+      }
+      monitorControl.updateValueAndValidity({ emitEvent: false });
     });
   }
 
   ngOnInit(): void {
     this.getRoles();
+    this.getFieldMonitors();
     const userId = this.route.snapshot.paramMap.get('id') || '';
     this.isUpdate = !!userId;
     if (userId) this.getUserInformation(userId);
@@ -94,12 +113,22 @@ export class UserItemComponent implements OnInit {
     });
   }
 
+  private getFieldMonitors() {
+    this.userService.getFieldMonitors().subscribe({
+      next: (response) => {
+        this.fieldMonitors = response.results;
+      },
+      error: (err) => console.log(err),
+    });
+  }
+
   private fillInForm(user: UserInterface) {
     this.form.patchValue({
       id: user.id,
       realname: user.realname,
       email: user.email,
       role: user.role,
+      field_monitor_ids: user.field_monitor_ids || [],
     });
   }
 
@@ -111,6 +140,7 @@ export class UserItemComponent implements OnInit {
       email: this.form.value.email,
       password: this.form.value.password,
       role: this.form.value.role,
+      field_monitor_ids: this.form.value.field_monitor_ids,
     };
     !this.isUpdate ? this.createUser(roleBody) : this.updateUser(roleBody);
   }

@@ -21,6 +21,13 @@ export interface UserInterface {
   logins?: number;
   updated?: Date;
   url?: string;
+  field_monitor_ids?: number[];
+}
+
+export interface FieldMonitorInterface {
+  id: number;
+  code: string;
+  district?: string;
 }
 
 export interface UserDataInterface {

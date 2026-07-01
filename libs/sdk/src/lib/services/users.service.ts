@@ -3,7 +3,12 @@ import { Injectable } from '@angular/core';
 import { Observable, Subject, tap } from 'rxjs';
 import { apiHelpers } from '../helpers';
 import { EnvLoader } from '../loader';
-import { GeoJsonFilter, UserInterfaceResponse, UserResponse } from '../models';
+import {
+  FieldMonitorInterface,
+  GeoJsonFilter,
+  UserInterfaceResponse,
+  UserResponse,
+} from '../models';
 import { ResourceService } from './resource.service';
 
 @Injectable({
@@ -70,6 +75,10 @@ export class UsersService extends ResourceService<any> {
 
   public getUserById(id: string) {
     return super.get(id);
+  }
+
+  public getFieldMonitors(): Observable<{ results: FieldMonitorInterface[] }> {
+    return super.get('field-monitors');
   }
 
   public updateUserById(id: number, params: any) {

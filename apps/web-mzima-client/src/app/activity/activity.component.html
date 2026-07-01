@@ -61,6 +61,13 @@
       <strong class="filter-panel__title">{{ 'dashboard.filters.title' | translate }}</strong>
       <div class="filter-grid">
         <mat-form-field appearance="outline">
+          <mat-label>{{ 'dashboard.filters.project' | translate }}</mat-label>
+          <mat-select [(value)]="selectedFormId">
+            <mat-option value="">{{ 'dashboard.filters.all_projects' | translate }}</mat-option>
+            <mat-option *ngFor="let form of forms" [value]="form.id">{{ form.name }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
           <mat-label>{{ 'dashboard.filters.date_from' | translate }}</mat-label>
           <input matInput type="date" [(ngModel)]="dateFrom" />
         </mat-form-field>
@@ -114,7 +121,8 @@
           <div class="district-map-layout">
             <div class="district-map" aria-hidden="true">
               <div class="district-map__shape"></div>
-              <div
+              <button
+                type="button"
                 class="map-bubble"
                 *ngFor="let district of districts"
                 [style.left.%]="district.x"
@@ -123,12 +131,17 @@
                 [style.height.px]="28 + district.value / 5"
                 [style.background]="district.color + '66'"
                 [attr.title]="(district.labelKey | translate) + ': ' + district.value"
+                (click)="selectDistrict(district)"
               >
                 <span>{{ district.value }}</span>
-              </div>
+              </button>
             </div>
             <div class="district-ranking">
               <strong>{{ 'dashboard.charts.ranking' | translate }}</strong>
+              <p *ngIf="selectedDistrict">
+                {{ selectedDistrict.labelKey | translate }}:
+                <strong>{{ selectedDistrict.value }}</strong>
+              </p>
               <div class="ranking-row" *ngFor="let district of districts">
                 <span>{{ district.labelKey | translate }}</span>
                 <i>
@@ -260,7 +273,7 @@
 
         <article class="chart-card">
           <header class="chart-card__header">
-            <h3>{{ 'dashboard.charts.conflict_response_by_district' | translate }}</h3>
+            <h3>{{ 'dashboard.charts.conflict_response_by_type' | translate }}</h3>
             <ng-container *ngTemplateOutlet="chartExportActions"></ng-container>
           </header>
           <div class="vertical-chart">
@@ -324,7 +337,7 @@
           </header>
           <div class="vertical-chart vertical-chart--count">
             <div class="vertical-chart__item" *ngFor="let item of gbvDistricts">
-              <strong>{{ item.value }}</strong>
+              <strong>{{ item.value }} ({{ percentage(item.value, gbvTotal) }}%)</strong>
               <i
                 [style.height.%]="(item.value / maxValue(gbvDistricts)) * 100"
                 [style.background]="item.color"
@@ -405,6 +418,7 @@
                 <strong>{{ item.value }}%</strong>
               </div>
               <span>{{ item.labelKey | translate }}</span>
+              <small>{{ item.count }}/{{ item.total }}</small>
             </div>
           </div>
         </article>

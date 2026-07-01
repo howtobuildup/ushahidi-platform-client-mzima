@@ -1,5 +1,5 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-import { PostsService } from '@mzima-client/sdk';
+import { FormInterface, FormsService, PostsService } from '@mzima-client/sdk';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { NotificationService } from '../core/services/notification.service';
@@ -29,6 +29,8 @@ interface ChartMetric {
   labelKey: string;
   value: number;
   color?: string;
+  count?: number;
+  total?: number;
 }
 
 interface DistrictMetric extends ChartMetric {
@@ -89,7 +91,7 @@ interface DashboardResponse {
     survivor_ages: NamedValue[];
     gender_profiles: { survivors: number; perpetrators: number };
     social_violence: NamedValue[];
-    response_coverage: Record<string, number>;
+    response_coverage: Record<string, { percentage: number; count: number; total: number }>;
     early_warning_districts: NamedValue[];
     timeline: Array<{
       month: string;
@@ -116,6 +118,9 @@ export class ActivityComponent implements OnInit {
   public loadError = false;
   public reportingPeriod = '';
   public selectedIncidentType = 'all';
+  public selectedFormId = '';
+  public forms: FormInterface[] = [];
+  public selectedDistrict?: DistrictMetric;
   public dateFrom = '';
   public dateTo = '';
   public conflictTotal = 0;
@@ -165,9 +170,18 @@ export class ActivityComponent implements OnInit {
     warning: '#e5a52f',
   };
 
-  constructor(private postsService: PostsService, private notification: NotificationService) {}
+  constructor(
+    private postsService: PostsService,
+    private formsService: FormsService,
+    private notification: NotificationService,
+  ) {}
 
   public ngOnInit(): void {
+    this.formsService.get().subscribe({
+      next: (response) => {
+        this.forms = response.results;
+      },
+    });
     this.loadDashboard();
   }
 
@@ -181,6 +195,7 @@ export class ActivityComponent implements OnInit {
 
   public clearFilters(): void {
     this.selectedIncidentType = 'all';
+    this.selectedFormId = '';
     this.dateFrom = '';
     this.dateTo = '';
     this.applyFilters();
@@ -196,6 +211,10 @@ export class ActivityComponent implements OnInit {
 
   public percentage(value: number, total: number): number {
     return total ? Math.round((value / total) * 100) : 0;
+  }
+
+  public selectDistrict(district: DistrictMetric): void {
+    this.selectedDistrict = district;
   }
 
   public donutBackground(items: ChartMetric[]): string {
@@ -266,6 +285,7 @@ export class ActivityComponent implements OnInit {
 
   private dashboardParams(): Record<string, string> {
     return {
+      form_id: this.selectedFormId,
       incident_type: this.selectedIncidentType === 'all' ? '' : this.selectedIncidentType,
       date_from: this.dateFrom,
       date_to: this.dateTo,
@@ -363,7 +383,7 @@ export class ActivityComponent implements OnInit {
       '#505596',
       '#b8bce0',
       '#9297ca',
-    ]);
+    ]).filter((item) => item.labelKey !== 'dashboard.conflict.other');
     this.conflictDrivers = this.mapNamedValues(
       data.conflict_drivers.slice(0, 7),
       this.conflictDriverKey,
@@ -373,7 +393,7 @@ export class ActivityComponent implements OnInit {
       .slice(0, 4)
       .map((item) =>
         this.metric(
-          this.districtKey(item.name),
+          this.conflictTypeKey(item.name),
           item.value,
           item.value >= 70 ? '#4f9e88' : '#e5a52f',
         ),
@@ -432,10 +452,18 @@ export class ActivityComponent implements OnInit {
       '#dfa974',
     ]).map((item) => ({ ...item, value: this.percentage(item.value, socialTotal) }));
     this.responseCoverage = [
-      this.metric('dashboard.categories.gbv', data.response_coverage['gbv'], '#4f9e88'),
-      this.metric('dashboard.categories.conflict', data.response_coverage['conflict'], '#505596'),
-      this.metric('dashboard.categories.social', data.response_coverage['social'], '#cf8b4c'),
-      this.metric(
+      this.coverageMetric('dashboard.categories.gbv', data.response_coverage['gbv'], '#4f9e88'),
+      this.coverageMetric(
+        'dashboard.categories.conflict',
+        data.response_coverage['conflict'],
+        '#505596',
+      ),
+      this.coverageMetric(
+        'dashboard.categories.social',
+        data.response_coverage['social'],
+        '#cf8b4c',
+      ),
+      this.coverageMetric(
         'dashboard.categories.early_warning_short',
         data.response_coverage['warning'],
         '#5d9f94',
@@ -457,16 +485,18 @@ export class ActivityComponent implements OnInit {
         warning: item.warning,
       },
     }));
-    this.respondingActors = this.mapNamedValues(data.responding_actors.slice(0, 6), this.actorKey, [
+    const actorCounts = this.mapNamedValues(data.responding_actors.slice(0, 6), this.actorKey, [
       '#505596',
       '#656aa8',
       '#979bcc',
       '#979bcc',
       '#b8bce0',
       '#b8bce0',
-    ]).map((item) => ({
+    ]);
+    const actorTotal = this.metricTotal(actorCounts);
+    this.respondingActors = actorCounts.map((item) => ({
       ...item,
-      value: this.percentage(item.value, total),
+      value: this.percentage(item.value, actorTotal),
     }));
   }
 
@@ -481,6 +511,18 @@ export class ActivityComponent implements OnInit {
 
   private metric(labelKey: string, value = 0, color = '#505596'): ChartMetric {
     return { labelKey, value: value || 0, color };
+  }
+
+  private coverageMetric(
+    labelKey: string,
+    coverage: { percentage: number; count: number; total: number } | undefined,
+    color: string,
+  ): ChartMetric {
+    return {
+      ...this.metric(labelKey, coverage?.percentage || 0, color),
+      count: coverage?.count || 0,
+      total: coverage?.total || 0,
+    };
   }
 
   private mapNamedValues(

@@ -1,6 +1,6 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
-const appName: string = 'Saferworld';
+const appName: string = 'OGAAL';
 
 const config: CapacitorConfig = {
   // need change to app id before publish

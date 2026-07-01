@@ -17,14 +17,14 @@ export class DataComponent implements OnInit, AfterViewInit {
   displayedColumns: string[] = ['body', 'author', 'source', 'status'];
   dataSource: MatTableDataSource<PostResult>;
   length = 0;
-  pageSize = 20;
+  pageSize = 10;
   pageIndex = 0;
   showFirstLastButtons = false;
   isLoading = false;
   private shouldScopeToOwnPosts = false;
   params: GeoJsonFilter = {
     has_location: 'all',
-    limit: 20,
+    limit: 10,
     page: 1,
     order: 'desc',
     order_unlocked_on_top: true,
@@ -66,13 +66,9 @@ export class DataComponent implements OnInit, AfterViewInit {
 
   handlePageEvent(event: PageEvent) {
     this.pageSize = event.pageSize;
-    if (this.params.offset && event.pageIndex > this.pageIndex) {
-      this.params.offset = this.pageSize + this.params.offset;
-    }
-    if (this.params.offset && event.pageIndex < this.pageIndex) {
-      this.params.offset = this.params.offset - this.pageSize;
-    }
     this.pageIndex = event.pageIndex;
+    this.params.limit = event.pageSize;
+    this.params.page = event.pageIndex + 1;
     this.getPosts();
   }
 

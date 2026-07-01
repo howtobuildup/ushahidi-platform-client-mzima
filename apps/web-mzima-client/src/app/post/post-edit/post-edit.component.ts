@@ -4,6 +4,7 @@ import {
   EventEmitter,
   Input,
   OnChanges,
+  OnDestroy,
   OnInit,
   Output,
   SimpleChanges,
@@ -60,7 +61,7 @@ dayjs.extend(timezone);
   templateUrl: './post-edit.component.html',
   styleUrls: ['./post-edit.component.scss'],
 })
-export class PostEditComponent implements OnInit, OnChanges {
+export class PostEditComponent implements OnInit, OnChanges, OnDestroy {
   @Input() public postInput: any;
   @Input() public modalView: boolean;
   @Output() cancel = new EventEmitter();
@@ -84,7 +85,7 @@ export class PostEditComponent implements OnInit, OnChanges {
   private completeStages: number[] = [];
   private fieldsFormArray = ['tags'];
   public surveyName: string;
-  private postId?: number;
+  public postId?: number;
   formInfo: any;
 
   private post?: any;
@@ -94,6 +95,8 @@ export class PostEditComponent implements OnInit, OnChanges {
   public locationRequired = false;
   public emptyLocation = false;
   public submitted = false;
+  public previewMode = false;
+  private printPreview = false;
   public filters;
   public xlsFormRules = xlsFormRules;
   selectedLanguage: any;
@@ -131,6 +134,10 @@ export class PostEditComponent implements OnInit, OnChanges {
   }
 
   ngOnInit(): void {
+    this.route.queryParamMap.subscribe((params) => {
+      this.previewMode = params.get('preview') === '1';
+      this.printPreview = params.get('print') === '1';
+    });
     this.route.paramMap.subscribe((params) => {
       if (params.get('type')) {
         this.formId = Number(params.get('type'));
@@ -153,6 +160,12 @@ export class PostEditComponent implements OnInit, OnChanges {
       this.formId = this.post.form_id;
       this.postId = this.post.id;
       this.loadData(this.formId!, this.post.post_content);
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.postId) {
+      this.postsService.unlockPost(this.postId).subscribe({ error: () => undefined });
     }
   }
 
@@ -182,6 +195,9 @@ export class PostEditComponent implements OnInit, OnChanges {
         this.tasks = result.tasks;
         this.surveyName = result.name;
         this.formInfo = result;
+        if (this.previewMode && this.printPreview) {
+          window.setTimeout(() => window.print(), 300);
+        }
         const languages = this.languageService.getLanguages();
 
         const availableLanguages: any[] = result.enabled_languages.available;
@@ -652,6 +668,7 @@ export class PostEditComponent implements OnInit, OnChanges {
   }
 
   public async submitPost(): Promise<void> {
+    if (this.previewMode) return;
     if (this.form.disabled) return;
     this.submitted = true;
     this.form.disable();
@@ -659,6 +676,8 @@ export class PostEditComponent implements OnInit, OnChanges {
     try {
       await this.preparationData();
     } catch (error: any) {
+      this.form.enable();
+      this.submitted = false;
       this.showMessage(error, 'error');
       return;
     }
@@ -681,14 +700,49 @@ export class PostEditComponent implements OnInit, OnChanges {
     if (!this.form.valid) this.form.markAllAsTouched();
     this.preventSubmitIncaseTheresNoBackendValidation();
 
+    if (this.atLeastOneFieldHasValidationError || this.form.invalid) {
+      this.submitted = false;
+      return;
+    }
+
     if (this.postId) {
       postData.post_date = this.post.post_date || new Date().toISOString();
       this.updatePost(this.postId, postData);
     } else {
-      if (!this.atLeastOneFieldHasValidationError) {
-        this.createPost(postData);
-      }
+      this.createPost(postData);
     }
+  }
+
+  public canDeleteSubmission(): boolean {
+    return !!this.postId && !!this.post?.allowed_privileges?.includes('delete');
+  }
+
+  public async deleteSubmission(): Promise<void> {
+    if (!this.postId || !this.canDeleteSubmission()) return;
+
+    const confirmed = await this.confirmModalService.open({
+      title: this.translate.instant('post.delete_submission'),
+      description: this.translate.instant('post.delete_submission_warning'),
+      confirmButtonText: this.translate.instant('app.yes_delete'),
+      cancelButtonText: this.translate.instant('app.no_go_back'),
+    });
+    if (!confirmed) return;
+
+    this.form.disable();
+    this.postsService.delete(this.postId).subscribe({
+      next: () => {
+        this.updated.emit();
+        if (!this.modalView) this.router.navigate(['/feed']);
+      },
+      error: () => {
+        this.form.enable();
+        this.notificationDeleteFailed();
+      },
+    });
+  }
+
+  private notificationDeleteFailed(): void {
+    this.showMessage(this.translate.instant('post.delete_submission_failed'), 'error');
   }
 
   private updatePost(postId: number, postData: any) {

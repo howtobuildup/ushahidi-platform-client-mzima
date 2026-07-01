@@ -411,13 +411,24 @@
           {{ 'app.cancel' | translate }}
         </mzima-client-button>
         <mzima-client-button
+          *ngIf="!previewMode && canDeleteSubmission()"
+          color="danger"
+          type="button"
+          [data-qa]="'btn-delete-submission'"
+          [disabled]="form.disabled"
+          (buttonClick)="deleteSubmission()"
+        >
+          {{ 'post.delete_submission' | translate }}
+        </mzima-client-button>
+        <mzima-client-button
+          *ngIf="!previewMode"
           type="submit"
           [data-qa]="'btn-post-item-submit'"
           [disabled]="
             form.disabled || form.invalid || emptyLocation || submitted || taskForm.invalid
           "
         >
-          {{ 'app.submit' | translate }}
+          {{ (postId ? 'post.approve_submission' : 'app.submit') | translate }}
         </mzima-client-button>
       </div>
     </form>

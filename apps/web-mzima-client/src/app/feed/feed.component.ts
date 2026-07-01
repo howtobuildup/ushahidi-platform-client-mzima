@@ -28,7 +28,7 @@ export class FeedComponent extends MainViewComponent implements OnInit {
   @ViewChild('feed') public feed: ElementRef;
   @ViewChild('masonry') public masonry: NgxMasonryComponent;
   public override params: GeoJsonFilter = {
-    limit: 20,
+    limit: 10,
     page: 1,
     // created_before_by_id: '',
   };
@@ -51,6 +51,13 @@ export class FeedComponent extends MainViewComponent implements OnInit {
   public statuses = searchFormHelper.statuses;
   public selectedStatus?: string;
   public sortingOptions = searchFormHelper.sortingOptions;
+  public readonly datePresets = [
+    { label: 'global_filter.date_presets.today', days: 0, previousMonth: false },
+    { label: 'global_filter.date_presets.last_3_days', days: 3, previousMonth: false },
+    { label: 'global_filter.date_presets.last_7_days', days: 7, previousMonth: false },
+    { label: 'global_filter.date_presets.last_month', days: 0, previousMonth: true },
+  ];
+  public activeDatePreset?: number;
   public activeSorting = {
     order: 'desc',
     orderby: 'created',
@@ -69,7 +76,7 @@ export class FeedComponent extends MainViewComponent implements OnInit {
   };
   FeedMode = FeedMode;
   public currentPage = 1;
-  public itemsPerPage = 20;
+  public itemsPerPage = 10;
   private postDetailsModal: MatDialogRef<PostDetailsModalComponent>;
   public isMainFiltersOpen: boolean;
 
@@ -423,6 +430,34 @@ export class FeedComponent extends MainViewComponent implements OnInit {
   public sortPosts(value: any): void {
     this.activeSorting = value;
     this.postsService.setSorting(this.activeSorting);
+    this.getPostsSubject.next({ params: this.params, add: false });
+  }
+
+  public filterByRecentDays(days: number, previousMonth = false): void {
+    const end = new Date();
+    const start = new Date();
+
+    if (previousMonth) {
+      start.setFullYear(start.getFullYear(), start.getMonth() - 1, 1);
+      start.setHours(0, 0, 0, 0);
+      end.setFullYear(end.getFullYear(), end.getMonth(), 0);
+      end.setHours(23, 59, 59, 999);
+    } else {
+      start.setHours(0, 0, 0, 0);
+      start.setDate(start.getDate() - Math.max(0, days - 1));
+      end.setHours(23, 59, 59, 999);
+    }
+
+    this.activeDatePreset = previousMonth ? -1 : days;
+    this.params.date_after = start.toISOString();
+    this.params.date_before = end.toISOString();
+    this.getPostsSubject.next({ params: this.params, add: false });
+  }
+
+  public clearRecentDateFilter(): void {
+    this.activeDatePreset = undefined;
+    delete this.params.date_after;
+    delete this.params.date_before;
     this.getPostsSubject.next({ params: this.params, add: false });
   }
 

@@ -138,4 +138,14 @@ export class SurveysComponent implements OnInit {
       this.getSurveys(true);
     }
   }
+
+  public previewSurvey(event: Event, survey: SurveyItem): void {
+    event.stopPropagation();
+    window.open(`/post/create/${survey.id}?preview=1`, '_blank', 'noopener');
+  }
+
+  public downloadSurvey(event: Event, survey: SurveyItem): void {
+    event.stopPropagation();
+    window.open(`/post/create/${survey.id}?preview=1&print=1`, '_blank', 'noopener');
+  }
 }

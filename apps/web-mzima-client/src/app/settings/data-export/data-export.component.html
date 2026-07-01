@@ -7,18 +7,24 @@
     <mat-tab [label]="'data_export.export' | translate" [data-qa]="'tab-export'">
       <div class="form-controls-spacer" *ngIf="!(isDesktop$ | async)!"></div>
       <div class="form-controls-panel">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'data_export.select_project' | translate }}</mat-label>
+          <mat-select [(value)]="selectedFormId" [data-qa]="'select-export-project'">
+            <mat-option *ngFor="let form of forms" [value]="form.id">{{ form.name }}</mat-option>
+          </mat-select>
+        </mat-form-field>
         <mzima-client-button
           fill="outline"
           color="secondary"
           (buttonClick)="selectFields()"
-          [disabled]="showProgress"
+          [disabled]="showProgress || !selectedFormId"
           [data-qa]="'btn-select-fields'"
         >
           {{ 'data_export.select_fields' | translate }}
         </mzima-client-button>
         <mzima-client-button
           (buttonClick)="exportAll()"
-          [disabled]="showProgress"
+          [disabled]="showProgress || !selectedFormId"
           [data-qa]="'btn-export-all'"
         >
           {{ 'data_export.all' | translate }}
@@ -72,13 +78,33 @@
             </td>
           </ng-container>
 
+          <ng-container matColumnDef="delete">
+            <th mat-header-cell *matHeaderCellDef align="center">
+              {{ 'app.delete' | translate }}
+            </th>
+            <td mat-cell align="center" *matCellDef="let job">
+              <mzima-client-button
+                fill="clear"
+                color="danger"
+                [iconOnly]="true"
+                (buttonClick)="deleteExport(job)"
+                [data-qa]="'btn-delete-export-' + job.id"
+              >
+                <mat-icon icon svgIcon="delete"></mat-icon>
+              </mzima-client-button>
+            </td>
+          </ng-container>
+
           <tr
             mat-header-row
-            *matHeaderRowDef="['name', 'status', 'created', 'expires', 'download']"
+            *matHeaderRowDef="['name', 'status', 'created', 'expires', 'download', 'delete']"
           ></tr>
           <tr
             mat-row
-            *matRowDef="let row; columns: ['name', 'status', 'created', 'expires', 'download']"
+            *matRowDef="
+              let row;
+              columns: ['name', 'status', 'created', 'expires', 'download', 'delete']
+            "
           ></tr>
         </table>
       </div>
@@ -92,7 +118,7 @@
     <p>{{ 'data_export.select_fields_desc' | translate }}</p>
   </div>
 
-  <div class="form-row" *ngFor="let form of forms">
+  <div class="form-row" *ngIf="selectedForm as form">
     <mat-label>{{ form.name }}</mat-label>
     <div class="checkbox-group">
       <div class="checkbox" *ngIf="form.attributes">

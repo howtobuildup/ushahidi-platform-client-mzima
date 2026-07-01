@@ -36,7 +36,25 @@
       (click)="$event.stopPropagation()"
       (change)="selectSurveys($event, survey)"
     ></mat-checkbox>
-    {{ survey.name }}
+    <span class="type-item__name">{{ survey.name }}</span>
+    <span class="type-item__actions">
+      <button
+        mat-icon-button
+        type="button"
+        (click)="previewSurvey($event, survey)"
+        [attr.aria-label]="'survey.preview_blank' | translate"
+      >
+        <mat-icon svgIcon="eye"></mat-icon>
+      </button>
+      <button
+        mat-icon-button
+        type="button"
+        (click)="downloadSurvey($event, survey)"
+        [attr.aria-label]="'survey.download_blank' | translate"
+      >
+        <mat-icon svgIcon="download"></mat-icon>
+      </button>
+    </span>
   </li>
 </ul>
 <button

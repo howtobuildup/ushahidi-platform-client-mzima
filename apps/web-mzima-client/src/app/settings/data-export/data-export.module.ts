@@ -7,6 +7,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatSelectModule } from '@angular/material/select';
 import { TranslateModule } from '@ngx-translate/core';
 import { DirectiveModule, SpinnerModule } from '@shared';
 
@@ -29,6 +30,7 @@ import { MzimaUiModule } from '@mzima-client/mzima-ui';
     MatIconModule,
     SpinnerModule,
     MatFormFieldModule,
+    MatSelectModule,
     MzimaUiModule,
   ],
 })

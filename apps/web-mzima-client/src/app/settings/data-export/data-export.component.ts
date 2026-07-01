@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Observable } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { PollingService, BreakpointService } from '@services';
+import { ConfirmModalService } from '../../core/services/confirm-modal.service';
 import {
   ExportJobsService,
   FormsService,
@@ -23,12 +24,14 @@ export class DataExportComponent implements OnInit {
   showProgress = false;
   exportView = true;
   exportJobsReady = false;
+  selectedFormId: string | number = '';
 
   constructor(
     private formsService: FormsService,
     private exportJobsService: ExportJobsService,
     private pollingService: PollingService,
     private breakpointService: BreakpointService,
+    private confirmModalService: ConfirmModalService,
   ) {
     this.isDesktop$ = this.breakpointService.isDesktop$.pipe(untilDestroyed(this));
   }
@@ -56,8 +59,14 @@ export class DataExportComponent implements OnInit {
   }
 
   exportAll() {
+    if (!this.selectedFormId) return;
     this.pollingService
-      .startExport({ send_to_hdx: false, include_hxl: false, send_to_browser: true })
+      .startExport({
+        filters: { form: [Number(this.selectedFormId)] },
+        send_to_hdx: false,
+        include_hxl: false,
+        send_to_browser: true,
+      })
       .subscribe();
     this.showProgress = true;
   }
@@ -83,21 +92,46 @@ export class DataExportComponent implements OnInit {
   }
 
   exportSelected() {
+    if (!this.selectedFormId) return;
     const fields: string[] = [];
-    Object.keys(this.fieldsMap).forEach((form) => {
-      Object.keys(this.fieldsMap[form]).forEach((key) => {
-        if (this.fieldsMap[form][key]) {
-          fields.push(key);
-        }
-      });
+    const selectedFields = this.fieldsMap[this.selectedFormId] || {};
+    Object.keys(selectedFields).forEach((key) => {
+      if (selectedFields[key]) fields.push(key);
     });
     this.pollingService
-      .startExport({ fields, send_to_hdx: false, include_hxl: false, send_to_browser: true })
+      .startExport({
+        fields,
+        filters: { form: [Number(this.selectedFormId)] },
+        send_to_hdx: false,
+        include_hxl: false,
+        send_to_browser: true,
+      })
       .subscribe();
   }
 
   selectFields() {
+    if (!this.selectedFormId) return;
     this.exportView = !this.exportView;
+  }
+
+  async deleteExport(job: ExportJobInterface) {
+    const confirmed = await this.confirmModalService.open({
+      title: 'Delete this exported file?',
+      description: '<p>This removes the export record and its downloadable file.</p>',
+      confirmButtonText: 'Delete',
+      cancelButtonText: 'Cancel',
+    });
+    if (!confirmed) return;
+
+    this.exportJobsService.delete(job.id).subscribe({
+      next: () => {
+        this.exportJobs = this.exportJobs.filter((item) => item.id !== job.id);
+      },
+    });
+  }
+
+  get selectedForm(): FormInterface | undefined {
+    return this.forms.find((form) => String(form.id) === String(this.selectedFormId));
   }
 
   private attachFormAttributes() {

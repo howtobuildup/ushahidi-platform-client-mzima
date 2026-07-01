@@ -33,6 +33,29 @@
   }
 }
 
+.type-item__name {
+  flex: 1;
+  min-width: 0;
+}
+
+.type-item__actions {
+  display: flex;
+  margin-inline-start: auto;
+
+  button {
+    width: 28px;
+    height: 28px;
+    line-height: 28px;
+
+    mat-icon {
+      width: 17px;
+      height: 17px;
+      font-size: 17px;
+      line-height: 17px;
+    }
+  }
+}
+
 .actions-spacer {
   height: 68px;
 }

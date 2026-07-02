@@ -164,11 +164,13 @@ $text: #252a3b;
       }
 
       .mat-form-field-label {
-        font-size: 11px;
+        font-size: 14px;
+        font-weight: 500;
       }
 
-      .mat-select-value {
-        font-size: 12px;
+      .mat-select-value,
+      .mat-input-element {
+        font-size: 14px;
         font-weight: 500;
       }
     }

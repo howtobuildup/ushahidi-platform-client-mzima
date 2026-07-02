@@ -34,7 +34,7 @@
     >
     </app-checkbox>
   </ion-card-header>
-  <ng-container *ngIf="isConnection && mediaId && post.source !== 'Twitter'">
+  <ng-container *ngIf="!ewerTile && isConnection && mediaId && post.source !== 'Twitter'">
     <ion-img class="post__media" [src]="mediaUrl"></ion-img>
   </ng-container>
   <app-twitter-widget
@@ -43,8 +43,69 @@
     [id]="post.data_source_message_id"
   ></app-twitter-widget>
   <ion-card-content class="post__body">
-    <ion-card-title class="post__title">{{ post.title }}</ion-card-title>
-    <p *ngIf="post.content">{{ post.content }}</p>
+    <ng-container *ngIf="ewerTile as tile; else defaultPostBody">
+      <div
+        class="post__ewer"
+        [ngClass]="{
+          'post__ewer--escalation': tile.escalationRisk
+        }"
+      >
+        <div class="post__ewer-topline">
+          <span class="post__pill post__pill--incident">{{ tile.incidentType }}</span>
+          <span
+            class="post__pill"
+            [ngClass]="tile.escalationRisk ? 'post__pill--risk' : 'post__pill--safe'"
+          >
+            {{ tile.escalationLabel }}
+          </span>
+        </div>
+
+        <ion-card-title class="post__ewer-location">{{ tile.location }}</ion-card-title>
+        <p class="post__ewer-site" *ngIf="tile.site">{{ tile.site }}</p>
+
+        <div
+          class="post__ewer-media"
+          *ngIf="mediaUrl || tile.hasMedia"
+          [ngClass]="{ 'post__ewer-media--placeholder': !mediaUrl }"
+        >
+          <ion-img *ngIf="mediaUrl" [src]="mediaUrl"></ion-img>
+          <span>Attached media</span>
+        </div>
+
+        <div class="post__ewer-tags">
+          <span class="post__pill post__pill--status" *ngIf="tile.status">
+            {{ tile.status }}
+          </span>
+          <span class="post__pill post__pill--muted" *ngIf="tile.sourcesLabel">
+            {{ tile.sourcesLabel }}
+          </span>
+        </div>
+
+        <p class="post__ewer-actors" *ngIf="tile.actors">{{ tile.actors }}</p>
+
+        <span
+          class="post__pill post__pill--response"
+          [ngClass]="tile.responseActive ? 'post__pill--response-active' : 'post__pill--muted'"
+        >
+          {{ tile.responseLabel }}
+        </span>
+
+        <div class="post__ewer-footer">
+          <span
+            >{{ post.post_date | date : 'mediumDate' }} &middot; via
+            {{ post.source || 'Web' }}</span
+          >
+          <span class="post__pill post__pill--code" *ngIf="tile.monitorCode">
+            {{ tile.monitorCode }}
+          </span>
+        </div>
+      </div>
+    </ng-container>
+
+    <ng-template #defaultPostBody>
+      <ion-card-title class="post__title">{{ post.title }}</ion-card-title>
+      <p *ngIf="post.content">{{ post.content }}</p>
+    </ng-template>
   </ion-card-content>
 </ion-card>
 

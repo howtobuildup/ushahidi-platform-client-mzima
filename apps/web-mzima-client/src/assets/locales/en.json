@@ -269,6 +269,8 @@
     "error_input_number": "Please input {{type}} type number"
   },
   "survey": {
+    "preview_blank": "Preview blank survey",
+    "download_blank": "Download or print blank survey",
     "no_tasks": "No tasks",
     "select_categories": "Select categories",
     "select_related_post": "Select related post",
@@ -525,6 +527,13 @@
       "search_collections": "Search Collections"
     },
     "sorting": "Sorting",
+    "date_presets": {
+      "today": "Submissions made today",
+      "last_3_days": "Submissions from the last 3 days",
+      "last_7_days": "Submissions from the last 7 days",
+      "last_month": "Submissions from the last month",
+      "clear": "Clear submission date filter"
+    },
     "sort": {
       "order": {
         "filter_type_tag": "Order",
@@ -751,13 +760,15 @@
   },
   "dashboard": {
     "title": "EWER Monitoring Dashboard",
-    "subtitle": "Inclusive Conflict Early Warning & Early Response - Somalia",
+    "subtitle": "Inclusive Conflict Early Warning & Early Response",
     "reporting_period": "Reporting period",
     "period": "",
     "loading": "Loading dashboard data...",
     "load_error": "Dashboard data could not be loaded.",
     "filters": {
       "title": "Filters",
+      "project": "Project",
+      "all_projects": "Latest project",
       "date_range": "Date range",
       "date_from": "From",
       "date_to": "To",
@@ -821,6 +832,7 @@
       "conflicts": "conflicts",
       "conflict_drivers": "Top clan / community conflict drivers",
       "conflict_response_by_district": "Conflict response rate by district",
+      "conflict_response_by_type": "Conflict response rate by type",
       "conflict_response_note": "Response rate calculated from submitted conflict records",
       "escalation_signals": "Escalation signals",
       "nature_of_gbv": "Nature of GBV incidents",
@@ -937,6 +949,10 @@
     "share_on_facebook": "Share on Facebook"
   },
   "post": {
+    "approve_submission": "Approve",
+    "delete_submission": "Delete submission",
+    "delete_submission_warning": "This permanently deletes the submission and cannot be undone.",
+    "delete_submission_failed": "The submission could not be deleted.",
     "post_count": "{{count}} posts",
     "see_more_plural": "See {{newPostsCount}} new posts",
     "see_more_singular": "See {{newPostsCount}} new post",
@@ -1662,6 +1678,7 @@
     "which_survey": "which survey?"
   },
   "data_export": {
+    "select_project": "Select project",
     "title": "Export data",
     "title_hxl": "Export data",
     "description": "Download all data as an Excel-compatible CSV file, or choose specific survey fields to export.",
@@ -1753,6 +1770,10 @@
     }
   },
   "user": {
+    "field_monitors": "Linked field monitors",
+    "select_field_monitors": "Select field monitors",
+    "field_monitors_required": "Select at least one field monitor.",
+    "field_monitors_help": "This partner will only see submissions containing the selected monitor codes.",
     "are_you_sure_you_want_to_delete_this_account": "Are you sure you want to delete this account?",
     "role_display": "Role: {{role}}",
     "contact": "{{type}}: {{contact}}",

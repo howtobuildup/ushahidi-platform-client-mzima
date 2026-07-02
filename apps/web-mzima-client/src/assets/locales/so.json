@@ -269,6 +269,8 @@
     "error_input_number": "Please input {{type}} type number"
   },
   "survey": {
+    "preview_blank": "Fiiri sahanka madhan",
+    "download_blank": "Soo dejiso ama daabac sahanka madhan",
     "no_tasks": "No tasks",
     "select_categories": "Select categories",
     "select_related_post": "Select related post",
@@ -525,6 +527,13 @@
       "search_collections": "Search Collections"
     },
     "sorting": "Sorting",
+    "date_presets": {
+      "today": "Gudbinnada maanta la sameeyay",
+      "last_3_days": "Gudbinnada 3-dii maalmood ee la soo dhaafay",
+      "last_7_days": "Gudbinnada 7-dii maalmood ee la soo dhaafay",
+      "last_month": "Gudbinnada bishii la soo dhaafay",
+      "clear": "Nadiifi shaandhada taariikhda gudbinta"
+    },
     "sort": {
       "order": {
         "filter_type_tag": "Order",
@@ -751,13 +760,15 @@
   },
   "dashboard": {
     "title": "Dashboard-ka Kormeerka EWER",
-    "subtitle": "Digniinta Hore iyo Jawaabta Hore ee Khilaafaadka - Soomaaliya",
+    "subtitle": "Digniinta Hore iyo Jawaabta Hore ee Khilaafaadka",
     "reporting_period": "Muddada warbixinta",
     "period": "",
     "loading": "Xogta dashboard-ka waa la soo gelinayaa...",
     "load_error": "Xogta dashboard-ka lama soo gelin karin.",
     "filters": {
       "title": "Shaandheeyeyaasha",
+      "project": "Mashruuc",
+      "all_projects": "Mashruucii ugu dambeeyay",
       "date_range": "Muddada taariikhda",
       "date_from": "Laga bilaabo",
       "date_to": "Ilaa",
@@ -821,6 +832,7 @@
       "conflicts": "khilaaf",
       "conflict_drivers": "Sababaha ugu waaweyn ee khilaafaadka beelaha",
       "conflict_response_by_district": "Heerka jawaabta khilaafaadka degmo kasta",
+      "conflict_response_by_type": "Heerka jawaabta khilaafaadka nooc kasta",
       "conflict_response_note": "Heerka jawaabta waxaa laga xisaabiyey diiwaannada khilaafaadka",
       "escalation_signals": "Calaamadaha sii-kordhinta",
       "nature_of_gbv": "Nooca dhacdooyinka GBV",
@@ -937,6 +949,10 @@
     "share_on_facebook": "Share on Facebook"
   },
   "post": {
+    "approve_submission": "Ansixi",
+    "delete_submission": "Tirtir gudbinta",
+    "delete_submission_warning": "Tani waxay si joogto ah u tirtiraysaa gudbinta, lamana soo celin karo.",
+    "delete_submission_failed": "Gudbinta lama tirtiri karin.",
     "post_count": "{{count}} posts",
     "see_more_plural": "See {{newPostsCount}} new posts",
     "see_more_singular": "See {{newPostsCount}} new post",
@@ -1662,6 +1678,7 @@
     "which_survey": "which survey?"
   },
   "data_export": {
+    "select_project": "Dooro mashruuca",
     "title": "Export data",
     "title_hxl": "Export and tag data",
     "description": "Export all of your data as a CSV or choose specific survey fields you want to export.",
@@ -1749,6 +1766,10 @@
     }
   },
   "user": {
+    "field_monitors": "Kormeerayaasha goobta ee ku xiran",
+    "select_field_monitors": "Dooro kormeerayaasha goobta",
+    "field_monitors_required": "Dooro ugu yaraan hal kormeere goobta.",
+    "field_monitors_help": "Lammaanahani wuxuu arki doonaa oo keliya gudbinnada leh koodadka la doortay.",
     "are_you_sure_you_want_to_delete_this_account": "Are you sure you want to delete this account?",
     "role_display": "Role: {{role}}",
     "contact": "{{type}}: {{contact}}",

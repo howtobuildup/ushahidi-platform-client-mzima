@@ -163,23 +163,6 @@
               ></mat-icon>
               {{ sorting.orderBy | translate }} ({{ sorting.order | translate }})
             </button>
-            <hr />
-            <button
-              mat-menu-item
-              *ngFor="let preset of datePresets"
-              (click)="filterByRecentDays(preset.days, preset.previousMonth)"
-              [class.active]="activeDatePreset === (preset.previousMonth ? -1 : preset.days)"
-            >
-              <mat-icon svgIcon="calendar"></mat-icon>
-              {{ preset.label | translate }}
-            </button>
-            <button
-              mat-menu-item
-              *ngIf="activeDatePreset !== undefined"
-              (click)="clearRecentDateFilter()"
-            >
-              {{ 'global_filter.date_presets.clear' | translate }}
-            </button>
           </mat-menu>
 
           <mzima-client-button

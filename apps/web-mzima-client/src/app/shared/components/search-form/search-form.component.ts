@@ -44,6 +44,20 @@ import dayjs from 'dayjs';
   styleUrls: ['./search-form.component.scss'],
 })
 export class SearchFormComponent implements OnInit {
+  public readonly datePresets = [
+    { value: 'today', label: 'Today', days: 1 },
+    { value: 'last-3-days', label: 'Last 3 days', days: 3 },
+    { value: 'last-7-days', label: 'Last 7 days', days: 7 },
+    { value: 'last-month', label: 'Last month', previousMonth: true },
+  ];
+  public readonly districts = [
+    { value: '', name: 'All districts' },
+    { value: 'Baidoa', name: 'Baidoa' },
+    { value: 'Hudur', name: 'Hudur' },
+    { value: 'Kismayo', name: 'Kismayo' },
+    { value: 'Dhobley', name: 'Dhobley' },
+  ];
+  public activeDatePreset?: string;
   public isDesktop$: Observable<boolean>;
   public _array = Array;
   public filterType = FilterType;
@@ -52,7 +66,10 @@ export class SearchFormComponent implements OnInit {
   public activeFilters: any;
   public savedSearches: Savedsearch[];
   public surveyList: SurveyItem[] = [];
-  public statuses = searchFormHelper.statuses;
+  public statuses = searchFormHelper.statuses.map((status) => ({
+    ...status,
+    name: status.value === 'published' ? 'Approved' : status.name,
+  }));
   public sources = searchFormHelper.sources;
   public categoriesData: MultilevelSelectOption[];
   public activeSavedSearch?: Savedsearch;
@@ -324,11 +341,7 @@ export class SearchFormComponent implements OnInit {
             .toISOString()
         : null,
       q: this.searchQuery,
-      center_point:
-        values.center_point?.location?.lat && values.center_point?.location?.lng
-          ? [values.center_point.location.lat, values.center_point.location.lng].join(',')
-          : null,
-      within_km: values.center_point.distance,
+      district: values.district || null,
     };
 
     this.activeFilters = {};
@@ -637,6 +650,33 @@ export class SearchFormComponent implements OnInit {
     this.postsService.applyFilters(this.activeFilters);
   }
 
+  public applyDatePreset(value: string): void {
+    const preset = this.datePresets.find((option) => option.value === value);
+    if (!preset) {
+      this.clearDatePreset();
+      return;
+    }
+    const end = new Date();
+    const start = new Date();
+
+    if (preset.previousMonth) {
+      start.setFullYear(start.getFullYear(), start.getMonth() - 1, 1);
+      end.setFullYear(end.getFullYear(), end.getMonth(), 0);
+    } else {
+      start.setDate(start.getDate() - Math.max(0, (preset.days || 1) - 1));
+    }
+
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
+    this.activeDatePreset = preset.value;
+    this.form.controls['date'].setValue({ start, end });
+  }
+
+  public clearDatePreset(): void {
+    this.activeDatePreset = undefined;
+    this.form.controls['date'].setValue({ start: '', end: '' });
+  }
+
   public applyAndClose(): void {
     this.applyFilters();
     this.toggleFilters(false);
@@ -654,13 +694,7 @@ export class SearchFormComponent implements OnInit {
         end: '',
       },
       place: '',
-      center_point: {
-        location: {
-          lat: null,
-          lng: null,
-        },
-        distance: 1,
-      },
+      district: '',
       ...filters,
     });
   }

@@ -121,15 +121,7 @@ export const DEFAULT_FILTERS = {
       end: '',
     },
   ],
-  center_point: [
-    {
-      location: {
-        lat: null,
-        lng: null,
-      },
-      distance: 1,
-    },
-  ],
+  district: [''],
 };
 
 export const compareForms = (form1: any, form2: any) => {

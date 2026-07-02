@@ -418,7 +418,7 @@
           [disabled]="form.disabled"
           (buttonClick)="deleteSubmission()"
         >
-          {{ 'post.delete_submission' | translate }}
+          Delete submission
         </mzima-client-button>
         <mzima-client-button
           *ngIf="!previewMode"
@@ -428,7 +428,7 @@
             form.disabled || form.invalid || emptyLocation || submitted || taskForm.invalid
           "
         >
-          {{ (postId ? 'post.approve_submission' : 'app.submit') | translate }}
+          {{ postId ? 'Approve' : ('app.submit' | translate) }}
         </mzima-client-button>
       </div>
     </form>

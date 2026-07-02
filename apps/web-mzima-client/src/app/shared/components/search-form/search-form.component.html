@@ -348,6 +348,30 @@
 
       <app-filter-control
         class="search-form__filters-panel__item"
+        [(ngModel)]="activeDatePreset"
+        [ngModelOptions]="{ standalone: true }"
+        [type]="filterType.Select"
+        [options]="datePresets"
+        [fields]="['value', 'label']"
+        title="Submission date"
+        [badge]="activeDatePreset ? 1 : null"
+        (clear)="clearDatePreset()"
+        (filterChange)="applyDatePreset($event)"
+      >
+        <div class="clear-button" suffix>
+          <mzima-client-button
+            fill="clear"
+            size="small"
+            class="filter-group__head__button"
+            (buttonClick)="clearDatePreset()"
+          >
+            Clear
+          </mzima-client-button>
+        </div>
+      </app-filter-control>
+
+      <app-filter-control
+        class="search-form__filters-panel__item"
         formControlName="date"
         [type]="filterType.Daterange"
         (clear)="clearFilter('date')"
@@ -368,18 +392,20 @@
 
       <app-filter-control
         class="search-form__filters-panel__item"
-        formControlName="center_point"
-        [type]="filterType.Location"
-        (clear)="clearFilter('center_point')"
-        [title]="'global_filter.location' | translate"
-        [badge]="form.controls['center_point'].value.location?.lat ? 1 : null"
+        formControlName="district"
+        [type]="filterType.Select"
+        [options]="districts"
+        [fields]="['value', 'name']"
+        (clear)="clearFilter('district')"
+        title="District"
+        [badge]="form.controls['district'].value ? 1 : null"
       >
         <div class="clear-button" suffix>
           <mzima-client-button
             fill="clear"
             size="small"
             class="filter-group__head__button"
-            (buttonClick)="clearFilter('center_point')"
+            (buttonClick)="clearFilter('district')"
           >
             {{ 'nav.clear' | translate }}
           </mzima-client-button>

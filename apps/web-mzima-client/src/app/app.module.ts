@@ -6,7 +6,7 @@ import { BrowserModule, Meta } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { LeafletModule } from '@asymmetrik/ngx-leaflet';
 import { LeafletMarkerClusterModule } from '@asymmetrik/ngx-leaflet-markercluster';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
+import { MissingTranslationHandler, TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { ConfigService, EnvService } from '@services';
 import { SharedModule, SpinnerModule } from '@shared';
@@ -18,6 +18,7 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { AuthModule } from './auth/auth.module';
 import { ErrorsHandlerService } from './core/handlers/errors-handler.service';
+import { ReadableMissingTranslationHandler } from './core/handlers/readable-missing-translation.handler';
 import { AuthInterceptor } from './core/interceptors';
 import { IntercomModule } from '@supy-io/ngx-intercom';
 
@@ -124,6 +125,10 @@ export function playerFactory(): any {
         provide: TranslateLoader,
         useFactory: HttpLoaderFactory,
         deps: [HttpClient],
+      },
+      missingTranslationHandler: {
+        provide: MissingTranslationHandler,
+        useClass: ReadableMissingTranslationHandler,
       },
       useDefaultLang: true,
     }),

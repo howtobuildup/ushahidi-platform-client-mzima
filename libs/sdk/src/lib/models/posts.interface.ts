@@ -40,6 +40,7 @@ export interface GeoJsonFilter {
   q?: string;
   page?: number;
   user?: string;
+  district?: string;
 }
 
 export interface PostPropertiesInterface {

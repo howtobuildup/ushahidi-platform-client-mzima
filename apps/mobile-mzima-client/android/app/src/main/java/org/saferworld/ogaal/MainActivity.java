@@ -1,4 +1,4 @@
-package com.ushahidi.mobile;
+package org.saferworld.ogaal;
 
 import com.getcapacitor.BridgeActivity;
 

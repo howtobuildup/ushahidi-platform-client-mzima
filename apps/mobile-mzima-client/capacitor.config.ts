@@ -3,8 +3,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 const appName: string = 'OGAAL';
 
 const config: CapacitorConfig = {
-  // need change to app id before publish
-  appId: 'com.ushahidi.mobile',
+  appId: 'org.saferworld.ogaal',
   appName: appName,
   webDir: '../../dist/apps/mobile-mzima-client',
   bundledWebRuntime: false,

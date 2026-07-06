@@ -2,6 +2,6 @@
 <resources>
     <string name="app_name">OGAAL</string>
     <string name="title_activity_main">OGAAL</string>
-    <string name="package_name">com.ushahidi.mobile</string>
-    <string name="custom_url_scheme">com.ushahidi.mobile</string>
+    <string name="package_name">org.saferworld.ogaal</string>
+    <string name="custom_url_scheme">org.saferworld.ogaal</string>
 </resources>

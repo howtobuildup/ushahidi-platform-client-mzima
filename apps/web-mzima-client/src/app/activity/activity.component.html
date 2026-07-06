@@ -325,7 +325,7 @@
             <div class="horizontal-bar" *ngFor="let item of gbvNature">
               <span>{{ item.labelKey | translate }}</span>
               <i><b [style.width.%]="item.value" [style.background]="item.color"></b></i>
-              <strong>{{ item.value }}%</strong>
+              <strong>{{ item.count }} / {{ item.total }} ({{ item.value }}%)</strong>
             </div>
           </div>
         </article>

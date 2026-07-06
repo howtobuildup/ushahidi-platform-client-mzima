@@ -847,7 +847,7 @@
       "monthly_timeline": "Monthly incident timeline",
       "monthly_timeline_detail": "Stacked by incident type",
       "top_responding_actors": "Top responding actors",
-      "share_of_actioned": "Share of actioned cases"
+      "share_of_actioned": "Frequency and percentage of submissions where a response occurred"
     },
     "districts": {
       "baidoa": "Baidoa",

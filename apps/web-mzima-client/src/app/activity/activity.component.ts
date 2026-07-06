@@ -65,6 +65,12 @@ interface NamedValue {
   value: number;
 }
 
+interface RespondingActorValue {
+  name: string;
+  frequency: number;
+  percentage: number;
+}
+
 interface DashboardResponse {
   result: {
     reporting_period: { start: string | null; end: string | null };
@@ -101,7 +107,8 @@ interface DashboardResponse {
       warning: number;
       total: number;
     }>;
-    responding_actors: NamedValue[];
+    responding_actors: RespondingActorValue[];
+    responding_actors_total_yes: number;
   };
 }
 
@@ -485,18 +492,13 @@ export class ActivityComponent implements OnInit {
         warning: item.warning,
       },
     }));
-    const actorCounts = this.mapNamedValues(data.responding_actors.slice(0, 6), this.actorKey, [
-      '#505596',
-      '#656aa8',
-      '#979bcc',
-      '#979bcc',
-      '#b8bce0',
-      '#b8bce0',
-    ]);
-    const actorTotal = this.metricTotal(actorCounts);
-    this.respondingActors = actorCounts.map((item) => ({
-      ...item,
-      value: this.percentage(item.value, actorTotal),
+    const actorColors = ['#505596', '#656aa8', '#979bcc', '#979bcc', '#b8bce0', '#b8bce0'];
+    this.respondingActors = data.responding_actors.slice(0, 6).map((item, index) => ({
+      labelKey: this.actorKey(item.name),
+      value: item.percentage,
+      count: item.frequency,
+      total: data.responding_actors_total_yes,
+      color: actorColors[index % actorColors.length],
     }));
   }
 

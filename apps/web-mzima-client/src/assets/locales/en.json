@@ -864,7 +864,8 @@
       "early_warning": "Early warning",
       "early_warning_short": "Early warn.",
       "environmental_climate": "Environmental and Climate Early Warning",
-      "environmental_climate_short": "Climate warning"
+      "environmental_climate_short": "Climate warning",
+      "uncategorized": "Uncategorized"
     },
     "conflict": {
       "clan": "Clan",

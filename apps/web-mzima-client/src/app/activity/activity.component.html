@@ -186,43 +186,20 @@
             <ng-container *ngTemplateOutlet="chartExportActions"></ng-container>
           </header>
           <div class="compact-legend">
-            <span
-              ><i class="tone-conflict"></i>{{ 'dashboard.categories.conflict' | translate }}</span
-            >
-            <span><i class="tone-gbv"></i>{{ 'dashboard.categories.gbv' | translate }}</span>
-            <span><i class="tone-social"></i>{{ 'dashboard.categories.social' | translate }}</span>
-            <span
-              ><i class="tone-warning"></i
-              >{{ 'dashboard.categories.early_warning' | translate }}</span
-            >
-            <span
-              ><i class="tone-climate"></i
-              >{{ 'dashboard.categories.environmental_climate' | translate }}</span
-            >
+            <span *ngFor="let category of incidentMix">
+              <i [style.background]="category.color"></i>{{ category.labelKey | translate }}
+            </span>
           </div>
           <div class="stacked-chart">
             <div class="stacked-chart__column" *ngFor="let district of districtTypes">
               <strong>{{ district.total }}</strong>
               <div class="stacked-chart__bar">
                 <i
-                  class="tone-conflict"
-                  [style.height.%]="stackHeight(district.values.conflict, district.total)"
-                ></i>
-                <i
-                  class="tone-gbv"
-                  [style.height.%]="stackHeight(district.values.gbv, district.total)"
-                ></i>
-                <i
-                  class="tone-social"
-                  [style.height.%]="stackHeight(district.values.social, district.total)"
-                ></i>
-                <i
-                  class="tone-warning"
-                  [style.height.%]="stackHeight(district.values.warning, district.total)"
-                ></i>
-                <i
-                  class="tone-climate"
-                  [style.height.%]="stackHeight(district.values.climate, district.total)"
+                  *ngFor="let category of incidentMix"
+                  [style.background]="category.color"
+                  [style.height.%]="
+                    stackHeight(district.values[category.key || ''], district.total)
+                  "
                 ></i>
               </div>
               <span>{{ district.labelKey | translate }}</span>

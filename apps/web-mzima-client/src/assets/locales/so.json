@@ -864,7 +864,8 @@
       "early_warning": "Digniin hore",
       "early_warning_short": "Digniin hore",
       "environmental_climate": "Digniinta Deegaanka iyo Cimilada",
-      "environmental_climate_short": "Digniin cimilo"
+      "environmental_climate_short": "Digniin cimilo",
+      "uncategorized": "Aan la kala saarin"
     },
     "conflict": {
       "clan": "Beel",

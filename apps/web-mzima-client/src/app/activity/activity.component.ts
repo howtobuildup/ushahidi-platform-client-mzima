@@ -26,6 +26,7 @@ interface KpiMetric {
 }
 
 interface ChartMetric {
+  key?: string;
   labelKey: string;
   value: number;
   color?: string;
@@ -41,6 +42,13 @@ interface DistrictMetric extends ChartMetric {
 interface StackedMetric {
   labelKey: string;
   total: number;
+  values: Record<string, number>;
+}
+
+interface TimelineMetric {
+  labelKey: string;
+  shortLabelKey: string;
+  total: number;
   values: {
     conflict: number;
     gbv: number;
@@ -48,10 +56,6 @@ interface StackedMetric {
     warning: number;
     climate: number;
   };
-}
-
-interface TimelineMetric extends StackedMetric {
-  shortLabelKey: string;
 }
 
 interface GenderMetric {
@@ -87,13 +91,10 @@ interface DashboardResponse {
     };
     districts: NamedValue[];
     incident_mix: Record<string, number>;
+    incident_categories: Array<{ key: string; name: string; value: number }>;
     district_types: Array<
       NamedValue & {
-        conflict: number;
-        gbv: number;
-        social: number;
-        warning: number;
-        climate: number;
+        types: Record<string, number>;
         total: number;
       }
     >;
@@ -375,35 +376,26 @@ export class ActivityComponent implements OnInit {
       y: 18 + Math.floor(index / 4) * 25,
       color: districtColors[index % districtColors.length],
     }));
-    this.incidentMix = [
-      this.metric('dashboard.categories.gbv', data.incident_mix['gbv'], this.colors.danger),
-      this.metric(
-        'dashboard.categories.conflict',
-        data.incident_mix['conflict'],
-        this.colors.primary,
-      ),
-      this.metric('dashboard.categories.social', data.incident_mix['social'], this.colors.social),
-      this.metric(
-        'dashboard.categories.early_warning',
-        data.incident_mix['warning'],
-        this.colors.success,
-      ),
-      this.metric(
-        'dashboard.categories.environmental_climate',
-        data.incident_mix['climate'],
-        '#367f8f',
-      ),
+    const incidentColors = [
+      this.colors.primary,
+      this.colors.danger,
+      this.colors.social,
+      this.colors.success,
+      '#367f8f',
+      '#8b6aa8',
+      '#cfb24c',
+      '#477da3',
     ];
+    this.incidentMix = data.incident_categories.map((item, index) => ({
+      key: item.key,
+      labelKey: this.incidentCategoryKey(item.key, item.name),
+      value: item.value,
+      color: incidentColors[index % incidentColors.length],
+    }));
     this.districtTypes = data.district_types.map((item) => ({
       labelKey: this.districtKey(item.name),
       total: item.total,
-      values: {
-        conflict: item.conflict,
-        gbv: item.gbv,
-        social: item.social,
-        warning: item.warning,
-        climate: item.climate,
-      },
+      values: item.types,
     }));
 
     this.conflictTypes = this.mapNamedValues(data.conflict_types, this.conflictTypeKey, [
@@ -539,6 +531,18 @@ export class ActivityComponent implements OnInit {
 
   private metric(labelKey: string, value = 0, color = '#505596'): ChartMetric {
     return { labelKey, value: value || 0, color };
+  }
+
+  private incidentCategoryKey(key: string, name: string): string {
+    const labels: Record<string, string> = {
+      conflict: 'dashboard.categories.conflict',
+      gbv: 'dashboard.categories.gbv',
+      social: 'dashboard.categories.social',
+      warning: 'dashboard.categories.early_warning',
+      climate: 'dashboard.categories.environmental_climate',
+      uncategorized: 'dashboard.categories.uncategorized',
+    };
+    return labels[key] || name;
   }
 
   private coverageMetric(

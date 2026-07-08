@@ -46,6 +46,7 @@ interface StackedMetric {
     gbv: number;
     social: number;
     warning: number;
+    climate: number;
   };
 }
 
@@ -80,13 +81,21 @@ interface DashboardResponse {
       conflicts: number;
       social_violence: number;
       early_warning: number;
+      environmental_climate: number;
       response_rate: number;
       escalation_rate: number;
     };
     districts: NamedValue[];
     incident_mix: Record<string, number>;
     district_types: Array<
-      NamedValue & { conflict: number; gbv: number; social: number; warning: number; total: number }
+      NamedValue & {
+        conflict: number;
+        gbv: number;
+        social: number;
+        warning: number;
+        climate: number;
+        total: number;
+      }
     >;
     conflict_types: NamedValue[];
     conflict_drivers: NamedValue[];
@@ -105,6 +114,7 @@ interface DashboardResponse {
       gbv: number;
       social: number;
       warning: number;
+      climate: number;
       total: number;
     }>;
     responding_actors: RespondingActorValue[];
@@ -147,6 +157,7 @@ export class ActivityComponent implements OnInit {
         { labelKey: 'dashboard.categories.gbv', value: 'gbv' },
         { labelKey: 'dashboard.categories.social', value: 'social' },
         { labelKey: 'dashboard.categories.early_warning', value: 'warning' },
+        { labelKey: 'dashboard.categories.environmental_climate', value: 'climate' },
       ],
     },
   ];
@@ -337,6 +348,12 @@ export class ActivityComponent implements OnInit {
         'success',
       ),
       this.kpi(
+        'dashboard.kpis.environmental_climate',
+        data.kpis.environmental_climate,
+        this.incidentDetail(data.kpis.environmental_climate, total),
+        'success',
+      ),
+      this.kpi(
         'dashboard.kpis.response_rate',
         `${data.kpis.response_rate}%`,
         'Cases marked as responded to',
@@ -350,16 +367,13 @@ export class ActivityComponent implements OnInit {
       ),
     ];
 
-    const districtPositions = [
-      { x: 48, y: 42, color: '#51569a' },
-      { x: 30, y: 24, color: '#656aa8' },
-      { x: 55, y: 68, color: '#7f84bb' },
-      { x: 36, y: 84, color: '#a4a8cf' },
-    ];
-    this.districts = data.districts.slice(0, 4).map((item, index) => ({
+    const districtColors = ['#51569a', '#656aa8', '#7f84bb', '#a4a8cf', '#367f8f'];
+    this.districts = data.districts.map((item, index) => ({
       labelKey: this.districtKey(item.name),
       value: item.value,
-      ...districtPositions[index],
+      x: 14 + (index % 4) * 23,
+      y: 18 + Math.floor(index / 4) * 25,
+      color: districtColors[index % districtColors.length],
     }));
     this.incidentMix = [
       this.metric('dashboard.categories.gbv', data.incident_mix['gbv'], this.colors.danger),
@@ -374,8 +388,13 @@ export class ActivityComponent implements OnInit {
         data.incident_mix['warning'],
         this.colors.success,
       ),
+      this.metric(
+        'dashboard.categories.environmental_climate',
+        data.incident_mix['climate'],
+        '#367f8f',
+      ),
     ];
-    this.districtTypes = data.district_types.slice(0, 4).map((item) => ({
+    this.districtTypes = data.district_types.map((item) => ({
       labelKey: this.districtKey(item.name),
       total: item.total,
       values: {
@@ -383,6 +402,7 @@ export class ActivityComponent implements OnInit {
         gbv: item.gbv,
         social: item.social,
         warning: item.warning,
+        climate: item.climate,
       },
     }));
 
@@ -475,6 +495,11 @@ export class ActivityComponent implements OnInit {
         data.response_coverage['warning'],
         '#5d9f94',
       ),
+      this.coverageMetric(
+        'dashboard.categories.environmental_climate_short',
+        data.response_coverage['climate'],
+        '#367f8f',
+      ),
     ];
     this.earlyWarningDistricts = data.early_warning_districts
       .slice(0, 4)
@@ -490,10 +515,11 @@ export class ActivityComponent implements OnInit {
         gbv: item.gbv,
         social: item.social,
         warning: item.warning,
+        climate: item.climate,
       },
     }));
     const actorColors = ['#505596', '#656aa8', '#979bcc', '#979bcc', '#b8bce0', '#b8bce0'];
-    this.respondingActors = data.responding_actors.slice(0, 6).map((item, index) => ({
+    this.respondingActors = data.responding_actors.map((item, index) => ({
       labelKey: this.actorKey(item.name),
       value: item.percentage,
       count: item.frequency,
@@ -569,6 +595,8 @@ export class ActivityComponent implements OnInit {
       hudur: 'dashboard.districts.hudur',
       kismayo: 'dashboard.districts.kismayo',
       dhobley: 'dashboard.districts.dhobley',
+      sool: 'dashboard.districts.sool',
+      sool_region: 'dashboard.districts.sool',
     };
     const normalizedValue = this.normalize(value);
 
@@ -593,7 +621,7 @@ export class ActivityComponent implements OnInit {
       borderland_clashes: 'dashboard.conflict.borderland_clashes',
       inheritance_marriage: 'dashboard.conflict.inheritance_marriage',
     };
-    return keys[this.normalize(value)] || 'dashboard.conflict.other';
+    return keys[this.normalize(value)] || value || 'dashboard.conflict.other';
   }
 
   private gbvNatureKey(value: string): string {
@@ -641,7 +669,7 @@ export class ActivityComponent implements OnInit {
       community_mediation: 'dashboard.responders.community_mediation',
       cbos: 'dashboard.responders.cbos',
     };
-    return keys[this.normalize(value)] || 'dashboard.responders.cbos';
+    return keys[this.normalize(value)] || value || 'Unknown';
   }
 
   private monthKey(value: string): string {

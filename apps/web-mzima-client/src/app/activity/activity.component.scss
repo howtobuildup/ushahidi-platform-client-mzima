@@ -783,10 +783,14 @@ $text: #252a3b;
   background: $success;
 }
 
+.tone-climate {
+  background: #367f8f;
+}
+
 .stacked-chart {
   display: grid;
   height: 185px;
-  grid-template-columns: repeat(4, minmax(54px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(54px, 1fr));
   align-items: end;
   gap: 26px;
   margin-top: 12px;

@@ -806,6 +806,7 @@
       "social_violence": "Social violence",
       "social_detail": "25% of incidents",
       "early_warning": "Early warning",
+      "environmental_climate": "Environmental and climate early warning",
       "warning_detail": "Alert signals",
       "response_rate": "Response rate",
       "response_detail": "490 of 644 actioned",
@@ -853,14 +854,17 @@
       "baidoa": "Baidoa",
       "hudur": "Hudur",
       "kismayo": "Kismayo",
-      "dhobley": "Dhobley"
+      "dhobley": "Dhobley",
+      "sool": "Sool Region"
     },
     "categories": {
       "conflict": "Conflict",
       "gbv": "GBV",
       "social": "Social",
       "early_warning": "Early warning",
-      "early_warning_short": "Early warn."
+      "early_warning_short": "Early warn.",
+      "environmental_climate": "Environmental and Climate Early Warning",
+      "environmental_climate_short": "Climate warning"
     },
     "conflict": {
       "clan": "Clan",

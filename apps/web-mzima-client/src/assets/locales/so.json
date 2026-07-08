@@ -806,6 +806,7 @@
       "social_violence": "Rabshadaha bulshada",
       "social_detail": "25% dhacdooyinka",
       "early_warning": "Digniinta hore",
+      "environmental_climate": "Digniinta deegaanka iyo cimilada",
       "warning_detail": "Calaamadaha digniinta",
       "response_rate": "Heerka jawaabta",
       "response_detail": "490 ka mid ah 644 ayaa laga jawaabay",
@@ -853,14 +854,17 @@
       "baidoa": "Baydhabo",
       "hudur": "Xudur",
       "kismayo": "Kismaayo",
-      "dhobley": "Dhoobley"
+      "dhobley": "Dhoobley",
+      "sool": "Gobolka Sool"
     },
     "categories": {
       "conflict": "Khilaaf",
       "gbv": "GBV",
       "social": "Bulsho",
       "early_warning": "Digniin hore",
-      "early_warning_short": "Digniin hore"
+      "early_warning_short": "Digniin hore",
+      "environmental_climate": "Digniinta Deegaanka iyo Cimilada",
+      "environmental_climate_short": "Digniin cimilo"
     },
     "conflict": {
       "clan": "Beel",

@@ -195,6 +195,10 @@
               ><i class="tone-warning"></i
               >{{ 'dashboard.categories.early_warning' | translate }}</span
             >
+            <span
+              ><i class="tone-climate"></i
+              >{{ 'dashboard.categories.environmental_climate' | translate }}</span
+            >
           </div>
           <div class="stacked-chart">
             <div class="stacked-chart__column" *ngFor="let district of districtTypes">
@@ -215,6 +219,10 @@
                 <i
                   class="tone-warning"
                   [style.height.%]="stackHeight(district.values.warning, district.total)"
+                ></i>
+                <i
+                  class="tone-climate"
+                  [style.height.%]="stackHeight(district.values.climate, district.total)"
                 ></i>
               </div>
               <span>{{ district.labelKey | translate }}</span>
@@ -466,6 +474,10 @@
                 ><i class="tone-warning"></i
                 >{{ 'dashboard.categories.early_warning' | translate }}</span
               >
+              <span
+                ><i class="tone-climate"></i
+                >{{ 'dashboard.categories.environmental_climate' | translate }}</span
+              >
             </div>
           </header>
           <div class="stacked-chart stacked-chart--timeline">
@@ -487,6 +499,10 @@
                 <i
                   class="tone-warning"
                   [style.height.%]="stackHeight(month.values.warning, month.total)"
+                ></i>
+                <i
+                  class="tone-climate"
+                  [style.height.%]="stackHeight(month.values.climate, month.total)"
                 ></i>
               </div>
               <span>{{ month.shortLabelKey | translate }}</span>

@@ -163,7 +163,8 @@ export class ActivityComponent implements OnInit {
     },
   ];
 
-  public kpis: KpiMetric[] = [];
+  public summaryKpis: KpiMetric[] = [];
+  public incidentKpis: KpiMetric[] = [];
   public districts: DistrictMetric[] = [];
   public incidentMix: ChartMetric[] = [];
   public districtTypes: StackedMetric[] = [];
@@ -322,8 +323,22 @@ export class ActivityComponent implements OnInit {
       data.reporting_period.start,
       data.reporting_period.end,
     );
-    this.kpis = [
+    this.summaryKpis = [
       this.kpi('dashboard.kpis.total_reports', total, `${total} stored submissions`, 'primary'),
+      this.kpi(
+        'dashboard.kpis.response_rate',
+        `${data.kpis.response_rate}%`,
+        'Cases marked as responded to',
+        'success',
+      ),
+      this.kpi(
+        'dashboard.kpis.escalation_signals',
+        `${data.kpis.escalation_rate}%`,
+        'Cases with escalation indicators',
+        'warning',
+      ),
+    ];
+    this.incidentKpis = [
       this.kpi(
         'dashboard.kpis.gbv',
         data.kpis.gbv,
@@ -353,18 +368,6 @@ export class ActivityComponent implements OnInit {
         data.kpis.environmental_climate,
         this.incidentDetail(data.kpis.environmental_climate, total),
         'success',
-      ),
-      this.kpi(
-        'dashboard.kpis.response_rate',
-        `${data.kpis.response_rate}%`,
-        'Cases marked as responded to',
-        'success',
-      ),
-      this.kpi(
-        'dashboard.kpis.escalation_signals',
-        `${data.kpis.escalation_rate}%`,
-        'Cases with escalation indicators',
-        'warning',
       ),
     ];
 

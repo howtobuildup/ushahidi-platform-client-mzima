@@ -189,18 +189,42 @@ $text: #252a3b;
   }
 }
 
-.kpi-grid {
+.kpi-groups {
   display: grid;
-  grid-template-columns: repeat(7, minmax(120px, 1fr));
   gap: 10px;
   margin-bottom: 18px;
+}
+
+.kpi-grid {
+  display: grid;
+  gap: 10px;
+
+  &--summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  &--incidents {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
 
   @include breakpoint-max($laptop-small) {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    &--incidents {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
   }
 
   @include breakpoint-max($tablet) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    &--summary,
+    &--incidents {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 440px) {
+    &--summary,
+    &--incidents {
+      grid-template-columns: 1fr;
+    }
   }
 }
 

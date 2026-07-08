@@ -97,16 +97,21 @@
       </mzima-client-button>
     </section>
 
-    <section class="kpi-grid" [attr.aria-label]="'dashboard.kpis.title' | translate">
-      <article
-        class="kpi-card"
-        *ngFor="let metric of kpis"
-        [class]="'kpi-card kpi-card--' + metric.tone"
-      >
-        <span>{{ metric.labelKey | translate }}</span>
-        <strong>{{ metric.value }}</strong>
-        <small>{{ metric.detail }}</small>
-      </article>
+    <section class="kpi-groups" [attr.aria-label]="'dashboard.kpis.title' | translate">
+      <div class="kpi-grid kpi-grid--summary">
+        <article *ngFor="let metric of summaryKpis" [class]="'kpi-card kpi-card--' + metric.tone">
+          <span>{{ metric.labelKey | translate }}</span>
+          <strong>{{ metric.value }}</strong>
+          <small>{{ metric.detail }}</small>
+        </article>
+      </div>
+      <div class="kpi-grid kpi-grid--incidents">
+        <article *ngFor="let metric of incidentKpis" [class]="'kpi-card kpi-card--' + metric.tone">
+          <span>{{ metric.labelKey | translate }}</span>
+          <strong>{{ metric.value }}</strong>
+          <small>{{ metric.detail }}</small>
+        </article>
+      </div>
     </section>
 
     <section class="dashboard-section">

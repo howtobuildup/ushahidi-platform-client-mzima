@@ -1,5 +1,23 @@
 apply plugin: 'com.android.application'
 
+def releaseSigningCredentialsFile = rootProject.file('../../../release-signing/OGAAL_UPLOAD_KEY_CREDENTIALS.txt')
+def releaseSigningCredentials = [:]
+
+if (releaseSigningCredentialsFile.exists()) {
+    releaseSigningCredentialsFile.eachLine { line ->
+        def separatorIndex = line.indexOf(':')
+        if (separatorIndex > 0) {
+            releaseSigningCredentials[line.substring(0, separatorIndex).trim()] = line.substring(separatorIndex + 1).trim()
+        }
+    }
+}
+
+def hasReleaseSigningCredentials =
+    releaseSigningCredentials['Keystore'] &&
+    releaseSigningCredentials['Key alias'] &&
+    releaseSigningCredentials['Keystore password'] &&
+    releaseSigningCredentials['Key password']
+
 android {
     namespace "org.saferworld.ogaal"
     compileSdk rootProject.ext.compileSdkVersion
@@ -7,13 +25,23 @@ android {
         applicationId "org.saferworld.ogaal"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 2
-        versionName "1.1"
+        versionCode 3
+        versionName "1.2"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
              // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+    signingConfigs {
+        if (hasReleaseSigningCredentials) {
+            release {
+                storeFile rootProject.file("../../../release-signing/${releaseSigningCredentials['Keystore']}")
+                storePassword releaseSigningCredentials['Keystore password']
+                keyAlias releaseSigningCredentials['Key alias']
+                keyPassword releaseSigningCredentials['Key password']
+            }
         }
     }
     buildTypes {
@@ -22,6 +50,9 @@ android {
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             debuggable false
+            if (hasReleaseSigningCredentials) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 }

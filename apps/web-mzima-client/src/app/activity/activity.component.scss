@@ -145,7 +145,7 @@ $text: #252a3b;
 
 .filter-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(140px, 1fr));
+  grid-template-columns: repeat(5, minmax(135px, 1fr));
   gap: 8px;
 
   mat-form-field {
@@ -535,17 +535,76 @@ $text: #252a3b;
   height: 200px;
   margin: 0 auto;
 
-  &__shape {
+  &__svg {
     position: absolute;
-    inset: 8px 22px;
-    border: 2px solid #989dcc;
-    background: #f0f1f8;
-    clip-path: polygon(28% 5%, 72% 0, 68% 30%, 85% 49%, 65% 72%, 42% 92%, 25% 100%, 16% 61%);
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  &__outline {
+    fill: #f0f1f8;
+    stroke: #989dcc;
+    stroke-width: 2;
+  }
+
+  &__region {
+    fill: #e5e7f3;
+    stroke: #ffffff;
+    stroke-width: 1.5;
+
+    &--sanaag {
+      fill: #e9ebf6;
+    }
+
+    &--sool {
+      fill: #e0e3f2;
+    }
+
+    &--hiran {
+      fill: #eceef8;
+    }
+
+    &--gedo {
+      fill: #dfe2f1;
+    }
+  }
+}
+
+.map-label {
+  position: absolute;
+  z-index: 1;
+  transform: translate(-50%, -50%);
+  font-size: 9px;
+  font-weight: 700;
+  color: rgba(37, 42, 59, 0.58);
+  pointer-events: none;
+
+  &--sanaag {
+    left: 45%;
+    top: 32%;
+  }
+
+  &--sool {
+    left: 66%;
+    top: 43%;
+  }
+
+  &--hiran {
+    left: 50%;
+    top: 70%;
+  }
+
+  &--gedo {
+    left: 33%;
+    top: 52%;
   }
 }
 
 .map-bubble {
   position: absolute;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -635,6 +694,12 @@ $text: #252a3b;
     .horizontal-bar {
       min-height: 25px;
       grid-template-columns: minmax(120px, 1.3fr) minmax(80px, 1.6fr) 28px;
+    }
+  }
+
+  &--responders {
+    .horizontal-bar {
+      grid-template-columns: minmax(150px, 1.2fr) minmax(90px, 1.3fr) minmax(76px, auto);
     }
   }
 

@@ -83,6 +83,14 @@
             </mat-option>
           </mat-select>
         </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'dashboard.filters.district' | translate }}</mat-label>
+          <mat-select [(value)]="selectedDistrictFilter">
+            <mat-option *ngFor="let option of districtOptions" [value]="option.value">
+              {{ option.labelKey | translate }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
       </div>
       <mzima-client-button
         fill="outline"
@@ -125,7 +133,28 @@
           </header>
           <div class="district-map-layout">
             <div class="district-map" aria-hidden="true">
-              <div class="district-map__shape"></div>
+              <svg viewBox="0 0 220 210" class="district-map__svg" role="img">
+                <path
+                  class="district-map__outline"
+                  d="M68 9 L168 1 L160 56 L195 86 L166 122 L126 157 L85 195 L64 134 L47 94 Z"
+                ></path>
+                <path
+                  class="district-map__region district-map__region--sanaag"
+                  d="M68 9 L168 1 L160 56 L93 62 Z"
+                ></path>
+                <path
+                  class="district-map__region district-map__region--sool"
+                  d="M93 62 L160 56 L195 86 L151 111 L102 98 Z"
+                ></path>
+                <path
+                  class="district-map__region district-map__region--hiran"
+                  d="M64 134 L102 98 L151 111 L126 157 L85 195 Z"
+                ></path>
+                <path
+                  class="district-map__region district-map__region--gedo"
+                  d="M47 94 L93 62 L102 98 L64 134 Z"
+                ></path>
+              </svg>
               <button
                 type="button"
                 class="map-bubble"
@@ -140,6 +169,10 @@
               >
                 <span>{{ district.value }}</span>
               </button>
+              <span class="map-label map-label--sanaag">Sanaag</span>
+              <span class="map-label map-label--sool">Sool</span>
+              <span class="map-label map-label--hiran">Hiran</span>
+              <span class="map-label map-label--gedo">Gedo</span>
             </div>
             <div class="district-ranking">
               <strong>{{ 'dashboard.charts.ranking' | translate }}</strong>
@@ -498,11 +531,11 @@
             <p>{{ 'dashboard.charts.share_of_actioned' | translate }}</p>
             <ng-container *ngTemplateOutlet="chartExportActions"></ng-container>
           </header>
-          <div class="horizontal-bars">
+          <div class="horizontal-bars horizontal-bars--responders">
             <div class="horizontal-bar" *ngFor="let item of respondingActors">
               <span>{{ item.labelKey | translate }}</span>
               <i><b [style.width.%]="item.value" [style.background]="item.color"></b></i>
-              <strong>{{ item.value }}%</strong>
+              <strong>{{ item.count }}/{{ item.total }} ({{ item.value }}%)</strong>
             </div>
           </div>
         </article>

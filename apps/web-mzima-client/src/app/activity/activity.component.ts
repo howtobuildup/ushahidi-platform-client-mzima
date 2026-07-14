@@ -90,6 +90,7 @@ interface DashboardResponse {
       escalation_rate: number;
     };
     districts: NamedValue[];
+    district_options: NamedValue[];
     incident_mix: Record<string, number>;
     incident_categories: Array<{ key: string; name: string; value: number }>;
     district_types: Array<
@@ -136,6 +137,7 @@ export class ActivityComponent implements OnInit {
   public loadError = false;
   public reportingPeriod = '';
   public selectedIncidentType = 'all';
+  public selectedDistrictFilter = 'all';
   public selectedFormId = '';
   public forms: FormInterface[] = [];
   public selectedDistrict?: DistrictMetric;
@@ -215,6 +217,7 @@ export class ActivityComponent implements OnInit {
 
   public clearFilters(): void {
     this.selectedIncidentType = 'all';
+    this.selectedDistrictFilter = 'all';
     this.selectedFormId = '';
     this.dateFrom = '';
     this.dateTo = '';
@@ -307,6 +310,7 @@ export class ActivityComponent implements OnInit {
     return {
       form_id: this.selectedFormId,
       incident_type: this.selectedIncidentType === 'all' ? '' : this.selectedIncidentType,
+      district: this.selectedDistrictFilter === 'all' ? '' : this.selectedDistrictFilter,
       date_from: this.dateFrom,
       date_to: this.dateTo,
     };
@@ -375,10 +379,10 @@ export class ActivityComponent implements OnInit {
     this.districts = data.districts.map((item, index) => ({
       labelKey: this.districtKey(item.name),
       value: item.value,
-      x: 14 + (index % 4) * 23,
-      y: 18 + Math.floor(index / 4) * 25,
+      ...this.districtCoordinates(item.name, index),
       color: districtColors[index % districtColors.length],
     }));
+    this.updateSelectedDistrict(data.district_options || data.districts);
     const incidentColors = [
       this.colors.primary,
       this.colors.danger,
@@ -608,6 +612,48 @@ export class ActivityComponent implements OnInit {
     const normalizedValue = this.normalize(value);
 
     return keys[normalizedValue] || value || 'Unknown';
+  }
+
+  public districtOptions: FilterOption[] = [
+    { labelKey: 'dashboard.filters.all_districts', value: 'all' },
+  ];
+
+  private updateSelectedDistrict(districts: NamedValue[]): void {
+    const options = districts.map((district) => ({
+      labelKey: this.districtKey(district.name),
+      value: this.normalize(district.name),
+    }));
+    this.districtOptions = [
+      { labelKey: 'dashboard.filters.all_districts', value: 'all' },
+      ...options,
+    ];
+
+    if (
+      this.selectedDistrictFilter !== 'all' &&
+      !this.districtOptions.some((option) => option.value === this.selectedDistrictFilter)
+    ) {
+      this.selectedDistrictFilter = 'all';
+    }
+  }
+
+  private districtCoordinates(value: string, index: number): { x: number; y: number } {
+    const coordinates: Record<string, { x: number; y: number }> = {
+      sanaag: { x: 45, y: 18 },
+      hiran: { x: 54, y: 52 },
+      hiiraan: { x: 54, y: 52 },
+      gado: { x: 42, y: 78 },
+      gedo: { x: 42, y: 78 },
+      sool: { x: 65, y: 28 },
+      sool_region: { x: 65, y: 28 },
+    };
+    const normalizedValue = this.normalize(value);
+
+    return (
+      coordinates[normalizedValue] || {
+        x: 26 + (index % 3) * 24,
+        y: 24 + Math.floor(index / 3) * 24,
+      }
+    );
   }
 
   private conflictTypeKey(value: string): string {

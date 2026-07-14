@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { map, Observable } from 'rxjs';
+import { map, Observable, switchMap, take } from 'rxjs';
 import { apiHelpers } from '../helpers';
 import { EnvLoader } from '../loader';
 import { ExportJobInterface } from '../models';
@@ -43,6 +43,17 @@ export class ExportJobsService extends ResourceService<any> {
 
   override delete(id: string | number): Observable<any> {
     return super.delete(id);
+  }
+
+  download(jobId: string | number): Observable<Blob> {
+    return this.currentLoader.getApiUrl().pipe(
+      take(1),
+      switchMap((backendUrl) =>
+        this.httpClient.get(`${backendUrl}${apiHelpers.API_V_5}exports/jobs/${jobId}/download`, {
+          responseType: 'blob',
+        }),
+      ),
+    );
   }
 
   processJobs(jobs: ExportJobInterface[]) {

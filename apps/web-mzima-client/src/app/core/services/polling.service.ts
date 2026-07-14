@@ -142,17 +142,18 @@ export class PollingService implements OnDestroy {
     }
   }
 
-  private downloadFile(downloadUrl: string) {
+  private downloadBlob(blob: Blob, fileName: string) {
     const URL = window.URL || window.webkitURL;
 
     const anchor: HTMLAnchorElement = this.renderer.createElement('a');
-    anchor.href = downloadUrl;
+    anchor.href = URL.createObjectURL(blob);
+    anchor.download = fileName;
     this.renderer.appendChild(document.body, anchor);
     anchor.click();
     anchor.remove();
 
     setTimeout(() => {
-      URL.revokeObjectURL(downloadUrl);
+      URL.revokeObjectURL(anchor.href);
     }, 0);
   }
 
@@ -187,7 +188,9 @@ export class PollingService implements OnDestroy {
         result.forEach((job) => {
           if (job.status === 'SUCCESS') {
             if (job.send_to_browser) {
-              this.downloadFile(job.url);
+              this.exportJobsService.download(job.id).subscribe((blob) => {
+                this.downloadBlob(blob, `csv-export-${job.id}.csv`);
+              });
             } else {
               this.showNotification('success');
             }

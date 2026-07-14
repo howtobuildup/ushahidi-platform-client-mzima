@@ -109,6 +109,12 @@ export class DataExportComponent implements OnInit {
       .subscribe();
   }
 
+  downloadExport(job: ExportJobInterface) {
+    this.exportJobsService.download(job.id).subscribe((blob) => {
+      this.downloadBlob(blob, `csv-export-${job.id}.csv`);
+    });
+  }
+
   selectFields() {
     if (!this.selectedFormId) return;
     this.exportView = !this.exportView;
@@ -146,5 +152,15 @@ export class DataExportComponent implements OnInit {
           },
         });
     });
+  }
+
+  private downloadBlob(blob: Blob, fileName: string): void {
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(link.href), 0);
   }
 }

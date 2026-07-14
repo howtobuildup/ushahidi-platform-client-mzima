@@ -1,7 +1,10 @@
 <ng-container *ngIf="exportView; else fieldSelector">
   <h1>{{ 'data_export.title' | translate }}</h1>
   <div class="description">
-    <p *ngIf="showProgress; else description">{{ 'data_export.export_progress' | translate }}</p>
+    <div
+      *ngIf="showProgress; else description"
+      [innerHTML]="'data_export.export_progress' | translate"
+    ></div>
   </div>
   <mat-tab-group dynamicHeight disableRipple disablePagination animationDuration="0ms">
     <mat-tab [label]="'data_export.export' | translate" [data-qa]="'tab-export'">
@@ -67,11 +70,10 @@
             <td mat-cell align="center" *matCellDef="let job">
               <mzima-client-button
                 fill="clear"
-                [href]="job.url"
                 color="secondary"
                 [iconOnly]="true"
                 class="download-btn"
-                [download]="'data_export.job' | translate : { jobId: job.id }"
+                (buttonClick)="downloadExport(job)"
               >
                 <mat-icon icon svgIcon="download"></mat-icon>
               </mzima-client-button>

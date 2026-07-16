@@ -30,13 +30,17 @@ export class ExportJobsService extends ResourceService<any> {
   }
 
   override getById(id: string | number): Observable<ExportJobInterface> {
-    return super.getById(id);
+    return super.getById(id).pipe(
+      map((response: any) => {
+        return this.processJob(response.result || response);
+      }),
+    );
   }
 
   override get(url?: string | undefined, queryParams?: any): Observable<ExportJobInterface[]> {
     return super.get(url, queryParams).pipe(
-      map((response) => {
-        return this.processJobs(response.results);
+      map((response: any) => {
+        return this.processJobs(response.results || []);
       }),
     );
   }
@@ -57,19 +61,21 @@ export class ExportJobsService extends ResourceService<any> {
   }
 
   processJobs(jobs: ExportJobInterface[]) {
-    return jobs.map((job) => {
-      if (job.status) {
-        if (!job.url_expiration) {
-          job.url_expiration = '';
-        } else if (Number.isInteger(job.url_expiration)) {
-          job.url_expiration = new Date(+job.url_expiration * 1000).toLocaleString();
-        }
+    return jobs.map((job) => this.processJob(job));
+  }
 
-        job.created_timestamp = job.created_timestamp ? job.created_timestamp : job.created;
-        job.created = new Date(job.created).toLocaleString();
-        job.status = job.status.toLowerCase();
+  private processJob(job: ExportJobInterface): ExportJobInterface {
+    if (job?.status) {
+      if (!job.url_expiration) {
+        job.url_expiration = '';
+      } else if (Number.isInteger(job.url_expiration)) {
+        job.url_expiration = new Date(+job.url_expiration * 1000).toLocaleString();
       }
-      return job;
-    });
+
+      job.created_timestamp = job.created_timestamp ? job.created_timestamp : job.created;
+      job.created = new Date(job.created).toLocaleString();
+      job.status = job.status.toLowerCase();
+    }
+    return job;
   }
 }

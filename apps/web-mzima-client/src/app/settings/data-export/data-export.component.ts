@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Observable } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { PollingService, BreakpointService } from '@services';
+import { PollingService, BreakpointService, NotificationService } from '@services';
 import { ConfirmModalService } from '../../core/services/confirm-modal.service';
 import {
   ExportJobsService,
@@ -32,6 +32,7 @@ export class DataExportComponent implements OnInit {
     private pollingService: PollingService,
     private breakpointService: BreakpointService,
     private confirmModalService: ConfirmModalService,
+    private notificationService: NotificationService,
   ) {
     this.isDesktop$ = this.breakpointService.isDesktop$.pipe(untilDestroyed(this));
   }
@@ -40,6 +41,14 @@ export class DataExportComponent implements OnInit {
     this.formsService.get().subscribe((forms) => {
       this.forms = forms.results;
       this.attachFormAttributes();
+    });
+    this.pollingService.exportFinished$.pipe(untilDestroyed(this)).subscribe(() => {
+      this.showProgress = false;
+      this.loadExportJobs();
+    });
+    this.pollingService.exportFailed$.pipe(untilDestroyed(this)).subscribe(() => {
+      this.showProgress = false;
+      this.loadExportJobs();
     });
     this.loadExportJobs();
   }
@@ -67,7 +76,12 @@ export class DataExportComponent implements OnInit {
         include_hxl: false,
         send_to_browser: true,
       })
-      .subscribe();
+      .subscribe({
+        error: (error) => {
+          this.showProgress = false;
+          this.notificationService.showError(error);
+        },
+      });
     this.showProgress = true;
   }
 
@@ -106,12 +120,23 @@ export class DataExportComponent implements OnInit {
         include_hxl: false,
         send_to_browser: true,
       })
-      .subscribe();
+      .subscribe({
+        error: (error) => {
+          this.showProgress = false;
+          this.notificationService.showError(error);
+        },
+      });
+    this.showProgress = true;
   }
 
   downloadExport(job: ExportJobInterface) {
-    this.exportJobsService.download(job.id).subscribe((blob) => {
-      this.downloadBlob(blob, `csv-export-${job.id}.csv`);
+    this.exportJobsService.download(job.id).subscribe({
+      next: (blob) => {
+        this.downloadBlob(blob, `csv-export-${job.id}.csv`);
+      },
+      error: (error) => {
+        this.notificationService.showError(error);
+      },
     });
   }
 

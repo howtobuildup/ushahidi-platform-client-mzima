@@ -28,6 +28,10 @@ export class PollingService implements OnDestroy {
   importFinished$ = this.importFinished.asObservable();
   private importFailed = new Subject();
   importFailed$ = this.importFailed.asObservable();
+  private exportFinished = new Subject<ExportJobInterface>();
+  exportFinished$ = this.exportFinished.asObservable();
+  private exportFailed = new Subject<ExportJobInterface | unknown>();
+  exportFailed$ = this.exportFailed.asObservable();
   private renderer;
 
   constructor(
@@ -186,15 +190,26 @@ export class PollingService implements OnDestroy {
       )
       .subscribe((result) => {
         result.forEach((job) => {
-          if (job.status === 'SUCCESS') {
+          const status = this.normalizedStatus(job);
+          if (status === 'success') {
             if (job.send_to_browser) {
-              this.exportJobsService.download(job.id).subscribe((blob) => {
-                this.downloadBlob(blob, `csv-export-${job.id}.csv`);
+              this.exportJobsService.download(job.id).subscribe({
+                next: (blob) => {
+                  this.downloadBlob(blob, `csv-export-${job.id}.csv`);
+                  this.exportFinished.next(job);
+                  this.showNotification('success');
+                },
+                error: (error) => {
+                  this.exportFailed.next(error);
+                  this.notificationService.showError(error);
+                },
               });
             } else {
+              this.exportFinished.next(job);
               this.showNotification('success');
             }
-          } else if (job.status === 'FAILED') {
+          } else if (status === 'failed') {
+            this.exportFailed.next(job);
             this.showNotification('error');
           } else {
             nextQueries.push(this.exportJobsService.getById(job.id));
@@ -206,6 +221,10 @@ export class PollingService implements OnDestroy {
           this.currentPool.exporting = 0;
         }
       });
+  }
+
+  private normalizedStatus(job: ExportJobInterface): string {
+    return String(job?.status || '').toLowerCase();
   }
 
   ngOnDestroy() {

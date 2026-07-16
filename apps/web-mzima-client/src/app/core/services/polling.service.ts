@@ -163,10 +163,10 @@ export class PollingService implements OnDestroy {
 
   startExport(query: Partial<ExportJobInterface>) {
     query.entity_type = 'post';
+    this.showNotification('started');
 
     return this.exportJobsService.save(query).pipe(
       map((job) => {
-        this.showNotification('started');
         this.startExportPolling([this.exportJobsService.getById(job.id)]);
         return job.id;
       }),

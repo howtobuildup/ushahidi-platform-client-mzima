@@ -52,6 +52,29 @@ export function buildXlsFormValueMap(
   return mappedValues;
 }
 
+export function buildDynamicRuleValueSignature(
+  fields: XlsFormFieldLike[],
+  values: XlsFormValueMap,
+): string {
+  const mappedValues = buildXlsFormValueMap(fields, values);
+  const dependencies = new Set<string>();
+
+  for (const field of fields) {
+    const config = getXlsFormConfig(field);
+    for (const expression of [config.relevant, config.choice_filter]) {
+      if (!expression) continue;
+
+      for (const match of expression.matchAll(/\$\{([^}]+)\}/g)) {
+        dependencies.add(match[1].trim());
+      }
+    }
+  }
+
+  return JSON.stringify(
+    [...dependencies].sort().map((dependency) => [dependency, mappedValues[dependency] ?? null]),
+  );
+}
+
 export function getXlsFormConfig(field: XlsFormFieldLike): XlsFormFieldConfig {
   if (!field?.config || Array.isArray(field.config)) {
     return {};

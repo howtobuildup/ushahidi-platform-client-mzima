@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, switchMap, tap } from 'rxjs';
+import { map, Observable, switchMap, tap, throwError } from 'rxjs';
 import { EnvService, SessionService } from '@services';
 import { Router } from '@angular/router';
 import { CONST } from '@constants';
@@ -40,23 +40,7 @@ export class AuthService extends ResourceService<any> {
     };
     return super.post(payload).pipe(
       switchMap((authResponse) => {
-        const accessToken = authResponse.access_token;
-
-        if (authResponse.expires_in) {
-          this.sessionService.setSessionData({
-            accessToken,
-            accessTokenExpires: Math.floor(Date.now() / 1000) + authResponse.expires_in,
-            grantType: 'password',
-            tokenType: authResponse.token_type,
-          });
-        } else if (authResponse.expires) {
-          this.sessionService.setSessionData({
-            accessToken,
-            accessTokenExpires: authResponse.expires,
-            grantType: 'password',
-            tokenType: authResponse.token_type,
-          });
-        }
+        this.storeSession(authResponse, 'password');
         return this.userService.getCurrentUser();
       }),
       tap((userData) => {
@@ -65,6 +49,40 @@ export class AuthService extends ResourceService<any> {
         this.userService.dispatchUserEvents(result);
       }),
     );
+  }
+
+  refreshAccessToken(): Observable<string> {
+    const refreshToken = this.sessionService.currentRefreshToken;
+    if (!refreshToken) {
+      return throwError(() => new Error('No refresh token is available'));
+    }
+
+    return super
+      .post({
+        refresh_token: refreshToken,
+        grant_type: 'refresh_token',
+        client_id: this.env.environment.oauth_client_id,
+        client_secret: this.env.environment.oauth_client_secret,
+        scope: CONST.CLAIMED_USER_SCOPES.join(' '),
+      })
+      .pipe(
+        tap((authResponse) => this.storeSession(authResponse, 'refresh_token')),
+        map((authResponse) => authResponse.access_token),
+      );
+  }
+
+  private storeSession(authResponse: any, grantType: string): void {
+    const expires = authResponse.expires_in
+      ? Math.floor(Date.now() / 1000) + authResponse.expires_in
+      : authResponse.expires || 0;
+
+    this.sessionService.setSessionData({
+      accessToken: authResponse.access_token,
+      accessTokenExpires: expires,
+      grantType,
+      refreshToken: authResponse.refresh_token || this.sessionService.currentRefreshToken,
+      tokenType: authResponse.token_type,
+    });
   }
 
   public setCurrentUserToSession(user: UserInterface) {

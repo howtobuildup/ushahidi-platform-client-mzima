@@ -1,4 +1,8 @@
-import { buildXlsFormValueMap, getFilteredOptions } from './xlsform-rules.helper';
+import {
+  buildDynamicRuleValueSignature,
+  buildXlsFormValueMap,
+  getFilteredOptions,
+} from './xlsform-rules.helper';
 
 describe('getFilteredOptions', () => {
   const options = [
@@ -90,5 +94,55 @@ describe('buildXlsFormValueMap', () => {
       region_where_incidence_occurred: 'sanaag',
       district_where_incidence_occurred: 'erigavo',
     });
+  });
+});
+
+describe('buildDynamicRuleValueSignature', () => {
+  const fields = [
+    {
+      key: 'incident-key',
+      config: { xlsform_name: 'Incidence_type' },
+    },
+    {
+      key: 'dependent-key',
+      config: { relevant: "${Incidence_type} = 'conflicts'" },
+    },
+    {
+      key: 'district-key',
+      config: { xlsform_name: 'district', choice_filter: '${region}=region' },
+    },
+    {
+      key: 'region-key',
+      config: { xlsform_name: 'region' },
+    },
+    { key: 'ordinary-text-key' },
+  ];
+
+  it('changes when a dynamic-rule dependency changes', () => {
+    const initial = buildDynamicRuleValueSignature(fields, {
+      'incident-key': 'conflicts',
+      'region-key': 'hiran',
+    });
+    const changed = buildDynamicRuleValueSignature(fields, {
+      'incident-key': 'climate_shock',
+      'region-key': 'hiran',
+    });
+
+    expect(changed).not.toEqual(initial);
+  });
+
+  it('stays stable when an unrelated text field changes', () => {
+    const initial = buildDynamicRuleValueSignature(fields, {
+      'incident-key': 'conflicts',
+      'region-key': 'hiran',
+      'ordinary-text-key': '',
+    });
+    const changed = buildDynamicRuleValueSignature(fields, {
+      'incident-key': 'conflicts',
+      'region-key': 'hiran',
+      'ordinary-text-key': 'Test',
+    });
+
+    expect(changed).toEqual(initial);
   });
 });

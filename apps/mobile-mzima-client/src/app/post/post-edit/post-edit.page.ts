@@ -5,6 +5,7 @@ import { ActivatedRoute, Params, Router } from '@angular/router';
 import { STORAGE_KEYS } from '@constants';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
+  distinctUntilChanged,
   EMPTY,
   from,
   lastValueFrom,
@@ -334,8 +335,13 @@ export class PostEditPage {
   private setupDynamicFormRules(): void {
     this.dynamicRulesSubscription?.unsubscribe();
     this.applyDynamicFieldVisibility();
+    const fields = this.tasks.flatMap((task) => task.fields);
     this.dynamicRulesSubscription = this.form.valueChanges
-      .pipe(untilDestroyed(this))
+      .pipe(
+        map((values) => xlsFormRules.buildDynamicRuleValueSignature(fields, values)),
+        distinctUntilChanged(),
+        untilDestroyed(this),
+      )
       .subscribe(() => this.applyDynamicFieldVisibility());
   }
 

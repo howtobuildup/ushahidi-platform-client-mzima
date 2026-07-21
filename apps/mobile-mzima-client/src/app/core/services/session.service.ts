@@ -20,6 +20,7 @@ export class SessionService {
     accessToken: '',
     accessTokenExpires: 0,
     grantType: '',
+    refreshToken: '',
     tokenType: '',
   });
 
@@ -40,6 +41,7 @@ export class SessionService {
     accessToken: '',
     accessTokenExpires: 0,
     grantType: '',
+    refreshToken: '',
     tokenType: '',
   };
 
@@ -123,6 +125,8 @@ export class SessionService {
     this.currentSessionData.accessTokenExpires = +expires;
     this.currentSessionData.grantType =
       localStorage.getItem(this.getLocalStorageNameMapper('grantType')) || '';
+    this.currentSessionData.refreshToken =
+      localStorage.getItem(this.getLocalStorageNameMapper('refreshToken')) || '';
     this.currentSessionData.tokenType =
       localStorage.getItem(this.getLocalStorageNameMapper('tokenType')) || '';
 
@@ -145,6 +149,10 @@ export class SessionService {
 
   get currentAuthTokenType() {
     return this.currentSessionData.tokenType;
+  }
+
+  get currentRefreshToken() {
+    return this.currentSessionData.refreshToken;
   }
 
   loadUserDataFromLocalStorage() {
@@ -186,6 +194,7 @@ export class SessionService {
       accessToken: '',
       accessTokenExpires: 0,
       grantType: '',
+      refreshToken: '',
       tokenType: '',
     };
     this._currentSessionData$.next(this.currentSessionData);

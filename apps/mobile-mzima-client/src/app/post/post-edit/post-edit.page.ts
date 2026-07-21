@@ -424,13 +424,6 @@ export class PostEditPage {
     return xlsFormRules.getOptionLabel(option);
   }
 
-  public getSelectOptions(field: any): any[] {
-    return this.getFieldOptions(field).map((option) => ({
-      value: this.getOptionValue(option),
-      label: this.getOptionLabel(option),
-    }));
-  }
-
   public changeLocation(data: any, formKey: string) {
     const { location, error } = data;
     const { lat, lng } = location;

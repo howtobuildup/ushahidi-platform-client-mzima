@@ -262,7 +262,7 @@
                   [label]="field?.label"
                   [formControlName]="field.key"
                   *ngIf="getFieldOptions(field)?.length; else noOptions"
-                  [options]="getSelectOptions(field)"
+                  [options]="getFieldOptions(field)"
                 >
                 </app-select>
               </div>

@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output, forwardRef } from '@angular/core';
 import { NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
 import { SelectOptionInterface } from '@models';
+import { xlsFormRules } from '@mzima-client/sdk';
 
 @Component({
   selector: 'app-select',
@@ -15,7 +16,7 @@ import { SelectOptionInterface } from '@models';
   ],
 })
 export class SelectComponent implements ControlValueAccessor {
-  @Input() public options?: SelectOptionInterface[];
+  @Input() public options?: Array<SelectOptionInterface | string | Record<string, any>>;
   @Input() public label?: string;
   @Input() public placeholder: string = '';
   @Input() public hintHTML?: string;
@@ -65,7 +66,11 @@ export class SelectComponent implements ControlValueAccessor {
     this.selectBlur.emit();
   }
 
-  public getOptionLabel(option: SelectOptionInterface | string): string {
-    return typeof option === 'string' ? option : option.label;
+  public getOptionValue(option: SelectOptionInterface | string | Record<string, any>): any {
+    return xlsFormRules.getOptionValue(option);
+  }
+
+  public getOptionLabel(option: SelectOptionInterface | string | Record<string, any>): string {
+    return xlsFormRules.getOptionLabel(option);
   }
 }

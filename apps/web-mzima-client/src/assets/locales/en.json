@@ -270,7 +270,7 @@
   },
   "survey": {
     "preview_blank": "Preview blank survey",
-    "download_blank": "Download or print blank survey",
+    "download_blank": "Download survey XLSForm",
     "no_tasks": "No tasks",
     "select_categories": "Select categories",
     "select_related_post": "Select related post",

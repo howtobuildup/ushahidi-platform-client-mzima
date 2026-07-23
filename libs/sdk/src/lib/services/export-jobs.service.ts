@@ -57,6 +57,12 @@ export class ExportJobsService extends ResourceService<any> {
           responseType: 'blob',
         }),
       ),
+      map((blob) => {
+        if (!blob.size) {
+          throw new Error('The generated CSV file is empty. Please run the export again.');
+        }
+        return blob;
+      }),
     );
   }
 

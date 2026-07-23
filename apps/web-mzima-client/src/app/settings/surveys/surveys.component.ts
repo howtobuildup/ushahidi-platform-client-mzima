@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
+import { xlsFormExportHelper } from '@helpers';
 import { MatCheckboxChange } from '@angular/material/checkbox';
 import { TranslateService } from '@ngx-translate/core';
-import { BreakpointService } from '@services';
+import { BreakpointService, NotificationService } from '@services';
 import { forkJoin, Observable, take } from 'rxjs';
 import { SurveysService, SurveyItem } from '@mzima-client/sdk';
 import { ConfirmModalService } from '../../core/services/confirm-modal.service';
@@ -34,6 +35,7 @@ export class SurveysComponent implements OnInit {
     private readonly translate: TranslateService,
     private readonly confirmModalService: ConfirmModalService,
     private readonly breakpointService: BreakpointService,
+    private readonly notificationService: NotificationService,
   ) {
     this.isDesktop$ = this.breakpointService.isDesktop$.pipe(untilDestroyed(this));
   }
@@ -146,6 +148,29 @@ export class SurveysComponent implements OnInit {
 
   public downloadSurvey(event: Event, survey: SurveyItem): void {
     event.stopPropagation();
-    window.open(`/post/create/${survey.id}?preview=1&print=1`, '_blank', 'noopener');
+    this.surveysService
+      .getSurveyById(survey.id)
+      .pipe(take(1))
+      .subscribe({
+        next: (response) => {
+          try {
+            const fullSurvey: SurveyItem = response.result || response;
+            const exported = xlsFormExportHelper.exportXlsForm(fullSurvey);
+            const url = URL.createObjectURL(exported.blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = exported.fileName;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 0);
+          } catch (error: any) {
+            this.notificationService.showError(error?.message || 'Failed to export XLSForm.');
+          }
+        },
+        error: (error) => {
+          this.notificationService.showError(error?.message || 'Failed to load survey.');
+        },
+      });
   }
 }

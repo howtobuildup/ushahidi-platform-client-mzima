@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, RendererFactory2 } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import {
   Observable,
   Subject,
@@ -11,6 +11,7 @@ import {
   map,
 } from 'rxjs';
 import { DataImportService, ExportJobsService, ExportJobInterface } from '@mzima-client/sdk';
+import { downloadBlob } from '../helpers/blob-download';
 import { NotificationService } from './notification.service';
 import { EnvService } from './env.service';
 
@@ -32,17 +33,13 @@ export class PollingService implements OnDestroy {
   exportFinished$ = this.exportFinished.asObservable();
   private exportFailed = new Subject<ExportJobInterface | unknown>();
   exportFailed$ = this.exportFailed.asObservable();
-  private renderer;
 
   constructor(
     private dataImportService: DataImportService,
     private exportJobsService: ExportJobsService,
     private notificationService: NotificationService,
     private env: EnvService,
-    private rendererFactory: RendererFactory2,
-  ) {
-    this.renderer = this.rendererFactory.createRenderer(null, null);
-  }
+  ) {}
 
   getImportJobs() {
     this.dataImportService.get().subscribe((allJobs) => {
@@ -146,21 +143,6 @@ export class PollingService implements OnDestroy {
     }
   }
 
-  private downloadBlob(blob: Blob, fileName: string) {
-    const URL = window.URL || window.webkitURL;
-
-    const anchor: HTMLAnchorElement = this.renderer.createElement('a');
-    anchor.href = URL.createObjectURL(blob);
-    anchor.download = fileName;
-    this.renderer.appendChild(document.body, anchor);
-    anchor.click();
-    anchor.remove();
-
-    setTimeout(() => {
-      URL.revokeObjectURL(anchor.href);
-    }, 0);
-  }
-
   startExport(query: Partial<ExportJobInterface>) {
     query.entity_type = 'post';
     this.showNotification('started');
@@ -195,7 +177,7 @@ export class PollingService implements OnDestroy {
             if (job.send_to_browser) {
               this.exportJobsService.download(job.id).subscribe({
                 next: (blob) => {
-                  this.downloadBlob(blob, `csv-export-${job.id}.csv`);
+                  downloadBlob(blob, `csv-export-${job.id}.csv`);
                   this.exportFinished.next(job);
                   this.showNotification('success');
                 },

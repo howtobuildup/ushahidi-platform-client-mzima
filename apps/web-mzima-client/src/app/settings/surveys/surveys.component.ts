@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { xlsFormExportHelper } from '@helpers';
+import { downloadBlob } from '../../core/helpers/blob-download';
 import { MatCheckboxChange } from '@angular/material/checkbox';
 import { TranslateService } from '@ngx-translate/core';
 import { BreakpointService, NotificationService } from '@services';
@@ -156,14 +157,7 @@ export class SurveysComponent implements OnInit {
           try {
             const fullSurvey: SurveyItem = response.result || response;
             const exported = xlsFormExportHelper.exportXlsForm(fullSurvey);
-            const url = URL.createObjectURL(exported.blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = exported.fileName;
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            setTimeout(() => URL.revokeObjectURL(url), 0);
+            downloadBlob(exported.blob, exported.fileName);
           } catch (error: any) {
             this.notificationService.showError(error?.message || 'Failed to export XLSForm.');
           }

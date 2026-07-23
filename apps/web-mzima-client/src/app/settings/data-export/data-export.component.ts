@@ -9,6 +9,7 @@ import {
   FormInterface,
   ExportJobInterface,
 } from '@mzima-client/sdk';
+import { downloadBlob } from '../../core/helpers/blob-download';
 
 @UntilDestroy()
 @Component({
@@ -132,7 +133,7 @@ export class DataExportComponent implements OnInit {
   downloadExport(job: ExportJobInterface) {
     this.exportJobsService.download(job.id).subscribe({
       next: (blob) => {
-        this.downloadBlob(blob, `csv-export-${job.id}.csv`);
+        downloadBlob(blob, `csv-export-${job.id}.csv`);
       },
       error: (error) => {
         this.notificationService.showError(error);
@@ -177,15 +178,5 @@ export class DataExportComponent implements OnInit {
           },
         });
     });
-  }
-
-  private downloadBlob(blob: Blob, fileName: string): void {
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.setTimeout(() => URL.revokeObjectURL(link.href), 0);
   }
 }

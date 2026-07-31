@@ -17,14 +17,14 @@ export class DataComponent implements OnInit, AfterViewInit {
   displayedColumns: string[] = ['body', 'author', 'source', 'status'];
   dataSource: MatTableDataSource<PostResult>;
   length = 0;
-  pageSize = 10;
+  pageSize = 5;
   pageIndex = 0;
   showFirstLastButtons = false;
   isLoading = false;
   private shouldScopeToOwnPosts = false;
   params: GeoJsonFilter = {
     has_location: 'all',
-    limit: 10,
+    limit: 5,
     page: 1,
     order: 'desc',
     order_unlocked_on_top: true,

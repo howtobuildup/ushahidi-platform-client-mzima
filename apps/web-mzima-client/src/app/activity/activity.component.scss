@@ -1087,3 +1087,30 @@ $text: #252a3b;
     gap: 4px;
   }
 }
+
+// Keep every dashboard label readable and consistent across cards, filters,
+// legends, and exported chart captures.
+.dashboard-page {
+  h1,
+  h2,
+  h3,
+  p,
+  span,
+  strong,
+  small,
+  em,
+  label,
+  button,
+  a,
+  input,
+  select,
+  option,
+  .mat-select-value,
+  .mat-select-arrow {
+    color: #000 !important;
+  }
+
+  svg text {
+    fill: #000 !important;
+  }
+}

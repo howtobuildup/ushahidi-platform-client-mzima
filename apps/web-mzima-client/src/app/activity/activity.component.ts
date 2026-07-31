@@ -608,6 +608,9 @@ export class ActivityComponent implements OnInit {
       dhobley: 'dashboard.districts.dhobley',
       sool: 'dashboard.districts.sool',
       sool_region: 'dashboard.districts.sool',
+      lower_shabelle: 'dashboard.districts.lower_shabelle',
+      lower_shabele: 'dashboard.districts.lower_shabelle',
+      shabeellaha_hoose: 'dashboard.districts.lower_shabelle',
     };
     const normalizedValue = this.normalize(value);
 
@@ -645,6 +648,9 @@ export class ActivityComponent implements OnInit {
       gedo: { x: 42, y: 78 },
       sool: { x: 65, y: 28 },
       sool_region: { x: 65, y: 28 },
+      lower_shabelle: { x: 55, y: 70 },
+      lower_shabele: { x: 55, y: 70 },
+      shabeellaha_hoose: { x: 55, y: 70 },
     };
     const normalizedValue = this.normalize(value);
 
@@ -721,6 +727,13 @@ export class ActivityComponent implements OnInit {
       local_government: 'dashboard.responders.local_government',
       community_mediation: 'dashboard.responders.community_mediation',
       cbos: 'dashboard.responders.cbos',
+      somali_national_army_sna: 'dashboard.responders.somali_national_army',
+      government_ministries: 'dashboard.responders.government_ministries',
+      local_ngo: 'dashboard.responders.local_ngo',
+      international_ngo: 'dashboard.responders.international_ngo',
+      formal_justice_mechanisms: 'dashboard.responders.formal_justice',
+      informal_justice_mechanisms: 'dashboard.responders.informal_justice',
+      emergency_services: 'dashboard.responders.emergency_services',
     };
     return keys[this.normalize(value)] || value || 'Unknown';
   }

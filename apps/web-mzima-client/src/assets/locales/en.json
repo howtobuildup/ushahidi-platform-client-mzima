@@ -855,7 +855,8 @@
       "hudur": "Hudur",
       "kismayo": "Kismayo",
       "dhobley": "Dhobley",
-      "sool": "Sool Region"
+      "sool": "Sool Region",
+      "lower_shabelle": "Lower Shabelle"
     },
     "categories": {
       "conflict": "Conflict",
@@ -940,7 +941,14 @@
       "religious_leaders": "Religious leaders",
       "local_government": "Local government",
       "community_mediation": "Community mediation",
-      "cbos": "CBOs"
+      "cbos": "CBOs",
+      "somali_national_army": "Somali National Army (SNA)",
+      "government_ministries": "Government ministries",
+      "local_ngo": "Local NGO",
+      "international_ngo": "International NGO",
+      "formal_justice": "Formal justice mechanisms",
+      "informal_justice": "Informal justice mechanisms",
+      "emergency_services": "Emergency services"
     },
     "source": "Source: NAGAASHO EWER imported submissions",
     "mockup_note": ""

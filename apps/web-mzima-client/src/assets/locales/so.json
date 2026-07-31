@@ -855,7 +855,8 @@
       "hudur": "Xudur",
       "kismayo": "Kismaayo",
       "dhobley": "Dhoobley",
-      "sool": "Gobolka Sool"
+      "sool": "Gobolka Sool",
+      "lower_shabelle": "Shabeellaha Hoose"
     },
     "categories": {
       "conflict": "Khilaaf",
@@ -940,7 +941,14 @@
       "religious_leaders": "Hoggaamiyeyaasha diinta",
       "local_government": "Dowladda hoose",
       "community_mediation": "Dhexdhexaadinta bulshada",
-      "cbos": "Ururrada bulshada"
+      "cbos": "Ururrada bulshada",
+      "somali_national_army": "Ciidanka Xoogga Dalka Soomaaliyeed (SNA)",
+      "government_ministries": "Wasaaradaha dowladda",
+      "local_ngo": "Hay'ad maxalli ah",
+      "international_ngo": "Hay'ad caalami ah",
+      "formal_justice": "Hababka caddaaladda rasmiga ah",
+      "informal_justice": "Hababka caddaaladda aan rasmiga ahayn",
+      "emergency_services": "Adeegyada gurmadka degdegga ah"
     },
     "source": "Isha: Diiwaannada NAGAASHO EWER ee la soo geliyey",
     "mockup_note": ""

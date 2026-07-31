@@ -71,8 +71,14 @@
     *ngIf="nativeApp"
     type="button"
     class="btn-current-location"
+    [disabled]="locating"
+    [attr.aria-busy]="locating"
     (click)="getCurrentLocation()"
   >
     <app-icon class="btn-current-location_icon" name="current-location"></app-icon>
   </button>
 </div>
+
+<p *ngIf="locationError" class="location-error">
+  {{ 'location.my_location_error' | translate }}
+</p>

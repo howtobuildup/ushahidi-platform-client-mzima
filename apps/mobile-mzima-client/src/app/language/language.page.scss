@@ -3,7 +3,8 @@
 }
 
 .language-page {
-  --background: var(--ion-color-primary);
+  --ogaal-brand-color: #405d6d;
+  --background: var(--ogaal-brand-color);
   --color: #ffffff;
 }
 
@@ -18,8 +19,9 @@
 .language-page__logo {
   display: block;
   width: min(260px, 78vw);
-  height: auto;
+  height: 60px;
   margin: 0 auto;
+  object-fit: cover;
 }
 
 .language-page__content {
@@ -60,7 +62,7 @@ p {
 .language-list__item--selected {
   border-color: #ffffff;
   background: #ffffff;
-  color: var(--ion-color-primary);
+  color: var(--ogaal-brand-color);
 }
 
 .language-page__continue {
@@ -68,7 +70,7 @@ p {
   --background-activated: rgba(255, 255, 255, 0.85);
   --background-focused: #ffffff;
   --background-hover: #ffffff;
-  --color: var(--ion-color-primary);
+  --color: var(--ogaal-brand-color);
   min-height: 48px;
   margin: 0;
   font-weight: 900;

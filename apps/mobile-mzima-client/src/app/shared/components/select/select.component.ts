@@ -25,10 +25,13 @@ export class SelectComponent implements ControlValueAccessor {
   @Input() public rounded = false;
   @Input() public disabled = false;
   @Input() public errors: string[] = [];
+  @Input() public language = 'en';
   @Input() public color: 'light' | 'default' = 'default';
   @Output() public selectFocus = new EventEmitter();
   @Output() public selectBlur = new EventEmitter();
   public isOnFocus: boolean;
+  private hasPendingValue = false;
+  private pendingValue: any;
 
   value: string;
   onChange: any = () => {};
@@ -52,7 +55,17 @@ export class SelectComponent implements ControlValueAccessor {
 
   public handleSelectChange(event: Event): void {
     const value = (event.target as HTMLInputElement)?.value;
-    this.onChange(typeof value === 'string' ? value.trim() : value);
+    this.pendingValue = typeof value === 'string' ? value.trim() : value;
+    this.hasPendingValue = true;
+  }
+
+  public handleDismiss(): void {
+    if (!this.hasPendingValue) return;
+
+    const value = this.pendingValue;
+    this.hasPendingValue = false;
+    this.pendingValue = undefined;
+    this.onChange(value);
   }
 
   public handleFocus(): void {
@@ -71,6 +84,6 @@ export class SelectComponent implements ControlValueAccessor {
   }
 
   public getOptionLabel(option: SelectOptionInterface | string | Record<string, any>): string {
-    return xlsFormRules.getOptionLabel(option);
+    return xlsFormRules.getOptionLabel(option, this.language);
   }
 }

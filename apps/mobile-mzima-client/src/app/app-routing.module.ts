@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { PreloadAllModules, RouterModule, Routes } from '@angular/router';
-import { AuthorizedGuard, LanguageGuard, SubmitPostsGuard } from '@guards';
+import { AuthorizedGuard, LanguageGuard, NotAuthorizedGuard, SubmitPostsGuard } from '@guards';
 import { PageNotFoundComponent } from '@components';
 
 const routes: Routes = [
@@ -17,6 +17,7 @@ const routes: Routes = [
   {
     path: 'language',
     loadChildren: () => import('./language/language.module').then((m) => m.LanguagePageModule),
+    canActivate: [NotAuthorizedGuard],
   },
   {
     path: 'auth',

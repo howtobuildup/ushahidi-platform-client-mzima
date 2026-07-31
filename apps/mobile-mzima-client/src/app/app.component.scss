@@ -5,10 +5,52 @@
   display: grid;
   place-items: center;
   padding: 32px;
-  background: #7075ad;
+  background: #ffffff;
 }
 
 .web-splash img {
   width: min(280px, 78vw);
-  height: auto;
+  height: 64px;
+  object-fit: cover;
+}
+
+.location-permission-gate {
+  position: fixed;
+  z-index: 11000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 32px;
+  background: var(--ion-background-color, #fff);
+  text-align: center;
+}
+
+.location-permission-gate__content {
+  width: min(420px, 100%);
+
+  img {
+    width: min(260px, 75vw);
+    height: 60px;
+    margin-bottom: 32px;
+    object-fit: cover;
+  }
+
+  h1 {
+    margin-bottom: 16px;
+  }
+
+  p {
+    margin-bottom: 28px;
+    color: var(--color-neutral-70, #5f6368);
+    line-height: 1.5;
+  }
+
+  ion-spinner {
+    width: 36px;
+    height: 36px;
+  }
+
+  ion-button + ion-button {
+    margin-top: 12px;
+  }
 }

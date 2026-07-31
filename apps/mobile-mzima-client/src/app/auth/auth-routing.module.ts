@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+import { NotAuthorizedGuard } from '@guards';
 import { AuthPage } from './auth.page';
 
 const routes: Routes = [
@@ -10,6 +11,7 @@ const routes: Routes = [
       {
         path: 'login',
         loadChildren: () => import('./login/login.module').then((m) => m.LoginPageModule),
+        canActivate: [NotAuthorizedGuard],
       },
       {
         path: 'signup',

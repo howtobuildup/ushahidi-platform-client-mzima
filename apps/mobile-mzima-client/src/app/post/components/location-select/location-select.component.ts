@@ -9,11 +9,10 @@ import {
   Output,
   ViewChild,
 } from '@angular/core';
-import { Geolocation } from '@capacitor/geolocation';
 import { Capacitor } from '@capacitor/core';
 import { STORAGE_KEYS } from '@constants';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { DatabaseService } from '@services';
+import { DatabaseService, DeviceLocationService } from '@services';
 import {
   control,
   FitBoundsOptions,
@@ -88,11 +87,14 @@ export class LocationSelectComponent implements OnInit {
   public geocodingResults: any[] = [];
   public isShowGeocodingResults = false;
   public nativeApp: boolean;
+  public locating = false;
+  public locationError = false;
 
   constructor(
     private cdr: ChangeDetectorRef,
     private dataBaseService: DatabaseService,
     private platform: Platform,
+    private deviceLocationService: DeviceLocationService,
   ) {
     this.searchSubject.pipe(debounceTime(600), untilDestroyed(this)).subscribe((query) => {
       this.performSearch(query);
@@ -145,8 +147,6 @@ export class LocationSelectComponent implements OnInit {
 
     this.geocoderControl.addTo(this.map);
     this.addMarker();
-
-    this.getCurrentLocation();
 
     this.map.on('click', (e) => {
       this.location = e.latlng;
@@ -206,21 +206,29 @@ export class LocationSelectComponent implements OnInit {
   }
 
   public async getCurrentLocation() {
-    if (!this.platform.is('capacitor')) return;
+    if (!this.platform.is('capacitor') || this.locating) {
+      return;
+    }
+
+    this.locating = true;
+    this.locationError = false;
+
     try {
-      const status = await Geolocation.requestPermissions();
-      if (status?.location === 'granted') {
-        const location = await Geolocation.getCurrentPosition();
-        const {
-          coords: { latitude, longitude },
-        } = location;
-        this.location.lat = latitude;
-        this.location.lng = longitude;
-        this.addMarker();
-        this.map.setView([latitude, longitude], 12);
-      }
+      const position = await this.deviceLocationService.getCurrentPosition();
+      const {
+        coords: { latitude, longitude },
+      } = position;
+
+      this.location = { lat: latitude, lng: longitude };
+      this.addMarker();
+      this.map.setView([latitude, longitude], 12);
+      this.checkErrors();
     } catch (e) {
-      console.log(e);
+      this.locationError = true;
+      console.error('Unable to retrieve the current location', e);
+    } finally {
+      this.locating = false;
+      this.cdr.markForCheck();
     }
   }
 

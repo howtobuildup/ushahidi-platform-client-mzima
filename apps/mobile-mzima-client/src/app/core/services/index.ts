@@ -15,3 +15,4 @@ export * from './share.service';
 export * from './listener.service';
 export * from './language.service';
 export * from './landing-route.service';
+export * from './device-location.service';

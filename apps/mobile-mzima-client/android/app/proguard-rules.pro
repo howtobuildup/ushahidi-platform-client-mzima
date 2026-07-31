@@ -16,6 +16,14 @@
 # debugging stack traces.
 -keepattributes SourceFile,LineNumberTable
 
+# Capacitor reads the custom plugin and its permission declarations through
+# reflection. Keep both the class and runtime annotation metadata in minified
+# release builds so checkPermissions/requestPermissions remain available.
+-keepattributes *Annotation*
+-keep class com.getcapacitor.annotation.** { *; }
+-keep @com.getcapacitor.annotation.CapacitorPlugin class * { *; }
+-keep class org.saferworld.ogaal.SafeGeolocationPlugin { *; }
+
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 -renamesourcefileattribute SourceFile

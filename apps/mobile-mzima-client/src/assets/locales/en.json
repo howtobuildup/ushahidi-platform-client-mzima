@@ -2735,6 +2735,19 @@
     "subtitle": "Select the language you want to use in the app.",
     "title": "Choose your language"
   },
+  "post_form": {
+    "create_post": "Create a post",
+    "edit_post": "Edit post",
+    "getting_data": "Getting data...",
+    "no_options": "No options",
+    "offline_success_message": "Thank you for your report. A message will be sent when the connection is restored.",
+    "selected_language": "Selected language",
+    "submit": "Submit",
+    "success_button": "OK",
+    "success_message": "Thank you for submitting your report. The post is being reviewed by our team and soon will appear on the platform.",
+    "success_title": "Success!",
+    "survey_name": "Survey name"
+  },
   "profile": {
     "help_and_support": "Help and Support",
     "support_and_information": "Support and Information",

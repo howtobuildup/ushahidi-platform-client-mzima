@@ -5,6 +5,7 @@ import { ActivatedRoute, Params, Router } from '@angular/router';
 import { STORAGE_KEYS } from '@constants';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
+  auditTime,
   distinctUntilChanged,
   EMPTY,
   from,
@@ -12,6 +13,8 @@ import {
   map,
   Observable,
   of,
+  skip,
+  startWith,
   Subscription,
   switchMap,
   tap,
@@ -29,10 +32,13 @@ import {
 import {
   AlertService,
   DatabaseService,
+  LanguageService,
   NetworkService,
   SessionService,
   ToastService,
 } from '@services';
+import { LanguageInterface } from '@models';
+import { TranslateService } from '@ngx-translate/core';
 import { FormValidator, preparingVideoUrl } from '@validators';
 import { PostEditForm, prepareRelationConfig, UploadFileHelper } from '../helpers';
 
@@ -83,6 +89,8 @@ export class PostEditPage {
   public surveyListOptions: any;
   public selectedSurveyId: number | null;
   public selectedSurvey: any;
+  public activeLanguage = 'en';
+  public formLanguages: LanguageInterface[] = [];
   private fileToUpload: any;
   private checkedList: any[] = [];
   public isConnection = true;
@@ -93,10 +101,8 @@ export class PostEditPage {
   private dynamicRulesSubscription?: Subscription;
   private hiddenFieldKeys = new Set<string>();
   private dynamicRuleValues: Record<string, any> = {};
-  private readonly postSuccessMessage = [
-    'Thank you for submitting your report.',
-    'The post is being reviewed by our team and soon will appear on the platform.',
-  ].join(' ');
+  private selectedAppLanguage = 'en';
+  private readonly postSuccessMessageKey = 'post_form.success_message';
 
   dateOption: any;
 
@@ -112,9 +118,17 @@ export class PostEditPage {
     private surveysService: SurveysService,
     private sessionService: SessionService,
     private dataBaseService: DatabaseService,
+    private languageService: LanguageService,
+    private translateService: TranslateService,
     private cdr: ChangeDetectorRef,
     private sanitizer: DomSanitizer,
   ) {
+    this.languageService.selectedLanguage$.pipe(untilDestroyed(this)).subscribe((language) => {
+      this.selectedAppLanguage = language;
+      this.activeLanguage = this.resolveFormLanguage(language);
+      this.transformSurveys();
+      this.cdr.markForCheck();
+    });
     this.route.queryParams.subscribe({
       next: (queryParams) => {
         this.queryParams = queryParams;
@@ -231,7 +245,7 @@ export class PostEditPage {
   private transformSurveys() {
     this.surveyListOptions = this.surveyList.map((item: any) => {
       return {
-        label: item.name,
+        label: item.translations?.[this.activeLanguage]?.name || item.name,
         value: item.id,
       };
     });
@@ -276,6 +290,7 @@ export class PostEditPage {
     this.clearData();
 
     this.selectedSurvey = this.surveyList.find((item: any) => item.id === this.selectedSurveyId);
+    this.configureFormLanguages();
     this.color = this.selectedSurvey?.color;
     this.tasks = this.selectedSurvey?.tasks;
 
@@ -332,14 +347,48 @@ export class PostEditPage {
     return !this.hiddenFieldKeys.has(String(field.key));
   }
 
+  public isFieldAnswered(fieldKey: string): boolean {
+    const value = this.form?.get(fieldKey)?.value;
+
+    if (Array.isArray(value)) {
+      return value.length > 0;
+    }
+
+    if (value && typeof value === 'object') {
+      if ('lat' in value || 'lng' in value) {
+        return this.hasAnswerValue(value.lat) && this.hasAnswerValue(value.lng);
+      }
+
+      return Object.keys(value).length > 0;
+    }
+
+    return this.hasAnswerValue(value);
+  }
+
+  private hasAnswerValue(value: unknown): boolean {
+    return (
+      value !== null && value !== undefined && (typeof value !== 'string' || value.trim() !== '')
+    );
+  }
+
   private setupDynamicFormRules(): void {
     this.dynamicRulesSubscription?.unsubscribe();
     this.applyDynamicFieldVisibility();
     const fields = this.tasks.flatMap((task) => task.fields);
+    const initialSignature = xlsFormRules.buildDynamicRuleValueSignature(
+      fields,
+      this.form.getRawValue(),
+    );
     this.dynamicRulesSubscription = this.form.valueChanges
       .pipe(
         map((values) => xlsFormRules.buildDynamicRuleValueSignature(fields, values)),
+        startWith(initialSignature),
         distinctUntilChanged(),
+        skip(1),
+        // Let Ionic finish dismissing the select popover before adding/removing
+        // dependent form controls. Synchronous rendering here can terminate the
+        // Android WebView on larger XLSForms.
+        auditTime(0),
         untilDestroyed(this),
       )
       .subscribe(() => this.applyDynamicFieldVisibility());
@@ -384,7 +433,7 @@ export class PostEditPage {
       }
     }
 
-    this.cdr.detectChanges();
+    this.cdr.markForCheck();
   }
 
   private clearHiddenFieldValue(field: any): void {
@@ -427,7 +476,49 @@ export class PostEditPage {
   }
 
   public getOptionLabel(option: any): string {
-    return xlsFormRules.getOptionLabel(option);
+    return xlsFormRules.getOptionLabel(option, this.activeLanguage);
+  }
+
+  public getTaskLabel(task: any): string {
+    return task?.translations?.[this.activeLanguage]?.label || task?.label || '';
+  }
+
+  public getFieldLabel(field: any): string {
+    return field?.translations?.[this.activeLanguage]?.label || field?.label || '';
+  }
+
+  public getFieldInstructions(field: any): string {
+    return field?.translations?.[this.activeLanguage]?.instructions || field?.instructions || '';
+  }
+
+  private configureFormLanguages(): void {
+    const enabledLanguages = this.selectedSurvey?.enabled_languages;
+    const languageCodes = Array.from(
+      new Set(
+        [enabledLanguages?.default, ...(enabledLanguages?.available || [])].filter(
+          (languageCode): languageCode is string => !!languageCode,
+        ),
+      ),
+    );
+    const configuredLanguages = this.languageService.getLanguages();
+
+    this.formLanguages = languageCodes
+      .map((languageCode) => configuredLanguages.find((language) => language.code === languageCode))
+      .filter((language): language is LanguageInterface => !!language);
+    this.activeLanguage = this.resolveFormLanguage(this.selectedAppLanguage);
+    this.transformSurveys();
+  }
+
+  private resolveFormLanguage(preferredLanguage: string): string {
+    if (!this.selectedSurvey) {
+      return preferredLanguage;
+    }
+
+    if (this.formLanguages.some((language) => language.code === preferredLanguage)) {
+      return preferredLanguage;
+    }
+
+    return this.selectedSurvey.enabled_languages?.default || 'en';
   }
 
   public changeLocation(data: any, formKey: string) {
@@ -720,9 +811,7 @@ export class PostEditPage {
         });
       }
     } else {
-      await this.postComplete(
-        'Thank you for your report. A message will be sent when the connection is restored.',
-      );
+      await this.postComplete('post_form.offline_success_message');
       this.backNavigation();
     }
   }
@@ -769,7 +858,7 @@ export class PostEditPage {
       await this.dataBaseService.set(STORAGE_KEYS.PENDING_POST_KEY, remainingPosts);
     }
 
-    await this.postComplete(this.postSuccessMessage);
+    await this.postComplete(this.postSuccessMessageKey);
     if (this.isSubmitOnlyUser() && !this.postId) {
       this.resetCreateForm();
       return;
@@ -813,13 +902,13 @@ export class PostEditPage {
     this.loadForm();
   }
 
-  async postComplete(message: string) {
+  async postComplete(messageKey: string) {
     await this.alertService.presentAlert({
-      header: 'Success!',
-      message,
+      header: this.translateService.instant('post_form.success_title'),
+      message: this.translateService.instant(messageKey),
       buttons: [
         {
-          text: 'OK',
+          text: this.translateService.instant('post_form.success_button'),
           role: 'confirm',
         },
       ],
@@ -832,8 +921,14 @@ export class PostEditPage {
     }
     if (!objectHelpers.objectsCompare(this.initialFormData, this.form.value)) {
       const result = await this.alertService.presentAlert({
-        header: 'Success!',
-        message: this.postSuccessMessage,
+        header: this.translateService.instant('post_form.success_title'),
+        message: this.translateService.instant(this.postSuccessMessageKey),
+        buttons: [
+          {
+            text: this.translateService.instant('post_form.success_button'),
+            role: 'confirm',
+          },
+        ],
       });
       if (result.role !== 'confirm') return;
     }

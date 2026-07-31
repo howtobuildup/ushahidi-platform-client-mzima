@@ -1,6 +1,43 @@
 <ion-app>
   <div class="web-splash" *ngIf="showWebSplash">
-    <img src="assets/saferworld-logo.png" alt="Saferworld" />
+    <img src="assets/ogaal-banner.png" alt="OGAAL" />
   </div>
   <ion-router-outlet></ion-router-outlet>
+
+  <section
+    *ngIf="!locationPermissionReady"
+    class="location-permission-gate"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="location-permission-title"
+  >
+    <div class="location-permission-gate__content">
+      <img src="assets/ogaal-banner.png" alt="OGAAL" />
+      <h1 id="location-permission-title">Allow location access</h1>
+      <p>
+        OGAAL needs location permission to capture the survey location. You must allow location
+        access before continuing to the app.
+      </p>
+
+      <ion-spinner
+        *ngIf="locationPermissionChecking || locationPermissionRequesting"
+        name="crescent"
+      ></ion-spinner>
+
+      <ng-container *ngIf="!locationPermissionChecking && !locationPermissionRequesting">
+        <ion-button expand="block" shape="round" (click)="requestLocationPermission()">
+          Allow location
+        </ion-button>
+        <ion-button
+          *ngIf="locationPermissionDenied"
+          expand="block"
+          shape="round"
+          fill="outline"
+          (click)="openLocationSettings()"
+        >
+          Open app settings
+        </ion-button>
+      </ng-container>
+    </div>
+  </section>
 </ion-app>

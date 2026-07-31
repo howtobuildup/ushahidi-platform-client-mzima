@@ -204,9 +204,8 @@
     --background: transparent;
 
     &.item-radio-checked {
-      @media (prefers-color-scheme: dark) {
-        --ion-item-background: var(--ion-background-color);
-      }
+      --background: rgba(var(--ion-color-primary-rgb), 0.16);
+      --ion-item-background: rgba(var(--ion-color-primary-rgb), 0.16);
     }
   }
 

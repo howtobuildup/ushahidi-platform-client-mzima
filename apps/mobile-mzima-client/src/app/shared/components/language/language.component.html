@@ -2,7 +2,7 @@
   id="language-trigger"
   fill="solid"
   class="language-button"
-  [attr.aria-label]="'form.select_language' | translate"
+  [attr.aria-label]="labelKey | translate"
   (click)="openLanguageList($event)"
 >
   <ion-icon name="globe-outline" slot="icon-only"></ion-icon>
@@ -19,7 +19,7 @@
   <ng-template>
     <ion-list class="language-list" lines="none">
       <ion-list-header class="language-list__header">
-        {{ 'form.select_language' | translate }}
+        {{ labelKey | translate }}
       </ion-list-header>
       <ion-item
         button

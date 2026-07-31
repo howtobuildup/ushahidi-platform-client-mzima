@@ -10,6 +10,7 @@ import { LanguageService } from '@services';
 export class LanguageComponent {
   @Input() public languages: LanguageInterface[] = [];
   @Input() public selectedLanguage: string | null = 'en';
+  @Input() public labelKey = 'form.select_language';
 
   public isOpen = false;
 

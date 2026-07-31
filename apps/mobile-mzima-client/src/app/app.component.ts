@@ -10,6 +10,7 @@ import {
   ListenerService,
   ToastService,
   LanguageService,
+  DeviceLocationService,
 } from '@services';
 import {
   Subject,
@@ -25,6 +26,8 @@ import { BaseComponent } from './base.component';
 import { UploadFileHelper } from './post/helpers';
 import { Location } from '@angular/common';
 import { Capacitor } from '@capacitor/core';
+import { App } from '@capacitor/app';
+import { AndroidSettings, NativeSettings } from 'capacitor-native-settings';
 
 @UntilDestroy()
 @Component({
@@ -35,6 +38,10 @@ import { Capacitor } from '@capacitor/core';
 export class AppComponent extends BaseComponent {
   private toastMessage$ = new Subject<string>();
   public showWebSplash = !Capacitor.isNativePlatform();
+  public locationPermissionReady = Capacitor.getPlatform() !== 'android';
+  public locationPermissionChecking = Capacitor.getPlatform() === 'android';
+  public locationPermissionRequesting = false;
+  public locationPermissionDenied = false;
 
   constructor(
     override router: Router,
@@ -50,6 +57,7 @@ export class AppComponent extends BaseComponent {
     private surveysService: SurveysService,
     private listenerService: ListenerService,
     private languageService: LanguageService,
+    private deviceLocationService: DeviceLocationService,
     @Optional() override routerOutlet?: IonRouterOutlet,
   ) {
     super(router, platform, toastService, alertCtrl, networkService, routerOutlet, location);
@@ -58,11 +66,50 @@ export class AppComponent extends BaseComponent {
     this.initNetworkListener();
     this.listenerService.changeDeploymentListener();
     this.loadInitialData();
+    this.initLocationPermissionGate();
     if (this.showWebSplash) {
       window.setTimeout(() => {
         this.showWebSplash = false;
       }, 1000);
     }
+  }
+
+  private async initLocationPermissionGate(): Promise<void> {
+    if (Capacitor.getPlatform() !== 'android') return;
+
+    await this.platform.ready();
+    await this.refreshLocationPermission();
+
+    if (!this.locationPermissionReady) {
+      await this.requestLocationPermission();
+    }
+
+    await App.addListener('appStateChange', async ({ isActive }) => {
+      if (isActive && !this.locationPermissionRequesting) {
+        await this.refreshLocationPermission();
+      }
+    });
+  }
+
+  public async requestLocationPermission(): Promise<void> {
+    if (this.locationPermissionRequesting) return;
+
+    this.locationPermissionRequesting = true;
+    this.locationPermissionDenied = false;
+    this.locationPermissionReady = await this.deviceLocationService.requestPermission();
+    this.locationPermissionDenied = !this.locationPermissionReady;
+    this.locationPermissionRequesting = false;
+  }
+
+  public async openLocationSettings(): Promise<void> {
+    await NativeSettings.openAndroid({ option: AndroidSettings.ApplicationDetails });
+  }
+
+  private async refreshLocationPermission(): Promise<void> {
+    this.locationPermissionChecking = true;
+    this.locationPermissionReady = await this.deviceLocationService.hasPermission();
+    this.locationPermissionDenied = !this.locationPermissionReady;
+    this.locationPermissionChecking = false;
   }
 
   private initLanguageListener(): void {

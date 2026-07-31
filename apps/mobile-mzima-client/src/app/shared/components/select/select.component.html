@@ -16,6 +16,7 @@
       interface="popover"
       [placeholder]="placeholder | translate"
       (ionChange)="handleSelectChange($event)"
+      (ionDismiss)="handleDismiss()"
       [label]="label ? (label | translate) + (required ? '*' : '') : null"
       [labelPlacement]="label ? 'floating' : 'end'"
       [required]="required"

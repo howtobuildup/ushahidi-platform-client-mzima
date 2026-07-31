@@ -1,30 +1,21 @@
 import { Injectable } from '@angular/core';
 import { CanActivate, UrlTree } from '@angular/router';
-import { LandingRouteService, SessionService } from '@services';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { LandingRouteService, LanguageService, SessionService } from '@services';
 import { Observable } from 'rxjs';
 
-@UntilDestroy()
 @Injectable({
   providedIn: 'root',
 })
 export class NotAuthorizedGuard implements CanActivate {
-  private isLoggedIn: boolean;
-
   constructor(
     private landingRouteService: LandingRouteService,
+    private languageService: LanguageService,
     private sessionService: SessionService,
-  ) {
-    this.sessionService
-      .getCurrentUserData()
-      .pipe(untilDestroyed(this))
-      .subscribe((userData) => {
-        this.isLoggedIn = !!userData.userId;
-      });
-  }
+  ) {}
 
   canActivate(): boolean | Observable<boolean | UrlTree> {
-    if (this.isLoggedIn) {
+    if (this.sessionService.isLogged()) {
+      this.languageService.ensureSelectedLanguage();
       return this.landingRouteService.getLandingUrl();
     }
     return true;

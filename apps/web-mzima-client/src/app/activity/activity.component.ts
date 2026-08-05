@@ -34,10 +34,7 @@ interface ChartMetric {
   total?: number;
 }
 
-interface DistrictMetric extends ChartMetric {
-  x: number;
-  y: number;
-}
+type DistrictMetric = ChartMetric;
 
 interface StackedMetric {
   labelKey: string;
@@ -140,7 +137,6 @@ export class ActivityComponent implements OnInit {
   public selectedDistrictFilter = 'all';
   public selectedFormId = '';
   public forms: FormInterface[] = [];
-  public selectedDistrict?: DistrictMetric;
   public dateFrom = '';
   public dateTo = '';
   public conflictTotal = 0;
@@ -234,10 +230,6 @@ export class ActivityComponent implements OnInit {
 
   public percentage(value: number, total: number): number {
     return total ? Math.round((value / total) * 100) : 0;
-  }
-
-  public selectDistrict(district: DistrictMetric): void {
-    this.selectedDistrict = district;
   }
 
   public donutBackground(items: ChartMetric[]): string {
@@ -379,7 +371,6 @@ export class ActivityComponent implements OnInit {
     this.districts = data.districts.map((item, index) => ({
       labelKey: this.districtKey(item.name),
       value: item.value,
-      ...this.districtCoordinates(item.name, index),
       color: districtColors[index % districtColors.length],
     }));
     this.updateSelectedDistrict(data.district_options || data.districts);
@@ -637,29 +628,6 @@ export class ActivityComponent implements OnInit {
     ) {
       this.selectedDistrictFilter = 'all';
     }
-  }
-
-  private districtCoordinates(value: string, index: number): { x: number; y: number } {
-    const coordinates: Record<string, { x: number; y: number }> = {
-      sanaag: { x: 45, y: 18 },
-      hiran: { x: 54, y: 52 },
-      hiiraan: { x: 54, y: 52 },
-      gado: { x: 42, y: 78 },
-      gedo: { x: 42, y: 78 },
-      sool: { x: 65, y: 28 },
-      sool_region: { x: 65, y: 28 },
-      lower_shabelle: { x: 55, y: 70 },
-      lower_shabele: { x: 55, y: 70 },
-      shabeellaha_hoose: { x: 55, y: 70 },
-    };
-    const normalizedValue = this.normalize(value);
-
-    return (
-      coordinates[normalizedValue] || {
-        x: 26 + (index % 3) * 24,
-        y: 24 + Math.floor(index / 3) * 24,
-      }
-    );
   }
 
   private conflictTypeKey(value: string): string {

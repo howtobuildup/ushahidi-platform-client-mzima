@@ -13,3 +13,4 @@ export * as dateHelper from './date-helper';
 export * as xlsFormImportHelper from './xlsform-import';
 export * as xlsFormExportHelper from './xlsform-export';
 export * from './permission-access';
+export * from './post-field-options';

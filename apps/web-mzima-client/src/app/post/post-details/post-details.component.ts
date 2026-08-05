@@ -22,7 +22,12 @@ import { TranslateService } from '@ngx-translate/core';
 import { lastValueFrom } from 'rxjs';
 import { preparingVideoUrl } from '../../core/helpers/validators';
 import { CollectionsModalComponent } from '../../shared/components';
-import { dateHelper } from '@helpers';
+import {
+  dateHelper,
+  deduplicatePostLocationFields,
+  postFieldChoiceLabel,
+  postFieldChoiceValues,
+} from '@helpers';
 
 @Component({
   selector: 'app-post-details',
@@ -41,6 +46,7 @@ export class PostDetailsComponent implements OnChanges, OnDestroy {
   public allowed_privileges: string | string[];
   public postId: number;
   public videoUrls: any[] = [];
+  public displayFields: PostContentField[] = [];
   public isPostLoading: boolean = true;
 
   constructor(
@@ -68,6 +74,7 @@ export class PostDetailsComponent implements OnChanges, OnDestroy {
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['post']) {
       this.allowed_privileges = this.post?.allowed_privileges ?? '';
+      this.displayFields = [];
       if (changes['post'].currentValue?.post_content?.length) {
         this.setMetaData(this.post!);
         this.getData(changes['post'].currentValue);
@@ -82,9 +89,13 @@ export class PostDetailsComponent implements OnChanges, OnDestroy {
   }
 
   private getData(post: PostResult): void {
-    this.preparingMediaField((post.post_content as PostContent[])[0].fields);
-    this.preparingSafeVideoUrls((post.post_content as PostContent[])[0].fields);
-    this.preparingRelatedPosts((post.post_content as PostContent[])[0].fields);
+    const fields = (post.post_content as PostContent[]).flatMap((content) =>
+      [...(content.fields || [])].sort((left, right) => left.priority - right.priority),
+    );
+    this.displayFields = deduplicatePostLocationFields(fields);
+    this.preparingMediaField(this.displayFields);
+    this.preparingSafeVideoUrls(this.displayFields);
+    this.preparingRelatedPosts(this.displayFields);
   }
 
   private preparingRelatedPosts(fields: PostContentField[]): void {
@@ -196,5 +207,17 @@ export class PostDetailsComponent implements OnChanges, OnDestroy {
 
   public getDate(value: any, format: string): string {
     return dateHelper.getDateWithTz(value, format);
+  }
+
+  public getChoiceLabel(field: PostContentField, value: any): string {
+    return postFieldChoiceLabel(
+      field,
+      value,
+      this.translate.currentLang || this.translate.defaultLang || 'en',
+    );
+  }
+
+  public getChoiceValues(field: PostContentField): any[] {
+    return postFieldChoiceValues(field, field.value?.value);
   }
 }

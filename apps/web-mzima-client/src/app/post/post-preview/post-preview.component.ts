@@ -13,6 +13,7 @@ import {
   PostResult,
   UserInterface,
 } from '@mzima-client/sdk';
+import { postFieldChoiceLabel } from '@helpers';
 import { Subject } from 'rxjs';
 
 interface EwerTileSummary {
@@ -170,7 +171,7 @@ export class PostPreviewComponent implements OnInit, OnChanges {
 
   private getFieldDisplay(fields: PostContentField[], names: string[]): string {
     const field = this.findField(fields, names);
-    return this.formatValue(this.getRawValue(field));
+    return this.formatFieldValue(field, this.getRawValue(field));
   }
 
   private getFieldValueCount(fields: PostContentField[], names: string[]): number {
@@ -219,6 +220,20 @@ export class PostPreviewComponent implements OnInit, OnChanges {
       return this.formatValue(value.label ?? value.name ?? value.value ?? '');
     }
     return String(value).replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+
+  private formatFieldValue(field: PostContentField | undefined, value: any): string {
+    if (!field) return this.formatValue(value);
+    if (Array.isArray(value)) {
+      return value
+        .map((item) => this.formatFieldValue(field, item))
+        .filter(Boolean)
+        .join(', ');
+    }
+    if (['checkbox', 'radio', 'select'].includes(field.input)) {
+      return postFieldChoiceLabel(field, value);
+    }
+    return this.formatValue(value);
   }
 
   private normalize(value: any): string {

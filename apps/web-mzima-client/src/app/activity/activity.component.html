@@ -125,71 +125,23 @@
     <section class="dashboard-section">
       <h2>{{ 'dashboard.sections.overview' | translate }}</h2>
       <div class="overview-grid">
-        <article class="chart-card district-map-card">
+        <article class="chart-card district-ranking-card">
           <header class="chart-card__header">
             <h3>{{ 'dashboard.charts.incidents_by_district' | translate }}</h3>
             <p>{{ 'dashboard.charts.geotagged_reports' | translate }}</p>
             <ng-container *ngTemplateOutlet="chartExportActions"></ng-container>
           </header>
-          <div class="district-map-layout">
-            <div class="district-map" aria-hidden="true">
-              <svg viewBox="0 0 220 210" class="district-map__svg" role="img">
-                <path
-                  class="district-map__outline"
-                  d="M68 9 L168 1 L160 56 L195 86 L166 122 L126 157 L85 195 L64 134 L47 94 Z"
-                ></path>
-                <path
-                  class="district-map__region district-map__region--sanaag"
-                  d="M68 9 L168 1 L160 56 L93 62 Z"
-                ></path>
-                <path
-                  class="district-map__region district-map__region--sool"
-                  d="M93 62 L160 56 L195 86 L151 111 L102 98 Z"
-                ></path>
-                <path
-                  class="district-map__region district-map__region--hiran"
-                  d="M64 134 L102 98 L151 111 L126 157 L85 195 Z"
-                ></path>
-                <path
-                  class="district-map__region district-map__region--gedo"
-                  d="M47 94 L93 62 L102 98 L64 134 Z"
-                ></path>
-              </svg>
-              <button
-                type="button"
-                class="map-bubble"
-                *ngFor="let district of districts"
-                [style.left.%]="district.x"
-                [style.top.%]="district.y"
-                [style.width.px]="28 + district.value / 5"
-                [style.height.px]="28 + district.value / 5"
-                [style.background]="district.color + '66'"
-                [attr.title]="(district.labelKey | translate) + ': ' + district.value"
-                (click)="selectDistrict(district)"
-              >
-                <span>{{ district.value }}</span>
-              </button>
-              <span class="map-label map-label--sanaag">Sanaag</span>
-              <span class="map-label map-label--sool">Sool</span>
-              <span class="map-label map-label--hiran">Hiran</span>
-              <span class="map-label map-label--gedo">Gedo</span>
-            </div>
-            <div class="district-ranking">
-              <strong>{{ 'dashboard.charts.ranking' | translate }}</strong>
-              <p *ngIf="selectedDistrict">
-                {{ selectedDistrict.labelKey | translate }}:
-                <strong>{{ selectedDistrict.value }}</strong>
-              </p>
-              <div class="ranking-row" *ngFor="let district of districts">
-                <span>{{ district.labelKey | translate }}</span>
-                <i>
-                  <b
-                    [style.width.%]="(district.value / maxValue(districts)) * 100"
-                    [style.background]="district.color"
-                  ></b>
-                </i>
-                <em>{{ district.value }}</em>
-              </div>
+          <div class="district-ranking district-ranking--wide">
+            <strong>{{ 'dashboard.charts.ranking' | translate }}</strong>
+            <div class="ranking-row" *ngFor="let district of districts">
+              <span>{{ district.labelKey | translate }}</span>
+              <i>
+                <b
+                  [style.width.%]="(district.value / maxValue(districts)) * 100"
+                  [style.background]="district.color"
+                ></b>
+              </i>
+              <em>{{ district.value }}</em>
             </div>
           </div>
         </article>
@@ -533,7 +485,9 @@
           </header>
           <div class="horizontal-bars horizontal-bars--responders">
             <div class="horizontal-bar" *ngFor="let item of respondingActors">
-              <span>{{ item.labelKey | translate }}</span>
+              <span class="horizontal-bar__label" [title]="item.labelKey | translate">
+                {{ item.labelKey | translate }}
+              </span>
               <i><b [style.width.%]="item.value" [style.background]="item.color"></b></i>
               <strong>{{ item.count }}/{{ item.total }} ({{ item.value }}%)</strong>
             </div>

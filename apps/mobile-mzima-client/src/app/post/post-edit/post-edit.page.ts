@@ -468,7 +468,9 @@ export class PostEditPage {
   }
 
   public getFieldOptions(field: any): any[] {
-    return xlsFormRules.getFilteredOptions(field, this.dynamicRuleValues);
+    return xlsFormRules.getFilteredOptions(field, this.dynamicRuleValues, {
+      caseInsensitive: true,
+    });
   }
 
   public getOptionValue(option: any): any {

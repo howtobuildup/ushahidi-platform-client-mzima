@@ -129,7 +129,11 @@ export function getFieldConstraintMessage(field: XlsFormFieldLike): string {
   return getXlsFormConfig(field).constraint_message || 'Value does not match the validation rule';
 }
 
-export function getFilteredOptions(field: XlsFormFieldLike, values: XlsFormValueMap): any[] {
+export function getFilteredOptions(
+  field: XlsFormFieldLike,
+  values: XlsFormValueMap,
+  settings: { caseInsensitive?: boolean } = {},
+): any[] {
   const options = Array.isArray(field.options) ? field.options : [];
   const choiceFilter = getXlsFormConfig(field).choice_filter;
   if (!choiceFilter) {
@@ -151,8 +155,22 @@ export function getFilteredOptions(field: XlsFormFieldLike, values: XlsFormValue
       return true;
     }
 
-    return valueEquals(option[filter.optionProperty], parentValue);
+    return settings.caseInsensitive
+      ? choiceFilterValueEquals(option[filter.optionProperty], parentValue)
+      : valueEquals(option[filter.optionProperty], parentValue);
   });
+}
+
+function choiceFilterValueEquals(optionValue: any, parentValue: any): boolean {
+  if (valueEquals(optionValue, parentValue)) {
+    return true;
+  }
+
+  if (typeof optionValue !== 'string' || typeof parentValue !== 'string') {
+    return false;
+  }
+
+  return optionValue.trim().toLocaleLowerCase() === parentValue.trim().toLocaleLowerCase();
 }
 
 function parseChoiceFilter(

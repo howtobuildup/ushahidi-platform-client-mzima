@@ -55,6 +55,28 @@ describe('getFilteredOptions', () => {
       ),
     ).toEqual(unscopedOptions);
   });
+
+  it('matches choice-filter labels to stored names without case sensitivity', () => {
+    const monitors = [
+      { name: 'ceri1', district: 'Bardere' },
+      { name: 'laas1', district: "Laas'anod" },
+    ];
+
+    expect(
+      getFilteredOptions(
+        { config: { choice_filter: '${district}=district' }, options: monitors },
+        { district: 'bardere' },
+      ),
+    ).toEqual([]);
+
+    expect(
+      getFilteredOptions(
+        { config: { choice_filter: '${district}=district' }, options: monitors },
+        { district: 'bardere' },
+        { caseInsensitive: true },
+      ),
+    ).toEqual([{ name: 'ceri1', district: 'Bardere' }]);
+  });
 });
 
 describe('buildXlsFormValueMap', () => {

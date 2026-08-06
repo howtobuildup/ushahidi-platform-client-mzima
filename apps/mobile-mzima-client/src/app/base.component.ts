@@ -36,11 +36,15 @@ export class BaseComponent {
     if (this.platform.is('capacitor')) {
       StatusBar.setOverlaysWebView({ overlay: true });
 
-      const mediaDarkMode = window.matchMedia('(prefers-color-scheme: dark)');
-      this.setStatusBarColor(mediaDarkMode.matches);
-      mediaDarkMode.addEventListener('change', (ev) => {
-        this.setStatusBarColor(ev.matches);
-      });
+      if (Capacitor.getPlatform() === 'android') {
+        StatusBar.setStyle({ style: Style.Light });
+      } else {
+        const mediaDarkMode = window.matchMedia('(prefers-color-scheme: dark)');
+        this.setStatusBarColor(mediaDarkMode.matches);
+        mediaDarkMode.addEventListener('change', (ev) => {
+          this.setStatusBarColor(ev.matches);
+        });
+      }
     }
   }
 

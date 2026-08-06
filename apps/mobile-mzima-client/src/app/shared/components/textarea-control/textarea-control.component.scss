@@ -102,6 +102,20 @@
   }
 
   &::ng-deep {
+    ion-textarea::part(label) {
+      color: var(--question-color, currentColor);
+      font-weight: 700;
+      max-width: 100%;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+
+    ion-textarea::part(native) {
+      font-weight: 400;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
     input,
     textarea,
     select {

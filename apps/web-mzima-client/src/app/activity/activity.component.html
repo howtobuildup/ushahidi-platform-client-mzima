@@ -485,8 +485,8 @@
           </header>
           <div class="horizontal-bars horizontal-bars--responders">
             <div class="horizontal-bar" *ngFor="let item of respondingActors">
-              <span class="horizontal-bar__label" [title]="item.labelKey | translate">
-                {{ item.labelKey | translate }}
+              <span class="horizontal-bar__label" [title]="item.labelKey">
+                {{ item.labelKey }}
               </span>
               <i><b [style.width.%]="item.value" [style.background]="item.color"></b></i>
               <strong>{{ item.count }}/{{ item.total }} ({{ item.value }}%)</strong>

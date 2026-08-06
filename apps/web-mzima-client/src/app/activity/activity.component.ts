@@ -510,7 +510,7 @@ export class ActivityComponent implements OnInit {
     }));
     const actorColors = ['#505596', '#656aa8', '#979bcc', '#979bcc', '#b8bce0', '#b8bce0'];
     this.respondingActors = data.responding_actors.map((item, index) => ({
-      labelKey: this.actorKey(item.name),
+      labelKey: item.name,
       value: item.percentage,
       count: item.frequency,
       total: data.responding_actors_total_yes,
@@ -684,26 +684,6 @@ export class ActivityComponent implements OnInit {
       murder_manslaughter: 'dashboard.social.murder',
     };
     return keys[this.normalize(value)] || 'dashboard.social.youth_group';
-  }
-
-  private actorKey(value: string): string {
-    const keys: Record<string, string> = {
-      police: 'dashboard.responders.police',
-      traditional_elders: 'dashboard.responders.traditional_elders',
-      religious_leaders: 'dashboard.responders.religious_leaders',
-      district_administration: 'dashboard.responders.local_government',
-      local_government: 'dashboard.responders.local_government',
-      community_mediation: 'dashboard.responders.community_mediation',
-      cbos: 'dashboard.responders.cbos',
-      somali_national_army_sna: 'dashboard.responders.somali_national_army',
-      government_ministries: 'dashboard.responders.government_ministries',
-      local_ngo: 'dashboard.responders.local_ngo',
-      international_ngo: 'dashboard.responders.international_ngo',
-      formal_justice_mechanisms: 'dashboard.responders.formal_justice',
-      informal_justice_mechanisms: 'dashboard.responders.informal_justice',
-      emergency_services: 'dashboard.responders.emergency_services',
-    };
-    return keys[this.normalize(value)] || value || 'Unknown';
   }
 
   private monthKey(value: string): string {

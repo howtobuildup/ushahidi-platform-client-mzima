@@ -100,8 +100,14 @@ export class PostsService extends ResourceService<any> {
     return super.delete(id);
   }
 
-  getGeojson(filter?: GeoJsonFilter): Observable<GeoJsonPostsResponse> {
+  getGeojson(
+    filter?: GeoJsonFilter,
+    defaultFormId?: string | number,
+  ): Observable<GeoJsonPostsResponse> {
     const tmpParams = { ...this.postsFilters.value, has_location: 'mapped', ...filter };
+    if (defaultFormId && !tmpParams['form[]']?.length) {
+      tmpParams['form[]'] = [String(defaultFormId)];
+    }
     delete tmpParams.order;
     delete tmpParams.orderby;
     return super.get('geojson', this.postParamsMapper(tmpParams)).pipe(

@@ -19,7 +19,7 @@ import {
   tileLayer,
 } from 'leaflet';
 import 'leaflet.markercluster';
-import { debounceTime, Observable } from 'rxjs';
+import { catchError, debounceTime, Observable, of } from 'rxjs';
 import { PostPreviewComponent } from '../post/post-preview/post-preview.component';
 import { PostDetailsModalComponent } from './post-details-modal/post-details-modal.component';
 import {
@@ -53,6 +53,7 @@ export class MapComponent extends MainViewComponent implements OnInit {
   public progress = 0;
   public isFiltersVisible: boolean;
   public isMainFiltersOpen: boolean;
+  private projectFormId?: string | number;
 
   constructor(
     protected override router: Router,
@@ -117,7 +118,13 @@ export class MapComponent extends MainViewComponent implements OnInit {
     });
 
     this.initCollectionRemoveListener();
-    this.getUserData();
+    this.postsService
+      .getEwerDashboard()
+      .pipe(catchError(() => of(null)))
+      .subscribe((response) => {
+        this.projectFormId = response?.result?.form_id;
+        this.getUserData();
+      });
   }
 
   loadData(): void {
@@ -153,7 +160,7 @@ export class MapComponent extends MainViewComponent implements OnInit {
 
   getPostsGeoJson() {
     this.postsService
-      .getGeojson(this.withPostAccessScope(this.params))
+      .getGeojson(this.withPostAccessScope(this.params), this.projectFormId)
       .pipe(untilDestroyed(this))
       .subscribe({
         next: (posts) => {

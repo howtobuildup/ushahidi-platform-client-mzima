@@ -101,21 +101,23 @@
     --highlight-color-valid: var(--ion-color-step-600);
   }
 
+  &::part(label) {
+    color: var(--question-color, currentColor);
+    font-weight: var(--question-font-weight, inherit);
+    max-width: 100%;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  &::part(native) {
+    font-weight: 400;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
   &::ng-deep {
-    ion-textarea::part(label) {
-      color: var(--question-color, currentColor);
-      font-weight: 700;
-      max-width: 100%;
-      white-space: normal;
-      overflow-wrap: anywhere;
-    }
-
-    ion-textarea::part(native) {
-      font-weight: 400;
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
-    }
-
     input,
     textarea,
     select {

@@ -48,6 +48,7 @@
 
 .question {
   --question-color: var(--ion-color-danger);
+  --question-font-weight: 700;
 
   ion-label {
     color: var(--question-color);

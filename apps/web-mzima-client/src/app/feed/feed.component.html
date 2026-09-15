@@ -121,6 +121,19 @@
               {{ 'nav.deselect' | translate }}
               {{ 'nav.all' | translate }}
             </mzima-client-button>
+            <!-- Admin only: removes every post in the selected surveys, not just this page. -->
+            <mzima-client-button
+              *ngIf="isAdmin"
+              color="danger"
+              class="feed-page__control"
+              [disabled]="!canDeleteAllData || isDeletingAllData"
+              (buttonClick)="deleteAllData()"
+            >
+              {{
+                (isDeletingAllData ? 'post.delete_all.in_progress' : 'post.delete_all.button')
+                  | translate
+              }}
+            </mzima-client-button>
           </ng-container>
         </ng-container>
       </div>

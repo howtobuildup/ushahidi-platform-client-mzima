@@ -12,6 +12,15 @@ import {
 } from '../models';
 import { ResourceService } from './resource.service';
 
+/** Phrase the delete-all endpoint requires before it will remove anything. */
+export const DELETE_ALL_POSTS_CONFIRMATION = 'DELETE ALL';
+
+export interface DeleteAllPostsResult {
+  deleted: number;
+  remaining: number;
+  form_ids: number[];
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -69,6 +78,34 @@ export class PostsService extends ResourceService<any> {
 
   updateStatus(id: string | number, status: string) {
     return super.patch(id, { status });
+  }
+
+  /**
+   * Delete every post belonging to the given surveys.
+   *
+   * The API removes a bounded batch per call and reports how many posts are
+   * still outstanding, so callers must keep calling until `remaining` is 0.
+   * Deleting in bounded calls keeps each request comfortably inside the proxy
+   * read timeout rather than risking a connection cut part-way through.
+   */
+  deleteAllByForm(
+    formIds: Array<string | number>,
+    limit?: number,
+  ): Observable<DeleteAllPostsResult> {
+    return this.currentLoader.getApiUrl().pipe(
+      take(1),
+      switchMap((backendUrl) =>
+        this.httpClient.post<{ result: DeleteAllPostsResult }>(
+          `${backendUrl}${apiHelpers.API_V_5}${this.getResourceUrl()}/delete-all`,
+          {
+            form_ids: formIds.map((id) => Number(id)),
+            confirm: DELETE_ALL_POSTS_CONFIRMATION,
+            ...(limit ? { limit } : {}),
+          },
+        ),
+      ),
+      map((response) => response.result),
+    );
   }
 
   override post(params: any): Observable<any> {

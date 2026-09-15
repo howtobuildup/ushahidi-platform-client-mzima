@@ -962,6 +962,20 @@
     "share_on_facebook": "Share on Facebook"
   },
   "post": {
+    "delete_all": {
+      "button": "Delete all data",
+      "in_progress": "Deleting…",
+      "title": "Delete all data in the selected surveys?",
+      "description": "This will permanently delete all {{count}} posts in the surveys you have selected, not just the ones shown on this page. This action cannot be undone.",
+      "confirm_button": "Continue",
+      "reconfirm_title": "Are you absolutely sure?",
+      "reconfirm_description": "{{count}} posts and all of their responses will be permanently deleted. There is no way to recover them.",
+      "reconfirm_button": "Delete all data",
+      "partial_title": "Deletion incomplete",
+      "partial_description": "Deleted {{deleted}} posts, but {{remaining}} could not be deleted. Please try again or check your permissions.",
+      "error_title": "Deletion failed",
+      "error_description": "The delete stopped after {{count}} posts. Some data may remain. Please try again."
+    },
     "approve_submission": "Approve",
     "delete_submission": "Delete submission",
     "delete_submission_warning": "This permanently deletes the submission and cannot be undone.",

@@ -12,6 +12,7 @@ import { SessionService, BreakpointService, EventBusService, EventType } from '@
 import { ConfirmModalService } from '../core/services/confirm-modal.service';
 import { LanguageService } from '../core/services/language.service';
 import { SavedsearchesService, PostsService, GeoJsonFilter, PostResult } from '@mzima-client/sdk';
+import { Roles } from '@enums';
 
 enum FeedMode {
   Tiles = 'TILES',
@@ -72,6 +73,10 @@ export class FeedComponent extends MainViewComponent implements OnInit {
   public itemsPerPage = 10;
   private postDetailsModal: MatDialogRef<PostDetailsModalComponent>;
   public isMainFiltersOpen: boolean;
+  public isAdmin = false;
+  public isDeletingAllData = false;
+  /** Survey ids currently ticked in the Surveys filter; the delete-all scope. */
+  private selectedSurveyIds: number[] = [];
 
   constructor(
     protected override router: Router,
@@ -127,7 +132,11 @@ export class FeedComponent extends MainViewComponent implements OnInit {
     });
 
     this.postsService.postsFilters$.pipe(untilDestroyed(this)).subscribe({
-      next: () => {
+      next: (filters) => {
+        this.selectedSurveyIds = (filters?.['form[]'] ?? [])
+          .filter((id: string | number) => id !== 'none')
+          .map((id: string | number) => Number(id))
+          .filter((id: number) => !Number.isNaN(id));
         this.router.navigate([], {
           relativeTo: this.route,
           queryParams: {
@@ -143,6 +152,12 @@ export class FeedComponent extends MainViewComponent implements OnInit {
     this.postsService.totalPosts$.pipe(untilDestroyed(this)).subscribe({
       next: (total) => {
         this.total = total;
+      },
+    });
+
+    this.sessionService.currentUserData$.pipe(untilDestroyed(this)).subscribe({
+      next: (userData) => {
+        this.isAdmin = userData?.role === Roles.Admin;
       },
     });
 
@@ -376,6 +391,105 @@ export class FeedComponent extends MainViewComponent implements OnInit {
         this.postDeleted(this.selectedPosts, count);
       },
     });
+  }
+
+  /** Admin-only, and only meaningful once a survey is selected to scope it. */
+  public get canDeleteAllData(): boolean {
+    return this.isAdmin && this.selectedSurveyIds.length > 0;
+  }
+
+  /**
+   * Delete every post in the selected surveys.
+   *
+   * The API deletes a bounded batch per call and tells us what is left, so we
+   * loop until nothing remains. That keeps each request short instead of one
+   * long request that a proxy could cut off part-way through.
+   */
+  public async deleteAllData(): Promise<void> {
+    if (!this.canDeleteAllData || this.isDeletingAllData) return;
+
+    const total = this.total;
+
+    const confirmed = await this.confirmModalService.open({
+      title: this.translate.instant('post.delete_all.title'),
+      description: this.translate.instant('post.delete_all.description', { count: total }),
+      confirmButtonText: this.translate.instant('post.delete_all.confirm_button'),
+    });
+    if (!confirmed) return;
+
+    // Second gate: this cannot be undone, so make the admin say so twice.
+    const reconfirmed = await this.confirmModalService.open({
+      title: this.translate.instant('post.delete_all.reconfirm_title'),
+      description: this.translate.instant('post.delete_all.reconfirm_description', {
+        count: total,
+      }),
+      confirmButtonText: this.translate.instant('post.delete_all.reconfirm_button'),
+    });
+    if (!reconfirmed) return;
+
+    this.isDeletingAllData = true;
+    this.deleteAllDataBatch(0);
+  }
+
+  private deleteAllDataBatch(deletedSoFar: number): void {
+    this.postsService.deleteAllByForm(this.selectedSurveyIds).subscribe({
+      next: (result) => {
+        const deleted = deletedSoFar + result.deleted;
+
+        // Keep going while the server is still making progress. Stopping on a
+        // zero-delete response avoids spinning forever if something is
+        // undeletable, e.g. a post the policy refuses.
+        if (result.remaining > 0 && result.deleted > 0) {
+          this.deleteAllDataBatch(deleted);
+          return;
+        }
+
+        this.isDeletingAllData = false;
+        this.selectedPosts = [];
+        this.posts = [];
+        this.getPostsSubject.next({ params: this.params, add: false });
+
+        if (result.remaining > 0) {
+          this.confirmModalService.open({
+            title: this.translate.instant('post.delete_all.partial_title'),
+            description: this.translate.instant('post.delete_all.partial_description', {
+              deleted,
+              remaining: result.remaining,
+            }),
+          });
+          return;
+        }
+
+        this.confirmModalService.open({
+          title: this.translate.instant('notify.confirm_modal.deleted.success'),
+          description: `<p>${this.translate.instant(
+            'notify.confirm_modal.deleted.success_description',
+            { count: deleted },
+          )}</p>`,
+          buttonSuccess: this.translate.instant('notify.confirm_modal.deleted.success_button'),
+        });
+      },
+      error: (err) => {
+        this.isDeletingAllData = false;
+        this.posts = [];
+        this.getPostsSubject.next({ params: this.params, add: false });
+        this.confirmModalService.open({
+          title: this.translate.instant('post.delete_all.error_title'),
+          description: `${this.translate.instant('post.delete_all.error_description', {
+            count: deletedSoFar,
+          })} ${this.getDeleteAllErrorDetail(err)}`,
+        });
+      },
+    });
+  }
+
+  /** Surface the API's own message; a generic string hides why it failed. */
+  private getDeleteAllErrorDetail(err: any): string {
+    const messages = err?.error?.messages;
+    if (Array.isArray(messages) && messages.length) {
+      return messages.join(' ');
+    }
+    return err?.error?.message ?? err?.message ?? '';
   }
 
   public postDeleted(postIds: string[], count?: number): void {

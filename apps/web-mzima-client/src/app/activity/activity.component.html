@@ -300,7 +300,10 @@
             <div class="horizontal-bar" *ngFor="let item of gbvNature">
               <span>{{ item.labelKey | translate }}</span>
               <i><b [style.width.%]="item.value" [style.background]="item.color"></b></i>
-              <strong>{{ item.count }} / {{ item.total }} ({{ item.value }}%)</strong>
+              <strong *ngIf="hasCount(item); else gbvNatureNoCount">
+                {{ item.count }} / {{ item.total }} ({{ item.value }}%)
+              </strong>
+              <ng-template #gbvNatureNoCount><strong>&mdash;</strong></ng-template>
             </div>
           </div>
         </article>
@@ -393,7 +396,10 @@
                 <strong>{{ item.value }}%</strong>
               </div>
               <span>{{ item.labelKey | translate }}</span>
-              <small>{{ item.count }}/{{ item.total }}</small>
+              <small *ngIf="hasCount(item); else coverageNoCount">
+                {{ item.count }}/{{ item.total }}
+              </small>
+              <ng-template #coverageNoCount><small>&mdash;</small></ng-template>
             </div>
           </div>
         </article>
@@ -489,7 +495,10 @@
                 {{ item.labelKey }}
               </span>
               <i><b [style.width.%]="item.value" [style.background]="item.color"></b></i>
-              <strong>{{ item.count }}/{{ item.total }} ({{ item.value }}%)</strong>
+              <strong *ngIf="hasCount(item); else actorNoCount">
+                {{ item.count }}/{{ item.total }} ({{ item.value }}%)
+              </strong>
+              <ng-template #actorNoCount><strong>&mdash;</strong></ng-template>
             </div>
           </div>
         </article>

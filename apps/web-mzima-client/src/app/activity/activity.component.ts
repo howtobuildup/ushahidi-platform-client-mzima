@@ -232,6 +232,17 @@ export class ActivityComponent implements OnInit {
     return total ? Math.round((value / total) * 100) : 0;
   }
 
+  /**
+   * Can this metric back its percentage with a count?
+   *
+   * A percentage with nothing behind it is a rendering error, not a value to
+   * interpolate around, so the readout is suppressed rather than printed with
+   * the numerator missing.
+   */
+  public hasCount(item: ChartMetric): boolean {
+    return item.count !== undefined && item.count !== null && !!item.total;
+  }
+
   public donutBackground(items: ChartMetric[]): string {
     const total = this.metricTotal(items);
     if (!total) return '#e9ebf2';
@@ -420,16 +431,24 @@ export class ActivityComponent implements OnInit {
       this.metric('dashboard.escalation.stable', data.escalation_signals.stable, '#c3c8d3'),
     ];
 
-    this.gbvNature = this.mapNamedValues(data.gbv_nature, this.gbvNatureKey, [
+    // The bar shows "count / total (percentage%)", so the count has to survive
+    // alongside the percentage. Overwriting value with the percentage on its
+    // own left the template reading an undefined count and rendering a bare
+    // slash.
+    const gbvNatureMetrics = this.mapNamedValues(data.gbv_nature, this.gbvNatureKey, [
       '#b7473d',
       '#c96960',
       '#d3928c',
       '#d3928c',
       '#d3928c',
       '#d3928c',
-    ]).map((item) => ({
+    ]);
+    const gbvNatureTotal = this.metricTotal(gbvNatureMetrics);
+    this.gbvNature = gbvNatureMetrics.map((item) => ({
       ...item,
-      value: this.percentage(item.value, this.metricTotal(this.mapNamedValues(data.gbv_nature))),
+      count: item.value,
+      total: gbvNatureTotal,
+      value: this.percentage(item.value, gbvNatureTotal),
     }));
     this.gbvDistricts = data.gbv_districts
       .slice(0, 4)

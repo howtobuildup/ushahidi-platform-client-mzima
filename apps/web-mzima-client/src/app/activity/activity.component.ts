@@ -18,6 +18,12 @@ interface DashboardFilter {
 
 type ExportFormat = 'png' | 'jpg' | 'pdf';
 
+/**
+ * Largest canvas area to ask the browser for. Safari caps a canvas at this,
+ * and a canvas over the limit fails quietly rather than throwing.
+ */
+const MAX_CANVAS_PIXELS = 16_000_000;
+
 interface KpiMetric {
   labelKey: string;
   value: string;
@@ -276,22 +282,40 @@ export class ActivityComponent implements OnInit {
     const title = card.querySelector('h3')?.textContent || 'dashboard-chart';
     try {
       await this.downloadElement(card, this.fileName(title), format);
-    } catch {
-      this.notification.showError('Dashboard chart export could not be generated.');
+    } catch (error) {
+      this.reportExportFailure('Dashboard chart export could not be generated.', error);
     }
   }
 
   public async downloadDashboardPdf(): Promise<void> {
-    if (!this.dashboardContent?.nativeElement) return;
+    if (!this.dashboardContent?.nativeElement) {
+      this.reportExportFailure(
+        'Dashboard PDF export could not be generated.',
+        new Error('The dashboard has not finished rendering.'),
+      );
+      return;
+    }
+
     try {
       await this.downloadElement(
         this.dashboardContent.nativeElement,
         'ewer-monitoring-dashboard',
         'pdf',
       );
-    } catch {
-      this.notification.showError('Dashboard PDF export could not be generated.');
+    } catch (error) {
+      this.reportExportFailure('Dashboard PDF export could not be generated.', error);
     }
+  }
+
+  /**
+   * Both export paths used to discard the cause, which left a failure with
+   * nothing to act on. Keep the readable message on screen and put the
+   * underlying error where it can be read.
+   */
+  private reportExportFailure(message: string, error: unknown): void {
+    console.error(message, error);
+    const detail = error instanceof Error ? error.message : String(error ?? '');
+    this.notification.showError(detail ? `${message} ${detail}` : message);
   }
 
   private loadDashboard(): void {
@@ -745,6 +769,32 @@ export class ActivityComponent implements OnInit {
     return `dashboard.months.${keys[month]}`;
   }
 
+  /**
+   * How finely to rasterise, without producing a canvas the browser refuses.
+   *
+   * A single chart card is small enough that device pixel ratio is free, but
+   * the whole dashboard is several thousand pixels tall, and at ratio 2 the
+   * canvas runs to tens of millions of pixels. Past the browser's limit the
+   * canvas comes back blank or toDataURL yields nothing, which is how a
+   * working per-chart export sat beside a failing whole-dashboard one.
+   *
+   * 16 megapixels is the smallest limit in current browsers, so staying under
+   * it keeps the export working everywhere rather than only where it is
+   * generous.
+   */
+  private rasterScale(element: HTMLElement): number {
+    const width = element.scrollWidth || element.clientWidth;
+    const height = element.scrollHeight || element.clientHeight;
+    const preferred = Math.min(2, window.devicePixelRatio || 1);
+    const area = width * height;
+
+    if (!area) {
+      return preferred;
+    }
+
+    return Math.max(0.5, Math.min(preferred, Math.sqrt(MAX_CANVAS_PIXELS / area)));
+  }
+
   private async downloadElement(
     element: HTMLElement,
     fileName: string,
@@ -752,7 +802,7 @@ export class ActivityComponent implements OnInit {
   ): Promise<void> {
     const canvas = await html2canvas(element, {
       backgroundColor: '#ffffff',
-      scale: Math.min(2, window.devicePixelRatio || 1),
+      scale: this.rasterScale(element),
       useCORS: true,
       ignoreElements: (ignoredElement) =>
         ignoredElement.classList.contains('chart-actions') ||
@@ -787,8 +837,14 @@ export class ActivityComponent implements OnInit {
     });
   }
 
+  /**
+   * Page the canvas by cutting it, rather than by placing the whole image on
+   * every page at a negative offset and letting the page crop it. The offset
+   * approach embedded a copy of the full-height image once per page, so a
+   * dashboard running to six pages carried six copies of a multi-megabyte
+   * JPEG and relied on the reader clipping each one.
+   */
   private downloadCanvasPdf(canvas: HTMLCanvasElement, fileName: string): void {
-    const imageData = canvas.toDataURL('image/jpeg', 0.95);
     const pdf = new jsPDF({
       orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
       unit: 'pt',
@@ -798,18 +854,35 @@ export class ActivityComponent implements OnInit {
     const pageHeight = pdf.internal.pageSize.getHeight();
     const margin = 24;
     const imageWidth = pageWidth - margin * 2;
-    const imageHeight = (canvas.height * imageWidth) / canvas.width;
-    let y = margin;
-    let remainingHeight = imageHeight;
+    // Points per source pixel, so a slice can be measured in source pixels.
+    const scale = imageWidth / canvas.width;
+    const sliceHeight = Math.max(1, Math.floor((pageHeight - margin * 2) / scale));
 
-    pdf.addImage(imageData, 'JPEG', margin, y, imageWidth, imageHeight);
-    remainingHeight -= pageHeight - margin * 2;
+    const slice = document.createElement('canvas');
+    const context = slice.getContext('2d');
+    if (!context) {
+      throw new Error('This browser would not provide a drawing context.');
+    }
 
-    while (remainingHeight > 0) {
-      y -= pageHeight - margin * 2;
-      pdf.addPage();
-      pdf.addImage(imageData, 'JPEG', margin, y, imageWidth, imageHeight);
-      remainingHeight -= pageHeight - margin * 2;
+    for (let offset = 0, page = 0; offset < canvas.height; offset += sliceHeight, page++) {
+      const height = Math.min(sliceHeight, canvas.height - offset);
+      slice.width = canvas.width;
+      slice.height = height;
+      // Slices are opaque so that JPEG, which has no alpha, does not render
+      // the transparent remainder of a short final slice as black.
+      context.fillStyle = '#ffffff';
+      context.fillRect(0, 0, slice.width, slice.height);
+      context.drawImage(canvas, 0, offset, canvas.width, height, 0, 0, canvas.width, height);
+
+      const imageData = slice.toDataURL('image/jpeg', 0.95);
+      if (!imageData.startsWith('data:image/jpeg')) {
+        throw new Error('The dashboard image could not be encoded for export.');
+      }
+
+      if (page > 0) {
+        pdf.addPage();
+      }
+      pdf.addImage(imageData, 'JPEG', margin, margin, imageWidth, height * scale);
     }
 
     pdf.save(`${fileName}.pdf`);

@@ -132,7 +132,10 @@ export interface PostContent {
   required: number;
   show_when_published: boolean;
   task_is_internal_only: boolean;
-  translations: any[];
+  // Keyed by language, then by the key being translated:
+  //   { "so": { "label": "Magaca Mashruuca", "options": { … } } }
+  // An empty set arrives as [], so guard before indexing.
+  translations: Record<string, Record<string, any>> | any[];
   type: string;
 }
 
@@ -168,7 +171,10 @@ export interface PostContentField {
   priority: number;
   required: number;
   response_private: number;
-  translations: any[];
+  // Keyed by language, then by the key being translated:
+  //   { "so": { "label": "Magaca Mashruuca", "options": { … } } }
+  // An empty set arrives as [], so guard before indexing.
+  translations: Record<string, Record<string, any>> | any[];
   type: string;
   value?: any;
 }

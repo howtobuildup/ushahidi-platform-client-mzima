@@ -813,7 +813,11 @@
       "response_rate": "Response rate",
       "response_detail": "490 of 644 actioned",
       "escalation_signals": "Escalation signals",
-      "escalation_detail": "112 flagged cases"
+      "escalation_detail": "112 flagged cases",
+      "stored_submissions": "{{count}} stored submissions",
+      "responded_detail": "Cases marked as responded to",
+      "escalation_indicators_detail": "Cases with escalation indicators",
+      "incident_share": "{{percent}}% of incidents"
     },
     "sections": {
       "overview": "Overview",
@@ -880,6 +884,7 @@
       "revenge_killings": "Revenge killings",
       "borderland_clashes": "Borderland clashes",
       "inheritance_marriage": "Inheritance/marriage",
+      "land_grabbing": "Land grabbing",
       "other": "Other"
     },
     "escalation": {

@@ -36,7 +36,10 @@
       <div class="dashboard-header__meta">
         <div class="reporting-period">
           <span>{{ 'dashboard.reporting_period' | translate }}</span>
-          <strong>{{ reportingPeriod }}</strong>
+          <strong *ngIf="reportingPeriod as period">
+            {{ period.startKey | translate }} {{ period.startYear }} -
+            {{ period.endKey | translate }} {{ period.endYear }}
+          </strong>
         </div>
       </div>
     </header>
@@ -101,14 +104,14 @@
         <article *ngFor="let metric of summaryKpis" [class]="'kpi-card kpi-card--' + metric.tone">
           <span>{{ metric.labelKey | translate }}</span>
           <strong>{{ metric.value }}</strong>
-          <small>{{ metric.detail }}</small>
+          <small>{{ metric.detailKey | translate : metric.detailParams }}</small>
         </article>
       </div>
       <div class="kpi-grid kpi-grid--incidents">
         <article *ngFor="let metric of incidentKpis" [class]="'kpi-card kpi-card--' + metric.tone">
           <span>{{ metric.labelKey | translate }}</span>
           <strong>{{ metric.value }}</strong>
-          <small>{{ metric.detail }}</small>
+          <small>{{ metric.detailKey | translate : metric.detailParams }}</small>
         </article>
       </div>
     </section>
@@ -482,8 +485,11 @@
           </header>
           <div class="horizontal-bars horizontal-bars--responders">
             <div class="horizontal-bar" *ngFor="let item of respondingActors">
-              <span class="horizontal-bar__label" [title]="item.labelKey">
-                {{ item.labelKey }}
+              <span
+                class="horizontal-bar__label"
+                [title]="item.labelKey ? (item.labelKey | translate) : item.label"
+              >
+                {{ item.labelKey ? (item.labelKey | translate) : item.label }}
               </span>
               <i><b [style.width.%]="item.value" [style.background]="item.color"></b></i>
               <strong *ngIf="hasCount(item); else actorNoCount">

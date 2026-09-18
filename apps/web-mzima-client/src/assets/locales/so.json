@@ -811,7 +811,11 @@
       "response_rate": "Heerka jawaabta",
       "response_detail": "490 ka mid ah 644 ayaa laga jawaabay",
       "escalation_signals": "Calaamadaha sii-kordhinta",
-      "escalation_detail": "112 kiis oo la calaamadeeyay"
+      "escalation_detail": "112 kiis oo la calaamadeeyay",
+      "stored_submissions": "{{count}} warbixin oo la kaydiyay",
+      "responded_detail": "Kiisaska laga jawaabay",
+      "escalation_indicators_detail": "Kiisaska leh calaamadaha sii-kordhinta",
+      "incident_share": "{{percent}}% dhacdooyinka"
     },
     "sections": {
       "overview": "Guudmar",
@@ -878,6 +882,7 @@
       "revenge_killings": "Dilal aargoosi",
       "borderland_clashes": "Iskahorimaad xuduudeed",
       "inheritance_marriage": "Dhaxal/guur",
+      "land_grabbing": "Boobka dhulka",
       "other": "Kale"
     },
     "escalation": {

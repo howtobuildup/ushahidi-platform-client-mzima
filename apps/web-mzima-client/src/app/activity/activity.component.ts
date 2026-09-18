@@ -25,23 +25,35 @@ type ExportFormat = 'png' | 'jpg' | 'pdf';
 const MAX_CANVAS_PIXELS = 16_000_000;
 
 /**
- * html2canvas 1.4.1 parses linear-gradient and radial-gradient and knows
- * nothing of conic-gradient: it throws "Error parsing CSS component value,
- * unexpected EOF" rather than skipping the declaration. The donuts and the
- * response gauges are drawn with conic-gradient, so any export containing one
- * of them failed outright.
+ * The reporting period, kept as month keys rather than a formatted string so
+ * the month names follow a language change. Intl was formatting them against a
+ * hardcoded 'en', which left them in English on a Somali dashboard.
  */
+interface ReportingPeriod {
+  startKey: string;
+  startYear: string;
+  endKey: string;
+  endYear: string;
+}
 
 interface KpiMetric {
   labelKey: string;
   value: string;
-  detail: string;
+  // The caption under the figure. Held as a key and its parameters rather than
+  // a built string, so it follows a language change without the dashboard
+  // having to be fetched again.
+  detailKey: string;
+  detailParams?: Record<string, string | number>;
   tone: 'primary' | 'danger' | 'social' | 'success' | 'warning';
 }
 
 interface ChartMetric {
   key?: string;
   labelKey: string;
+  // Shown when labelKey is empty, for values the dashboard has no translation
+  // for. Passing those through the translate pipe would corrupt them: the
+  // missing-translation handler keeps only the text after the last dot.
+  label?: string;
   value: number;
   color?: string;
   count?: number;
@@ -82,6 +94,7 @@ interface NamedValue {
 }
 
 interface RespondingActorValue {
+  key: string;
   name: string;
   frequency: number;
   percentage: number;
@@ -146,7 +159,7 @@ export class ActivityComponent implements OnInit {
   public filtersApplied = false;
   public loading = true;
   public loadError = false;
-  public reportingPeriod = '';
+  public reportingPeriod: ReportingPeriod | null = null;
   public selectedIncidentType = 'all';
   public selectedDistrictFilter = 'all';
   public selectedFormId = '';
@@ -363,50 +376,57 @@ export class ActivityComponent implements OnInit {
       data.reporting_period.end,
     );
     this.summaryKpis = [
-      this.kpi('dashboard.kpis.total_reports', total, `${total} stored submissions`, 'primary'),
+      this.kpi(
+        'dashboard.kpis.total_reports',
+        total,
+        'dashboard.kpis.stored_submissions',
+        'primary',
+        { count: total },
+      ),
       this.kpi(
         'dashboard.kpis.response_rate',
         `${data.kpis.response_rate}%`,
-        'Cases marked as responded to',
+        'dashboard.kpis.responded_detail',
         'success',
       ),
       this.kpi(
         'dashboard.kpis.escalation_signals',
         `${data.kpis.escalation_rate}%`,
-        'Cases with escalation indicators',
+        'dashboard.kpis.escalation_indicators_detail',
         'warning',
       ),
     ];
     this.incidentKpis = [
-      this.kpi(
-        'dashboard.kpis.gbv',
-        data.kpis.gbv,
-        this.incidentDetail(data.kpis.gbv, total),
-        'danger',
-      ),
+      this.kpi('dashboard.kpis.gbv', data.kpis.gbv, 'dashboard.kpis.incident_share', 'danger', {
+        percent: this.percentage(data.kpis.gbv, total),
+      }),
       this.kpi(
         'dashboard.kpis.conflicts',
         data.kpis.conflicts,
-        this.incidentDetail(data.kpis.conflicts, total),
+        'dashboard.kpis.incident_share',
         'primary',
+        { percent: this.percentage(data.kpis.conflicts, total) },
       ),
       this.kpi(
         'dashboard.kpis.social_violence',
         data.kpis.social_violence,
-        this.incidentDetail(data.kpis.social_violence, total),
+        'dashboard.kpis.incident_share',
         'social',
+        { percent: this.percentage(data.kpis.social_violence, total) },
       ),
       this.kpi(
         'dashboard.kpis.early_warning',
         data.kpis.early_warning,
-        this.incidentDetail(data.kpis.early_warning, total),
+        'dashboard.kpis.incident_share',
         'success',
+        { percent: this.percentage(data.kpis.early_warning, total) },
       ),
       this.kpi(
         'dashboard.kpis.environmental_climate',
         data.kpis.environmental_climate,
-        this.incidentDetail(data.kpis.environmental_climate, total),
+        'dashboard.kpis.incident_share',
         'success',
+        { percent: this.percentage(data.kpis.environmental_climate, total) },
       ),
     ];
 
@@ -561,7 +581,8 @@ export class ActivityComponent implements OnInit {
     }));
     const actorColors = ['#505596', '#656aa8', '#979bcc', '#979bcc', '#b8bce0', '#b8bce0'];
     this.respondingActors = data.responding_actors.map((item, index) => ({
-      labelKey: item.name,
+      labelKey: this.responderKey(item.key),
+      label: item.name,
       value: item.percentage,
       count: item.frequency,
       total: data.responding_actors_total_yes,
@@ -572,10 +593,11 @@ export class ActivityComponent implements OnInit {
   private kpi(
     labelKey: string,
     value: string | number,
-    detail: string,
+    detailKey: string,
     tone: KpiMetric['tone'],
+    detailParams?: Record<string, string | number>,
   ): KpiMetric {
-    return { labelKey, value: String(value), detail, tone };
+    return { labelKey, value: String(value), detailKey, detailParams, tone };
   }
 
   private metric(labelKey: string, value = 0, color = '#505596'): ChartMetric {
@@ -622,17 +644,14 @@ export class ActivityComponent implements OnInit {
     );
   }
 
-  private incidentDetail(value: number, total: number): string {
-    return `${this.percentage(value, total)}% of incidents`;
-  }
-
-  private formatPeriod(start: string | null, end: string | null): string {
-    if (!start || !end) return '';
-    const format = (value: string) =>
-      new Intl.DateTimeFormat('en', { month: 'short', year: 'numeric' }).format(
-        new Date(`${value}T00:00:00`),
-      );
-    return `${format(start)} - ${format(end)}`;
+  private formatPeriod(start: string | null, end: string | null): ReportingPeriod | null {
+    if (!start || !end) return null;
+    return {
+      startKey: this.shortMonthKey(start),
+      startYear: start.split('-')[0],
+      endKey: this.shortMonthKey(end),
+      endYear: end.split('-')[0],
+    };
   }
 
   private normalize(value: string): string {
@@ -698,8 +717,55 @@ export class ActivityComponent implements OnInit {
       revenge_killings: 'dashboard.conflict.revenge_killings',
       borderland_clashes: 'dashboard.conflict.borderland_clashes',
       inheritance_marriage: 'dashboard.conflict.inheritance_marriage',
+      // The survey stores these as written-out labels rather than the coded
+      // names above, so only revenge killings was resolving and the rest of
+      // the chart stayed in English whatever the language.
+      land_dispute: 'dashboard.conflict.land_disputes',
+      clashes_over_grazing_land: 'dashboard.conflict.grazing_land',
+      clashes_over_water_sources: 'dashboard.conflict.water_sources',
+      borderland_conflicts_clashes: 'dashboard.conflict.borderland_clashes',
+      family_conflict_over_marriage: 'dashboard.conflict.inheritance_marriage',
+      inheritance_dispute: 'dashboard.conflict.inheritance_marriage',
+      land_grabbing: 'dashboard.conflict.land_grabbing',
     };
     return keys[this.normalize(value)] || value || 'dashboard.conflict.other';
+  }
+
+  /**
+   * Translation key for a responding actor, or empty when there is none.
+   *
+   * The canonical keys come from the API and mostly match the translations
+   * already carried here; the handful that do not are mapped across. Anything
+   * unknown returns empty so the caller shows the label the survey gave,
+   * rather than a guess at what it means.
+   */
+  private responderKey(key: string): string {
+    const known = [
+      'police',
+      'traditional_elders',
+      'religious_leaders',
+      'local_government',
+      'community_mediation',
+      'cbos',
+      'government_ministries',
+      'local_ngo',
+      'international_ngo',
+      'emergency_services',
+    ];
+    const aliases: Record<string, string> = {
+      national_army: 'somali_national_army',
+      somali_national_army: 'somali_national_army',
+      informal_justice_mechanism_e_g_clan_eld: 'informal_justice',
+      informal_justice_mechanisms: 'informal_justice',
+      formal_justice_mechanism_formal_courts: 'formal_justice',
+      formal_justice_mechanisms: 'formal_justice',
+    };
+
+    const normalized = this.normalize(key);
+    if (aliases[normalized]) {
+      return `dashboard.responders.${aliases[normalized]}`;
+    }
+    return known.includes(normalized) ? `dashboard.responders.${normalized}` : '';
   }
 
   private gbvNatureKey(value: string): string {
@@ -805,6 +871,12 @@ export class ActivityComponent implements OnInit {
 
   /**
    * Swap every conic-gradient in the clone for an equivalent SVG.
+   *
+   * html2canvas 1.4.1 parses linear-gradient and radial-gradient and knows
+   * nothing of conic-gradient: it throws "Error parsing CSS component value,
+   * unexpected EOF" rather than skipping the declaration. The donuts and the
+   * response gauges are drawn with conic-gradient, so any export containing
+   * one of them failed outright.
    *
    * Only the offscreen copy html2canvas rasterises is touched, so the live
    * dashboard keeps drawing the donut and gauges the way it always has and

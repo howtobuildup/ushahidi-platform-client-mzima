@@ -898,6 +898,8 @@
       "early_forced_marriage": "Early/forced marriage",
       "fgmc": "FGM/C",
       "physical_assault": "Physical assault",
+      "denial_resource": "Denial of resources",
+      "sexual_harassment": "Sexual harassment",
       "other": "Other GBV",
       "age_under_12": "<12",
       "age_12_17": "12-17",

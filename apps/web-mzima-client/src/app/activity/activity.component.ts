@@ -776,6 +776,11 @@ export class ActivityComponent implements OnInit {
       fgm_c: 'dashboard.gbv.fgmc',
       physical_assaults: 'dashboard.gbv.physical_assault',
       other_forms_of_gbv: 'dashboard.gbv.other',
+      // Recorded by the survey but absent here, so both were counted as
+      // "other" rather than shown as themselves.
+      denial_resource: 'dashboard.gbv.denial_resource',
+      denial_of_resources: 'dashboard.gbv.denial_resource',
+      sexual_harassment: 'dashboard.gbv.sexual_harassment',
     };
     return keys[this.normalize(value)] || 'dashboard.gbv.other';
   }
@@ -798,6 +803,8 @@ export class ActivityComponent implements OnInit {
       kidnapping_and_abductions: 'dashboard.social.kidnapping',
       drug_related_violence: 'dashboard.social.drug_related',
       youth_group_violence: 'dashboard.social.youth_group',
+      // The survey records this shorter name, which matched nothing.
+      youth_conflict: 'dashboard.social.youth_group',
       murder_manslaughter: 'dashboard.social.murder',
     };
     return keys[this.normalize(value)] || 'dashboard.social.youth_group';

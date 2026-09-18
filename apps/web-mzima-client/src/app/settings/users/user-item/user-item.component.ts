@@ -10,6 +10,7 @@ import {
   FieldMonitorInterface,
   RolesService,
   RoleResult,
+  SurveysService,
   UsersService,
   UserInterface,
 } from '@mzima-client/sdk';
@@ -33,12 +34,21 @@ export class UserItemComponent implements OnInit {
   public createUserErrors: any[] = [];
   public submitted = false;
   public fieldMonitors: FieldMonitorInterface[] = [];
+  public surveys: { id: number; name: string }[] = [];
+
+  /**
+   * Roles whose access is limited to the surveys assigned to them. Mirrors
+   * UserFormAccess::RESTRICTED_ROLES on the API, which is what actually
+   * enforces it; this only decides whether to offer the field.
+   */
+  private static readonly RESTRICTED_ROLES = ['field_monitor', 'saferworld_partner'];
 
   constructor(
     private route: ActivatedRoute,
     private fb: FormBuilder,
     private userService: UsersService,
     private rolesService: RolesService,
+    private surveysService: SurveysService,
     private translate: TranslateService,
     private confirmModalService: ConfirmModalService,
     private breakpointService: BreakpointService,
@@ -65,6 +75,7 @@ export class UserItemComponent implements OnInit {
       ],
       role: ['', [Validators.required]],
       field_monitor_ids: [[]],
+      form_ids: [[]],
     });
     this.form.controls['role'].valueChanges.pipe(untilDestroyed(this)).subscribe((role) => {
       const monitorControl = this.form.controls['field_monitor_ids'];
@@ -75,12 +86,28 @@ export class UserItemComponent implements OnInit {
         monitorControl.setValue([]);
       }
       monitorControl.updateValueAndValidity({ emitEvent: false });
+
+      // A scoped account with no surveys assigned can reach nothing at all, so
+      // the assignment is required rather than left to be filled in later.
+      const surveyControl = this.form.controls['form_ids'];
+      if (UserItemComponent.RESTRICTED_ROLES.includes(role)) {
+        surveyControl.addValidators(Validators.required);
+      } else {
+        surveyControl.clearValidators();
+        surveyControl.setValue([]);
+      }
+      surveyControl.updateValueAndValidity({ emitEvent: false });
     });
+  }
+
+  public get isRestrictedRole(): boolean {
+    return UserItemComponent.RESTRICTED_ROLES.includes(this.form.get('role')?.value);
   }
 
   ngOnInit(): void {
     this.getRoles();
     this.getFieldMonitors();
+    this.getSurveys();
     const userId = this.route.snapshot.paramMap.get('id') || '';
     this.isUpdate = !!userId;
     if (userId) this.getUserInformation(userId);
@@ -122,6 +149,20 @@ export class UserItemComponent implements OnInit {
     });
   }
 
+  private getSurveys() {
+    // An administrator is not scoped, so this returns every survey and is the
+    // list to grant from.
+    this.surveysService.getSurveys('', { limit: 0 }).subscribe({
+      next: (response) => {
+        this.surveys = (response.results || []).map((survey: any) => ({
+          id: survey.id,
+          name: survey.name,
+        }));
+      },
+      error: (err) => console.log(err),
+    });
+  }
+
   private fillInForm(user: UserInterface) {
     this.form.patchValue({
       id: user.id,
@@ -129,6 +170,7 @@ export class UserItemComponent implements OnInit {
       email: user.email,
       role: user.role,
       field_monitor_ids: user.field_monitor_ids || [],
+      form_ids: user.form_ids || [],
     });
   }
 
@@ -141,6 +183,7 @@ export class UserItemComponent implements OnInit {
       password: this.form.value.password,
       role: this.form.value.role,
       field_monitor_ids: this.form.value.field_monitor_ids,
+      form_ids: this.form.value.form_ids,
     };
     !this.isUpdate ? this.createUser(roleBody) : this.updateUser(roleBody);
   }

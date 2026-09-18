@@ -94,6 +94,27 @@
     <mat-hint>{{ 'user.field_monitors_help' | translate }}</mat-hint>
   </div>
 
+  <div class="form-row" *ngIf="isRestrictedRole">
+    <mat-label>{{ 'user.surveys' | translate }} *</mat-label>
+    <mat-form-field appearance="outline">
+      <mat-select
+        formControlName="form_ids"
+        multiple
+        disableOptionCentering
+        [placeholder]="'user.select_surveys' | translate"
+        [data-qa]="'user-survey-select'"
+      >
+        <mat-option *ngFor="let survey of surveys" [value]="survey.id">
+          {{ survey.name }}
+        </mat-option>
+      </mat-select>
+      <mat-error *ngIf="form.get('form_ids')?.hasError('required')">
+        {{ 'user.surveys_required' | translate }}
+      </mat-error>
+    </mat-form-field>
+    <mat-hint>{{ 'user.surveys_help' | translate }}</mat-hint>
+  </div>
+
   <div class="form-controls-spacer" *ngIf="!isDesktop"></div>
   <div class="form-controls-panel form-controls-panel--sticky">
     <div>
@@ -123,7 +144,7 @@
         [disabled]="form.invalid || form.disabled || submitted"
         type="submit"
       >
-        {{ 'app.save' | translate }}
+        {{ (isUpdate ? 'user.update_user' : 'user.create_user') | translate }}
       </mzima-client-button>
     </div>
   </div>

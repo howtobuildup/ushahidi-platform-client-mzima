@@ -22,6 +22,9 @@ export interface UserInterface {
   updated?: Date;
   url?: string;
   field_monitor_ids?: number[];
+  // Surveys this account may open. Empty for roles that are not scoped, which
+  // reach every survey rather than none.
+  form_ids?: number[];
 }
 
 export interface FieldMonitorInterface {

@@ -21,6 +21,13 @@
       </app-post-head>
     </div>
 
+    <!-- Leads the detail panel so a post can be traced to its database row
+         before anything the survey itself supplied. -->
+    <div class="post__group" *ngIf="post.id">
+      <h3>{{ 'post.post_id' | translate }}</h3>
+      <p>{{ post.id }}</p>
+    </div>
+
     <div class="post__twitter" *ngIf="post.source === 'Twitter' && post.data_source_message_id">
       <app-twitter-widget [id]="post.data_source_message_id"></app-twitter-widget>
     </div>

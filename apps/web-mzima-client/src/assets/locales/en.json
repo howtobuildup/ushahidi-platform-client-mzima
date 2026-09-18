@@ -541,6 +541,7 @@
         "asc": "Oldest first"
       },
       "orderby": {
+        "id": "Post ID",
         "post_date": "Post Date",
         "created": "Date created",
         "updated": "Date updated"
@@ -553,6 +554,7 @@
       "order": "Order",
       "order_group": {
         "orderby": {
+          "id": "Post ID",
           "post_date": "Post Date",
           "created": "Date created",
           "updated": "Date updated"
@@ -1057,6 +1059,7 @@
     "delete_post": "Delete post",
     "delete_this_post": "Delete this post",
     "delete_post_desc": "<strong>If you delete this post</strong>, all of its comments will also be deleted. Proceed with caution.",
+    "post_id": "Post ID",
     "read_more": "Read more",
     "post_actions": {
       "edit": "Edit",

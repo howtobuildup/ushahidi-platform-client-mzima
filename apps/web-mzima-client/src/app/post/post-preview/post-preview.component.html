@@ -41,6 +41,7 @@
       }"
     >
       <div class="post__ewer-topline">
+        <span class="post__pill post__pill--id" *ngIf="post.id">ID {{ post.id }}</span>
         <span class="post__pill post__pill--incident">{{ tile.incidentType }}</span>
         <span
           class="post__pill"
@@ -75,6 +76,7 @@
 
       <span
         class="post__pill post__pill--response"
+        *ngIf="media?.original_file_url || tile.hasMedia"
         [ngClass]="tile.responseActive ? 'post__pill--response-active' : 'post__pill--muted'"
       >
         {{ tile.responseLabel }}

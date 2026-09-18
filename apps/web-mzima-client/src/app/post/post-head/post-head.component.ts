@@ -5,7 +5,6 @@ import { CollectionsComponent } from '@data';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { BreakpointService, EventBusService, EventType, SessionService } from '@services';
-import { ShareModalComponent } from '../../shared/components';
 import {
   PostPropertiesInterface,
   PostResult,
@@ -118,19 +117,5 @@ export class PostHeadComponent {
     } else {
       this.edit.emit();
     }
-  }
-
-  public sharePost() {
-    event?.stopPropagation();
-    this.dialog.open(ShareModalComponent, {
-      width: '100%',
-      maxWidth: 564,
-      panelClass: 'modal',
-      data: {
-        postId: this.post.id,
-        title: this.post.title,
-        description: this.post.content,
-      },
-    });
   }
 }

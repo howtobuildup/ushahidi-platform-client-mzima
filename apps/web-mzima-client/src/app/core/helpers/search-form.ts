@@ -58,6 +58,25 @@ export const sources = [
 ];
 
 export const sortingOptions = [
+  // Sorting by the database id, so a post found in the feed can be matched
+  // against the row it came from. The API orders on posts.<orderby>, and id
+  // is a column like any other, so this needs nothing on the server.
+  {
+    orderBy: 'global_filter.sort.orderby.id',
+    order: 'global_filter.sort.order.desc',
+    value: {
+      orderby: 'id',
+      order: 'desc',
+    },
+  },
+  {
+    orderBy: 'global_filter.sort.orderby.id',
+    order: 'global_filter.sort.order.asc',
+    value: {
+      orderby: 'id',
+      order: 'asc',
+    },
+  },
   {
     orderBy: 'global_filter.sort.orderby.created',
     order: 'global_filter.sort.order.desc',

@@ -312,5 +312,13 @@
       color: #5651a2;
       background: #f0ecff;
     }
+
+    // The database id, so a tile can be traced back to its row. Tabular
+    // figures keep the numbers aligned down a column of tiles.
+    &--id {
+      color: #3f4756;
+      background: #e8eaee;
+      font-variant-numeric: tabular-nums;
+    }
   }
 }

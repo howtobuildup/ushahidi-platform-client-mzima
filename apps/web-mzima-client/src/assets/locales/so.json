@@ -989,7 +989,7 @@
       "no_response": "Weli jawaab ma jirto",
       "attached_media": "Warbaahin lifaaqan",
       "no_location": "Goobta lama hayo",
-      "via": "via {{source}}",
+      "via": "{{source}} ahaan",
       "sources": "{{count}} il"
     },
     "approve_submission": "Ansixi",

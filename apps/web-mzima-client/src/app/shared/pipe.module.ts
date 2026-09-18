@@ -1,10 +1,10 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { DateAgoPipe, FilterValuePipe } from '@pipes';
+import { DateAgoPipe, FieldLabelPipe, FilterValuePipe } from '@pipes';
 
 @NgModule({
-  declarations: [DateAgoPipe, FilterValuePipe],
+  declarations: [DateAgoPipe, FieldLabelPipe, FilterValuePipe],
   imports: [CommonModule],
-  exports: [DateAgoPipe, FilterValuePipe],
+  exports: [DateAgoPipe, FieldLabelPipe, FilterValuePipe],
 })
 export class PipeModule {}

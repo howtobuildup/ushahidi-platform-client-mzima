@@ -40,7 +40,7 @@
 
     <ng-container *ngFor="let field of displayFields">
       <div *ngIf="field.input !== 'tags' ? field.value : field.value?.length" class="post__group">
-        <h3>{{ field.label }}</h3>
+        <h3>{{ field | fieldLabel }}</h3>
 
         <ng-container *ngIf="field.input === 'tags'">
           <ng-container *ngFor="let category of post.categories">

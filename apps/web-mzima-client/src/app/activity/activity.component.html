@@ -38,15 +38,6 @@
           <span>{{ 'dashboard.reporting_period' | translate }}</span>
           <strong>{{ reportingPeriod }}</strong>
         </div>
-        <mzima-client-button
-          class="dashboard-export"
-          fill="outline"
-          color="secondary"
-          (buttonClick)="downloadDashboardPdf()"
-          [data-qa]="'dashboard-download-pdf'"
-        >
-          {{ 'dashboard.download.full_pdf' | translate }}
-        </mzima-client-button>
       </div>
     </header>
 

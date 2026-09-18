@@ -24,6 +24,14 @@ type ExportFormat = 'png' | 'jpg' | 'pdf';
  */
 const MAX_CANVAS_PIXELS = 16_000_000;
 
+/**
+ * html2canvas 1.4.1 parses linear-gradient and radial-gradient and knows
+ * nothing of conic-gradient: it throws "Error parsing CSS component value,
+ * unexpected EOF" rather than skipping the declaration. The donuts and the
+ * response gauges are drawn with conic-gradient, so any export containing one
+ * of them failed outright.
+ */
+
 interface KpiMetric {
   labelKey: string;
   value: string;
@@ -795,6 +803,187 @@ export class ActivityComponent implements OnInit {
     return Math.max(0.5, Math.min(preferred, Math.sqrt(MAX_CANVAS_PIXELS / area)));
   }
 
+  /**
+   * Swap every conic-gradient in the clone for an equivalent SVG.
+   *
+   * Only the offscreen copy html2canvas rasterises is touched, so the live
+   * dashboard keeps drawing the donut and gauges the way it always has and
+   * cannot regress from this.
+   *
+   * Detection is by resolved background-image rather than by matching text in
+   * the style attribute: that catches a gradient wherever it came from, and
+   * the resolved value is the one html2canvas goes on to parse. Every element
+   * is examined because a gradient reaching an element through a rule would
+   * not appear in its style attribute at all.
+   */
+  private replaceConicGradients(documentClone: Document): void {
+    const view = documentClone.defaultView;
+
+    Array.from(documentClone.querySelectorAll<HTMLElement>('*')).forEach((clone) => {
+      const inline = clone.getAttribute('style') ?? '';
+      const resolved = view ? view.getComputedStyle(clone).backgroundImage : '';
+      const declaration = [inline, resolved].find((candidate) =>
+        candidate?.includes('conic-gradient'),
+      );
+
+      if (!declaration) {
+        return;
+      }
+
+      const width = clone.offsetWidth || clone.getBoundingClientRect().width || 200;
+      const height = clone.offsetHeight || clone.getBoundingClientRect().height || 200;
+      const svg = this.conicGradientToSvg(declaration, width, height);
+
+      // Clear the shorthand first, or it would reinstate the gradient.
+      clone.style.background = 'none';
+      if (svg) {
+        clone.style.backgroundImage = svg;
+        clone.style.backgroundSize = '100% 100%';
+        clone.style.backgroundRepeat = 'no-repeat';
+      }
+    });
+  }
+
+  /**
+   * Read the colour ranges out of a conic-gradient body.
+   *
+   * Two forms have to be handled. As authored, a stop carries both its start
+   * and end: `red 0% 40%`. Once the browser has resolved the declaration it
+   * may hand back the expanded equivalent, `red 0%, red 40%`, where each stop
+   * carries one position and a range runs from one stop to the next. Reading
+   * the attribute gives the first, reading the resolved value gives the
+   * second, and both reach this method.
+   */
+  private conicGradientStops(
+    body: string,
+    toDegrees: (amount: string, unit: string) => number,
+  ): Array<{ color: string; from: number; to: number }> {
+    const colour = '(#[0-9a-f]{3,8}|rgba?\\([^)]*\\)|transparent)';
+    const paired = new RegExp(`${colour}\\s+(-?[\\d.]+)(deg|%)\\s+(-?[\\d.]+)(deg|%)`, 'gi');
+    const ranges: Array<{ color: string; from: number; to: number }> = [];
+    let match: RegExpExecArray | null;
+
+    while ((match = paired.exec(body)) !== null) {
+      ranges.push({
+        color: match[1],
+        from: toDegrees(match[2], match[3]),
+        to: toDegrees(match[4], match[5]),
+      });
+    }
+
+    if (ranges.length) {
+      return ranges;
+    }
+
+    const single = new RegExp(`${colour}\\s+(-?[\\d.]+)(deg|%)`, 'gi');
+    const points: Array<{ color: string; at: number }> = [];
+
+    while ((match = single.exec(body)) !== null) {
+      points.push({ color: match[1], at: toDegrees(match[2], match[3]) });
+    }
+
+    // A range runs from each stop to the next, and the colour is the one the
+    // range opens with.
+    return points.slice(0, -1).map((point, index) => ({
+      color: point.color,
+      from: point.at,
+      to: points[index + 1].at,
+    }));
+  }
+
+  /**
+   * Render a conic-gradient as an SVG data URI of the same geometry.
+   *
+   * Handles both forms this dashboard produces: the donut's bare percentage
+   * stops, and the gauges' `from 270deg at 50% 100%` with degree stops, whose
+   * centre sits on the bottom edge. Returns null when the value is not a
+   * conic-gradient or carries no stops, and the caller then just drops the
+   * background rather than exporting something wrong.
+   */
+  private conicGradientToSvg(value: string, width: number, height: number): string | null {
+    const opening = value?.indexOf('conic-gradient(') ?? -1;
+    if (opening < 0) {
+      return null;
+    }
+
+    let depth = 0;
+    let closing = -1;
+    for (let index = opening + 'conic-gradient'.length; index < value.length; index++) {
+      if (value[index] === '(') {
+        depth++;
+      } else if (value[index] === ')') {
+        depth--;
+        if (depth === 0) {
+          closing = index;
+          break;
+        }
+      }
+    }
+    if (closing < 0) {
+      return null;
+    }
+
+    const body = value.slice(opening + 'conic-gradient('.length, closing);
+    const rotation = Number(/from\s+(-?[\d.]+)deg/i.exec(body)?.[1] ?? 0);
+    const centre = /at\s+([\d.]+)%\s+([\d.]+)%/i.exec(body);
+    const cx = (Number(centre?.[1] ?? 50) / 100) * width;
+    const cy = (Number(centre?.[2] ?? 50) / 100) * height;
+
+    // Reach the far corner, so the wedges cover the box however it is cropped.
+    const radius = Math.max(
+      Math.hypot(cx, cy),
+      Math.hypot(width - cx, cy),
+      Math.hypot(cx, height - cy),
+      Math.hypot(width - cx, height - cy),
+    );
+
+    const toDegrees = (amount: string, unit: string) =>
+      unit === '%' ? Number(amount) * 3.6 : Number(amount);
+    const point = (degrees: number) => {
+      const radians = ((rotation + degrees - 90) * Math.PI) / 180;
+      return `${(cx + radius * Math.cos(radians)).toFixed(2)},${(
+        cy +
+        radius * Math.sin(radians)
+      ).toFixed(2)}`;
+    };
+
+    const ranges = this.conicGradientStops(body, toDegrees);
+    const shapes: string[] = [];
+
+    for (const { color, from, to } of ranges) {
+      if (color === 'transparent' || /rgba\([^)]*,\s*0\s*\)/i.test(color)) {
+        continue;
+      }
+
+      const sweep = to - from;
+      if (sweep <= 0) {
+        continue;
+      }
+
+      if (sweep >= 360) {
+        shapes.push(`<circle cx="${cx}" cy="${cy}" r="${radius}" fill="${color}"/>`);
+        continue;
+      }
+
+      const largeArc = sweep > 180 ? 1 : 0;
+      shapes.push(
+        `<path d="M ${cx},${cy} L ${point(from)} A ${radius},${radius} 0 ${largeArc} 1 ${point(
+          to,
+        )} Z" fill="${color}"/>`,
+      );
+    }
+
+    if (!shapes.length) {
+      return null;
+    }
+
+    const svg =
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" ` +
+      `viewBox="0 0 ${width} ${height}">${shapes.join('')}</svg>`;
+
+    return `url("data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}")`;
+  }
+
   private async downloadElement(
     element: HTMLElement,
     fileName: string,
@@ -807,6 +996,7 @@ export class ActivityComponent implements OnInit {
       ignoreElements: (ignoredElement) =>
         ignoredElement.classList.contains('chart-actions') ||
         ignoredElement.classList.contains('dashboard-export'),
+      onclone: (documentClone) => this.replaceConicGradients(documentClone),
     });
 
     if (format === 'pdf') {

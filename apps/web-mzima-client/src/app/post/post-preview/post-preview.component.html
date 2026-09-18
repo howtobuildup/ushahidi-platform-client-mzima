@@ -41,17 +41,23 @@
       }"
     >
       <div class="post__ewer-topline">
-        <span class="post__pill post__pill--id" *ngIf="post.id">ID {{ post.id }}</span>
-        <span class="post__pill post__pill--incident">{{ tile.incidentType }}</span>
+        <span class="post__pill post__pill--id" *ngIf="post.id">
+          {{ 'post.tile.id' | translate }} {{ post.id }}
+        </span>
+        <span class="post__pill post__pill--incident">
+          {{ tile.incidentTypeKey ? (tile.incidentTypeKey | translate) : tile.incidentType }}
+        </span>
         <span
           class="post__pill"
           [ngClass]="tile.escalationRisk ? 'post__pill--risk' : 'post__pill--safe'"
         >
-          {{ tile.escalationLabel }}
+          {{ tile.escalationLabelKey | translate }}
         </span>
       </div>
 
-      <h3 class="post__ewer-location">{{ tile.location }}</h3>
+      <h3 class="post__ewer-location">
+        {{ tile.locationKey ? (tile.locationKey | translate) : tile.location }}
+      </h3>
       <p class="post__ewer-site" *ngIf="tile.site">{{ tile.site }}</p>
 
       <div
@@ -60,15 +66,15 @@
         [ngClass]="{ 'post__ewer-media--placeholder': !media?.original_file_url }"
       >
         <img *ngIf="media?.original_file_url" [src]="media.original_file_url" [alt]="post.title" />
-        <span>Attached media</span>
+        <span>{{ 'post.tile.attached_media' | translate }}</span>
       </div>
 
       <div class="post__ewer-tags">
         <span class="post__pill post__pill--status" *ngIf="tile.status">
           {{ tile.status }}
         </span>
-        <span class="post__pill post__pill--muted" *ngIf="tile.sourcesLabel">
-          {{ tile.sourcesLabel }}
+        <span class="post__pill post__pill--muted" *ngIf="tile.sourcesCount">
+          {{ 'post.tile.sources' | translate : { count: tile.sourcesCount } }}
         </span>
       </div>
 
@@ -79,11 +85,14 @@
         *ngIf="media?.original_file_url || tile.hasMedia"
         [ngClass]="tile.responseActive ? 'post__pill--response-active' : 'post__pill--muted'"
       >
-        {{ tile.responseLabel }}
+        {{ tile.responseLabelKey | translate }}
       </span>
 
       <div class="post__ewer-footer">
-        <span>{{ post.post_date | dateAgo }} &middot; via {{ post.source || 'Web' }}</span>
+        <span>
+          {{ post.post_date | dateAgo }} &middot;
+          {{ 'post.tile.via' | translate : { source: post.source || 'Web' } }}
+        </span>
         <span class="post__pill post__pill--code" *ngIf="tile.monitorCode">
           {{ tile.monitorCode }}
         </span>

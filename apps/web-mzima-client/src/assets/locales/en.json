@@ -754,6 +754,17 @@
     "data": "Data",
     "feed": "Data view"
   },
+  "date_ago": {
+    "long_time": "a long time ago",
+    "just_now": "just now",
+    "moment": "a moment ago",
+    "second": "{{count}} seconds ago",
+    "minute": "{{count}} minutes ago",
+    "hour": "{{count}} hours ago",
+    "day": "{{count}} days ago",
+    "month": "{{count}} months ago",
+    "year": "{{count}} years ago"
+  },
   "views": {
     "map": "Map view",
     "list": "Timeline",
@@ -971,6 +982,17 @@
     "share_on_facebook": "Share on Facebook"
   },
   "post": {
+    "tile": {
+      "id": "ID",
+      "no_escalation": "No escalation",
+      "escalation_risk": "Escalation risk",
+      "response_active": "Response active",
+      "no_response": "No response yet",
+      "attached_media": "Attached media",
+      "no_location": "Location unavailable",
+      "via": "via {{source}}",
+      "sources": "{{count}} sources"
+    },
     "delete_all": {
       "button": "Delete all data",
       "in_progress": "Deleting…",

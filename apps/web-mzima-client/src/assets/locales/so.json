@@ -752,6 +752,17 @@
     "data": "Xogta",
     "feed": "Muuqaalka xogta"
   },
+  "date_ago": {
+    "long_time": "waqti dheer ka hor",
+    "just_now": "hadda",
+    "moment": "daqiiqad ka hor",
+    "second": "{{count}} ilbiriqsi ka hor",
+    "minute": "{{count}} daqiiqo ka hor",
+    "hour": "{{count}} saacadood ka hor",
+    "day": "{{count}} maalmood ka hor",
+    "month": "{{count}} bilood ka hor",
+    "year": "{{count}} sano ka hor"
+  },
   "views": {
     "map": "Muuqaalka khariidadda",
     "list": "Jadwalka waqtiga",
@@ -969,6 +980,18 @@
     "share_on_facebook": "Ku wadaag Facebook"
   },
   "post": {
+    "post_id": "Aqoonsiga warbixinta",
+    "tile": {
+      "id": "ID",
+      "no_escalation": "Sii-kordhin ma jirto",
+      "escalation_risk": "Khatar sii-kordhin",
+      "response_active": "Jawaab socota",
+      "no_response": "Weli jawaab ma jirto",
+      "attached_media": "Warbaahin lifaaqan",
+      "no_location": "Goobta lama hayo",
+      "via": "via {{source}}",
+      "sources": "{{count}} il"
+    },
     "approve_submission": "Ansixi",
     "delete_submission": "Tirtir gudbinta",
     "delete_submission_warning": "Tani waxay si joogto ah u tirtiraysaa gudbinta, lamana soo celin karo.",

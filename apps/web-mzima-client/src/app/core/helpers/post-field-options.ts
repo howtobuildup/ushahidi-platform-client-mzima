@@ -21,13 +21,61 @@ function rawChoiceValue(value: any): any {
   return value.value ?? value.name ?? value.id ?? value.label ?? value;
 }
 
+/**
+ * Reduce a stored value or an option to a comparable form.
+ */
+function normalizeChoice(value: any): string {
+  return String(value ?? '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+}
+
+/**
+ * The same option appears in several incident branches with the branch
+ * appended to its name, so a value recorded in one branch does not match the
+ * option as the survey lists it.
+ */
+function stripBranchSuffix(value: string): string {
+  return value.replace(/_(climate|conflict|gbv|social|warning|violence)$/, '');
+}
+
+/**
+ * Find the option a stored value refers to.
+ *
+ * An exact match on the option name is tried first. Failing that the value is
+ * compared loosely against both the name and the label, because this survey
+ * records some answers as the option's display text rather than its name, and
+ * some with the incident branch appended. Without that, those answers never
+ * resolve to an option and so are shown in the language they were recorded in,
+ * whatever language the reader has chosen.
+ */
+function findOption(field: PostContentField, rawValue: any): any {
+  const options = fieldOptions(field);
+
+  const exact = options.find(
+    (candidate) => String(xlsFormRules.getOptionValue(candidate)) === String(rawValue),
+  );
+  if (exact !== undefined) return exact;
+
+  const normalized = normalizeChoice(rawValue);
+  const withoutBranch = stripBranchSuffix(normalized);
+
+  return options.find((candidate) => {
+    const names = [
+      normalizeChoice(xlsFormRules.getOptionValue(candidate)),
+      normalizeChoice(candidate?.label),
+    ].filter(Boolean);
+
+    return names.some((name) => name === normalized || name === withoutBranch);
+  });
+}
+
 export function postFieldChoiceLabel(field: PostContentField, value: any, language = 'en'): string {
   const rawValue = rawChoiceValue(value);
   if (rawValue === undefined || rawValue === null || rawValue === '') return '';
 
-  const option = fieldOptions(field).find(
-    (candidate) => String(xlsFormRules.getOptionValue(candidate)) === String(rawValue),
-  );
+  const option = findOption(field, rawValue);
   if (option !== undefined) return xlsFormRules.getOptionLabel(option, language);
 
   return String(rawValue).replace(/_/g, ' ').replace(/\s+/g, ' ').trim();

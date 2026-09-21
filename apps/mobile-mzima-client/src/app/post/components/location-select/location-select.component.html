@@ -53,9 +53,23 @@
   </div>
 </div>
 
-<span class="instructions">
-  You can search or click the area of map where you want to place the marker.
-</span>
+<!-- Reading the coordinates off the device is the common case for a reporter
+     standing at the site, so it gets a labelled button of its own. It used to
+     be a 30px icon in the corner of the map, which nobody found. -->
+<button
+  type="button"
+  class="use-my-location"
+  [disabled]="locating"
+  [attr.aria-busy]="locating"
+  (click)="getCurrentLocation()"
+>
+  <app-icon class="use-my-location__icon" name="current-location"></app-icon>
+  <span>
+    {{ (locating ? 'location.finding_location' : 'location.use_current_location') | translate }}
+  </span>
+</button>
+
+<span class="instructions">{{ 'location.or_pick_on_map' | translate }}</span>
 
 <div class="map-wrapper" *ngIf="mapReady">
   <div
@@ -67,16 +81,6 @@
     (leafletMapReady)="onMapReady($event)"
     [leafletFitBoundsOptions]="fitBoundsOptions"
   ></div>
-  <button
-    *ngIf="nativeApp"
-    type="button"
-    class="btn-current-location"
-    [disabled]="locating"
-    [attr.aria-busy]="locating"
-    (click)="getCurrentLocation()"
-  >
-    <app-icon class="btn-current-location_icon" name="current-location"></app-icon>
-  </button>
 </div>
 
 <p *ngIf="locationError" class="location-error">

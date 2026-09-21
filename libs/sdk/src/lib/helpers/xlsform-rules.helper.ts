@@ -161,6 +161,65 @@ export function getFilteredOptions(
   });
 }
 
+/**
+ * The question a field's `choice_filter` depends on, or null when the field
+ * offers the same options whatever else has been answered.
+ */
+export function getChoiceFilterQuestionKey(field: XlsFormFieldLike): string | null {
+  const choiceFilter = getXlsFormConfig(field).choice_filter;
+  if (!choiceFilter) {
+    return null;
+  }
+
+  return parseChoiceFilter(choiceFilter)?.questionKey ?? null;
+}
+
+/**
+ * Whether a field's options are empty only because the question they are
+ * filtered by has not been answered yet. This is the difference between "this
+ * question has no choices" and "choose a region before picking a district".
+ */
+export function isAwaitingChoiceFilter(field: XlsFormFieldLike, values: XlsFormValueMap): boolean {
+  const questionKey = getChoiceFilterQuestionKey(field);
+  if (!questionKey) {
+    return false;
+  }
+
+  return !isFilled(values[questionKey]);
+}
+
+/**
+ * Finds the field a rule expression refers to. Expressions name a question by
+ * its XLSForm name or by its label, and `buildXlsFormValueMap` accepts either,
+ * along with a first-word alias when only one field can claim it, so the same
+ * three attempts are made here in the same order.
+ */
+export function findFieldByRuleKey<T extends XlsFormFieldLike>(
+  fields: T[],
+  ruleKey: string,
+): T | null {
+  const key = String(ruleKey || '').trim();
+  if (!key) {
+    return null;
+  }
+
+  const byName = fields.find((field) => getXlsFormConfig(field).xlsform_name === key);
+  if (byName) {
+    return byName;
+  }
+
+  const normalizedKey = normalizeRuleKey(key);
+  const byLabel = fields.find((field) => normalizeRuleKey((field as any).label) === normalizedKey);
+  if (byLabel) {
+    return byLabel;
+  }
+
+  const byAlias = fields.filter(
+    (field) => normalizeRuleKey((field as any).label).split('_')[0] === normalizedKey,
+  );
+  return byAlias.length === 1 ? byAlias[0] : null;
+}
+
 function choiceFilterValueEquals(optionValue: any, parentValue: any): boolean {
   if (valueEquals(optionValue, parentValue)) {
     return true;

@@ -1,7 +1,10 @@
 import {
   buildDynamicRuleValueSignature,
   buildXlsFormValueMap,
+  findFieldByRuleKey,
+  getChoiceFilterQuestionKey,
   getFilteredOptions,
+  isAwaitingChoiceFilter,
 } from './xlsform-rules.helper';
 
 describe('getFilteredOptions', () => {
@@ -166,5 +169,57 @@ describe('buildDynamicRuleValueSignature', () => {
     });
 
     expect(changed).toEqual(initial);
+  });
+});
+
+describe('isAwaitingChoiceFilter', () => {
+  const district = {
+    key: 'district-key',
+    config: { choice_filter: '${region}=region' },
+    options: [{ name: 'erigavo', region: 'sanaag' }],
+  };
+
+  it('is true while the question the options are filtered by is unanswered', () => {
+    expect(isAwaitingChoiceFilter(district, {})).toBe(true);
+    expect(isAwaitingChoiceFilter(district, { region: '' })).toBe(true);
+  });
+
+  it('is false once that question has an answer', () => {
+    expect(isAwaitingChoiceFilter(district, { region: 'sanaag' })).toBe(false);
+  });
+
+  it('is false for a question that offers the same options throughout', () => {
+    expect(isAwaitingChoiceFilter({ key: 'region-key', options: [] }, {})).toBe(false);
+  });
+
+  it('names the question the options depend on', () => {
+    expect(getChoiceFilterQuestionKey(district)).toBe('region');
+    expect(getChoiceFilterQuestionKey({ key: 'region-key' })).toBeNull();
+  });
+});
+
+describe('findFieldByRuleKey', () => {
+  const byName = { key: '1', config: { xlsform_name: 'region' }, label: 'Anything' };
+  const byLabel = { key: '2', label: 'District where incidence occurred' };
+  const fields = [byName, byLabel];
+
+  it('matches on the XLSForm name', () => {
+    expect(findFieldByRuleKey(fields, 'region')).toBe(byName);
+  });
+
+  it('matches on a normalized label', () => {
+    expect(findFieldByRuleKey(fields, 'district_where_incidence_occurred')).toBe(byLabel);
+  });
+
+  it('matches on a first-word alias only when one field can claim it', () => {
+    expect(findFieldByRuleKey(fields, 'district')).toBe(byLabel);
+    expect(
+      findFieldByRuleKey([byLabel, { key: '3', label: 'District council' }], 'district'),
+    ).toBeNull();
+  });
+
+  it('returns null for a key no field answers to', () => {
+    expect(findFieldByRuleKey(fields, 'village')).toBeNull();
+    expect(findFieldByRuleKey(fields, '')).toBeNull();
   });
 });

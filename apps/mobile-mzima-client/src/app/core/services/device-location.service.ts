@@ -69,7 +69,7 @@ export class DeviceLocationService {
 
   private async requestCurrentPosition(): Promise<DevicePosition> {
     if (!Capacitor.isNativePlatform()) {
-      throw new Error('Device location is only available in the native app');
+      return this.requestBrowserPosition();
     }
 
     const options = {
@@ -90,6 +90,34 @@ export class DeviceLocationService {
     return Geolocation.getCurrentPosition({
       ...options,
       enableHighAccuracy: true,
+    });
+  }
+
+  /**
+   * The browser build is where the form is reviewed before a release, so the
+   * "use my location" button has to work there too. Native keeps the Capacitor
+   * plugins, including the app-owned Android one.
+   */
+  private requestBrowserPosition(): Promise<DevicePosition> {
+    const geolocation = typeof navigator === 'undefined' ? undefined : navigator.geolocation;
+    if (!geolocation) {
+      return Promise.reject(new Error('This browser cannot report a location'));
+    }
+
+    return new Promise<DevicePosition>((resolve, reject) => {
+      geolocation.getCurrentPosition(
+        ({ coords, timestamp }) =>
+          resolve({
+            coords: {
+              latitude: coords.latitude,
+              longitude: coords.longitude,
+              accuracy: coords.accuracy,
+            },
+            timestamp,
+          }),
+        reject,
+        { enableHighAccuracy: true, maximumAge: 60_000, timeout: 20_000 },
+      );
     });
   }
 

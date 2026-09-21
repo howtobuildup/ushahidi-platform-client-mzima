@@ -18,11 +18,21 @@
     "subtitle": "Dooro luqadda aad rabto inaad ku isticmaasho app-ka.",
     "title": "Dooro luqaddaada"
   },
+  "location": {
+    "use_current_location": "Isticmaal goobtaada hadda",
+    "finding_location": "Goobtaada waa la raadinayaa…",
+    "or_pick_on_map": "Ama raadi khariidadda, ama taabo meesha ay dhacday.",
+    "my_location_error": "Waan ka xumahay, goobtaada lama helin"
+  },
   "post_form": {
-    "create_post": "Abuur qoraal",
+    "create_post": "Ka jawaab sahanka",
     "edit_post": "Wax ka beddel qoraalka",
     "getting_data": "Xogta waa la soo qaadayaa...",
     "no_options": "Ikhtiyaarro ma jiraan",
+    "answer_question_first": "Marka hore ka jawaab \"{{question}}\" si aad u aragto doorashooyinka halkan.",
+    "answer_previous_first": "Marka hore ka jawaab su\u0027aasha kor ku xusan si aad u aragto doorashooyinka halkan.",
+    "find_an_option": "Raadi ikhtiyaar",
+    "no_matching_options": "Ikhtiyaar u dhigma ma jiro",
     "offline_success_message": "Waad ku mahadsan tahay warbixintaada. Farriin ayaa la soo diri doonaa marka xiriirka internetku soo noqdo.",
     "selected_language": "Luqadda la doortay",
     "submit": "Gudbi",

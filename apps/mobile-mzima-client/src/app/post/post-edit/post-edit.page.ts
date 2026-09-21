@@ -347,30 +347,6 @@ export class PostEditPage {
     return !this.hiddenFieldKeys.has(String(field.key));
   }
 
-  public isFieldAnswered(fieldKey: string): boolean {
-    const value = this.form?.get(fieldKey)?.value;
-
-    if (Array.isArray(value)) {
-      return value.length > 0;
-    }
-
-    if (value && typeof value === 'object') {
-      if ('lat' in value || 'lng' in value) {
-        return this.hasAnswerValue(value.lat) && this.hasAnswerValue(value.lng);
-      }
-
-      return Object.keys(value).length > 0;
-    }
-
-    return this.hasAnswerValue(value);
-  }
-
-  private hasAnswerValue(value: unknown): boolean {
-    return (
-      value !== null && value !== undefined && (typeof value !== 'string' || value.trim() !== '')
-    );
-  }
-
   private setupDynamicFormRules(): void {
     this.dynamicRulesSubscription?.unsubscribe();
     this.applyDynamicFieldVisibility();
@@ -471,6 +447,33 @@ export class PostEditPage {
     return xlsFormRules.getFilteredOptions(field, this.dynamicRuleValues, {
       caseInsensitive: true,
     });
+  }
+
+  /**
+   * What to show where a question's choices would be when there are none.
+   *
+   * Cascading questions such as district and village carry a `choice_filter`,
+   * so until the question they hang off is answered they genuinely have nothing
+   * to offer. Saying "No options" there is misleading: the options exist, they
+   * are just not reachable yet. Name the question that unlocks them instead.
+   */
+  public getNoOptionsMessage(field: any): string {
+    if (!xlsFormRules.isAwaitingChoiceFilter(field, this.dynamicRuleValues)) {
+      return this.translateService.instant('post_form.no_options');
+    }
+
+    const questionKey = xlsFormRules.getChoiceFilterQuestionKey(field);
+    const parent = questionKey
+      ? xlsFormRules.findFieldByRuleKey(
+          this.tasks.flatMap((task) => task.fields),
+          questionKey,
+        )
+      : null;
+    const question = parent ? this.getFieldLabel(parent) : '';
+
+    return question
+      ? this.translateService.instant('post_form.answer_question_first', { question })
+      : this.translateService.instant('post_form.answer_previous_first');
   }
 
   public getOptionValue(option: any): any {
@@ -666,11 +669,8 @@ export class PostEditPage {
   }
 
   private handleDateTime(key: string, value: any) {
-    this.updateFormControl(
-      key,
-      value?.value ? dateHelper.setDate(value?.value, 'datetimeFormat') : null,
-    );
-    console.log(this.form.controls[key].value);
+    // Shown as a date, to match the picker, which no longer asks for a time.
+    this.updateFormControl(key, value?.value ? dateHelper.setDate(value?.value, 'date') : null);
   }
 
   private handleTitle(key: string) {

@@ -1849,6 +1849,8 @@
   "location": {
     "search": "Search",
     "use_current_location": "Use your current location",
+    "finding_location": "Finding your location…",
+    "or_pick_on_map": "Or search the map, or tap the place it happened.",
     "click_map": "<em>You can search or click the area of map where you want to place the marker.</em>",
     "placeholder": "Search for addresses, place names, or coordinates...",
     "search_results": "Search results",
@@ -2736,10 +2738,14 @@
     "title": "Choose your language"
   },
   "post_form": {
-    "create_post": "Create a post",
+    "create_post": "Respond to Survey",
     "edit_post": "Edit post",
     "getting_data": "Getting data...",
     "no_options": "No options",
+    "answer_question_first": "Answer \"{{question}}\" first to see the choices here.",
+    "answer_previous_first": "Answer the question above first to see the choices here.",
+    "find_an_option": "Find an option",
+    "no_matching_options": "No matching options",
     "offline_success_message": "Thank you for your report. A message will be sent when the connection is restored.",
     "selected_language": "Selected language",
     "submit": "Submit",

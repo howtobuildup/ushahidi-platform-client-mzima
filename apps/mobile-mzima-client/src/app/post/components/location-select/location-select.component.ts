@@ -9,7 +9,6 @@ import {
   Output,
   ViewChild,
 } from '@angular/core';
-import { Capacitor } from '@capacitor/core';
 import { STORAGE_KEYS } from '@constants';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DatabaseService, DeviceLocationService } from '@services';
@@ -28,7 +27,6 @@ import {
 import Geocoder from 'leaflet-control-geocoder';
 import { debounceTime, Subject } from 'rxjs';
 import { mapHelper, regexHelper } from '@helpers';
-import { Platform } from '@ionic/angular';
 
 export interface MapViewInterface {
   baselayer: 'streets' | 'satellite' | 'hOSM' | 'MapQuestAerial' | 'MapQuest';
@@ -86,14 +84,12 @@ export class LocationSelectComponent implements OnInit {
   private searchSubject = new Subject<string>();
   public geocodingResults: any[] = [];
   public isShowGeocodingResults = false;
-  public nativeApp: boolean;
   public locating = false;
   public locationError = false;
 
   constructor(
     private cdr: ChangeDetectorRef,
     private dataBaseService: DatabaseService,
-    private platform: Platform,
     private deviceLocationService: DeviceLocationService,
   ) {
     this.searchSubject.pipe(debounceTime(600), untilDestroyed(this)).subscribe((query) => {
@@ -102,10 +98,6 @@ export class LocationSelectComponent implements OnInit {
   }
 
   async ngOnInit(): Promise<void> {
-    if (Capacitor.getPlatform() !== 'web') {
-      this.nativeApp = true;
-    }
-
     this.mapConfig = await this.dataBaseService.get(STORAGE_KEYS.MAP);
 
     const currentLayer =
@@ -206,7 +198,7 @@ export class LocationSelectComponent implements OnInit {
   }
 
   public async getCurrentLocation() {
-    if (!this.platform.is('capacitor') || this.locating) {
+    if (this.locating) {
       return;
     }
 

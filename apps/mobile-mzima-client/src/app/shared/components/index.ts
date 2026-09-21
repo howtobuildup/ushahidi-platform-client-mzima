@@ -23,3 +23,4 @@ export * from './choose-collection/choose-collection.component';
 export * from './collection-item/collection-item.component';
 export * from './post-controls/post-controls.component';
 export * from './language/language.component';
+export * from './option-select/option-select.component';

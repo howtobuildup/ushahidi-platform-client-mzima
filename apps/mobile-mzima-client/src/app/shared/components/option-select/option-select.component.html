@@ -1,0 +1,59 @@
+<div class="option-select" [class.option-select--open]="isOpen">
+  <button
+    type="button"
+    class="option-select__control"
+    [class.option-select__control--disabled]="disabled"
+    [disabled]="disabled"
+    [attr.aria-expanded]="isOpen"
+    aria-haspopup="listbox"
+    (click)="toggle()"
+  >
+    <span class="option-select__value" *ngIf="selectedLabel; else placeholderText">
+      {{ selectedLabel | translate }}
+    </span>
+    <ng-template #placeholderText>
+      <span class="option-select__placeholder">{{ placeholder | translate }}</span>
+    </ng-template>
+    <svg
+      class="option-select__chevron"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        fill="currentColor"
+        d="M8.12 9.29 12 13.17l3.88-3.88a.996.996 0 1 1 1.41 1.41l-4.59 4.59a.996.996 0 0 1-1.41 0L6.7 10.7a.996.996 0 0 1 0-1.41c.39-.38 1.03-.39 1.42 0Z"
+      />
+    </svg>
+  </button>
+
+  <div class="option-select__panel" *ngIf="isOpen">
+    <input
+      #search
+      *ngIf="showSearch"
+      type="text"
+      class="option-select__search"
+      autocomplete="off"
+      [placeholder]="'post_form.find_an_option' | translate"
+      [(ngModel)]="query"
+    />
+    <div class="option-select__options" role="listbox">
+      <button
+        type="button"
+        class="option-select__option"
+        role="option"
+        *ngFor="let option of filteredOptions"
+        [class.option-select__option--selected]="isSelected(option)"
+        [attr.aria-selected]="isSelected(option)"
+        (click)="select(option)"
+      >
+        {{ getOptionLabel(option) | translate }}
+      </button>
+      <p class="option-select__empty" *ngIf="!filteredOptions.length">
+        {{ 'post_form.no_matching_options' | translate }}
+      </p>
+    </div>
+  </div>
+</div>

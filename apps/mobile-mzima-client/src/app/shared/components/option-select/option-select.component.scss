@@ -1,0 +1,137 @@
+// The picker is two parts: the field, which always reads as an empty box
+// waiting for an answer, and the panel of choices under it.
+.option-select {
+  position: relative;
+  display: block;
+
+  &__control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 52px;
+    margin: 0;
+    padding: 12px 14px;
+    border: 1px solid var(--ion-color-step-200);
+    border-radius: 10px;
+    background: var(--ion-background-color);
+    color: var(--ion-text-color);
+    font-family: inherit;
+    font-size: 16px;
+    // A shade heavier than body text. The answer is what a reviewer scans for,
+    // and at 400 it sat back too far from the question above it.
+    font-weight: 500;
+    line-height: 1.4;
+    text-align: start;
+    cursor: pointer;
+
+    &--disabled {
+      cursor: default;
+      opacity: 0.6;
+    }
+  }
+
+  // Open state borrows the primary colour rather than a thicker border, so the
+  // field does not change size when the panel appears.
+  &--open &__control {
+    border-color: var(--ion-color-primary);
+    box-shadow: 0 0 0 1px var(--ion-color-primary);
+  }
+
+  &__value {
+    flex: 1 1 auto;
+    min-width: 0;
+    // Long option labels wrap instead of being cut off with an ellipsis, which
+    // is what Ionic's own select did to the survey names.
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  &__placeholder {
+    flex: 1 1 auto;
+    color: var(--ion-color-step-450);
+  }
+
+  &__chevron {
+    flex: 0 0 auto;
+    margin-inline-start: auto;
+    color: var(--ion-color-step-500);
+  }
+
+  &__panel {
+    margin-top: 6px;
+    border: 1px solid var(--ion-color-step-200);
+    border-radius: 10px;
+    background: var(--ion-background-color);
+    overflow: hidden;
+  }
+
+  &__search {
+    display: block;
+    width: 100%;
+    padding: 14px 16px;
+    border: 0;
+    border-bottom: 1px solid var(--ion-color-step-150);
+    background: transparent;
+    color: var(--ion-text-color);
+    font-family: inherit;
+    font-size: 16px;
+    line-height: 1.4;
+
+    &:focus {
+      outline: none;
+    }
+
+    &::placeholder {
+      color: var(--ion-color-step-450);
+    }
+  }
+
+  &__options {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    // Tall enough to show several choices, short enough that the question
+    // above stays on screen while choosing.
+    max-height: 280px;
+    padding: 14px 16px;
+    overflow-y: auto;
+  }
+
+  // Each choice is a pill, so the tap target is the size of the words rather
+  // than a full-width row.
+  &__option {
+    max-width: 100%;
+    margin: 0;
+    padding: 9px 18px;
+    border: 0;
+    border-radius: 999px;
+    color: var(--ion-text-color);
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.4;
+    text-align: start;
+    cursor: pointer;
+
+    @media (prefers-color-scheme: light) {
+      background: var(--ion-color-step-100);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      background: var(--ion-color-step-200);
+    }
+
+    &--selected {
+      background: rgba(var(--ion-color-primary-rgb), 0.16);
+      font-weight: 600;
+    }
+  }
+
+  &__empty {
+    margin: 0;
+    color: var(--ion-color-step-500);
+    font-size: 14px;
+  }
+}

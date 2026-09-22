@@ -757,6 +757,12 @@
     "feed": "Muuqaalka xogta"
   },
   "date_ago": {
+    "second_one": "{{count}} ilbiriqsi ka hor",
+    "minute_one": "{{count}} daqiiqad ka hor",
+    "hour_one": "{{count}} saacad ka hor",
+    "day_one": "{{count}} maalin ka hor",
+    "month_one": "{{count}} bil ka hor",
+    "year_one": "{{count}} sanad ka hor",
     "long_time": "waqti dheer ka hor",
     "just_now": "hadda",
     "moment": "daqiiqad ka hor",

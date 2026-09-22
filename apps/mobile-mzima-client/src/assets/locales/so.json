@@ -56,6 +56,23 @@
       "uncategorized": "Aan la kala saarin"
     }
   },
+  "date_ago": {
+    "second_one": "{{count}} ilbiriqsi ka hor",
+    "minute_one": "{{count}} daqiiqad ka hor",
+    "hour_one": "{{count}} saacad ka hor",
+    "day_one": "{{count}} maalin ka hor",
+    "month_one": "{{count}} bil ka hor",
+    "year_one": "{{count}} sanad ka hor",
+    "long_time": "waqti dheer ka hor",
+    "just_now": "hadda",
+    "moment": "daqiiqad ka hor",
+    "second": "{{count}} ilbiriqsi ka hor",
+    "minute": "{{count}} daqiiqo ka hor",
+    "hour": "{{count}} saacadood ka hor",
+    "day": "{{count}} maalmood ka hor",
+    "month": "{{count}} bilood ka hor",
+    "year": "{{count}} sano ka hor"
+  },
   "post_form": {
     "create_post": "Ka jawaab sahanka",
     "edit_post": "Wax ka beddel qoraalka",

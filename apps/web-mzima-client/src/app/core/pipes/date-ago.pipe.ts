@@ -6,8 +6,8 @@ import { TranslateService } from '@ngx-translate/core';
  *
  * The English was assembled by concatenation, down to adding an "s" for the
  * plural, so it could not be translated at all. Each unit is a key with the
- * count as a parameter instead, which also suits languages that do not form
- * plurals by suffix.
+ * count as a parameter instead, and a count of one takes a key of its own,
+ * which also suits languages that do not form plurals by suffix.
  *
  * Impure because a language change alters the output without the input
  * changing, and a pure pipe would keep showing the previous language until
@@ -46,6 +46,7 @@ export class DateAgoPipe implements PipeTransform {
     }
 
     const count = Math.floor(time);
-    return this.translate.instant(`date_ago.${DateAgoPipe.UNITS[index]}`, { count });
+    const unit = DateAgoPipe.UNITS[index];
+    return this.translate.instant(`date_ago.${unit}${count === 1 ? '_one' : ''}`, { count });
   }
 }

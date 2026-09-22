@@ -2767,6 +2767,23 @@
     "update": "Update",
     "later": "Later"
   },
+  "date_ago": {
+    "second_one": "{{count}} second ago",
+    "minute_one": "{{count}} minute ago",
+    "hour_one": "{{count}} hour ago",
+    "day_one": "{{count}} day ago",
+    "month_one": "{{count}} month ago",
+    "year_one": "{{count}} year ago",
+    "long_time": "a long time ago",
+    "just_now": "just now",
+    "moment": "a moment ago",
+    "second": "{{count}} seconds ago",
+    "minute": "{{count}} minutes ago",
+    "hour": "{{count}} hours ago",
+    "day": "{{count}} days ago",
+    "month": "{{count}} months ago",
+    "year": "{{count}} years ago"
+  },
   "post_form": {
     "create_post": "Respond to Survey",
     "edit_post": "Edit post",

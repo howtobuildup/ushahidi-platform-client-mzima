@@ -8,8 +8,8 @@
     "Leave store_url empty to keep a platform quiet; the apps skip the prompt when they have nowhere to send anyone."
   ],
   "android": {
-    "latest_build": 13,
-    "latest_version": "1.10",
+    "latest_build": 14,
+    "latest_version": "1.11",
     "store_url": "https://play.google.com/store/apps/details?id=org.saferworld.ogaal"
   },
   "ios": {

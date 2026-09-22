@@ -1,6 +1,4 @@
-<app-header [title]="'dashboard.title' | translate"></app-header>
-
-<ion-content class="ion-padding-horizontal ion-padding-top page">
+<app-main-layout [title]="'dashboard.title' | translate" (back)="back()">
   <ion-refresher slot="fixed" (ionRefresh)="load($event)" [disabled]="offline">
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
@@ -127,7 +125,9 @@
       </div>
     </section>
   </ng-container>
-</ion-content>
+</app-main-layout>
+
+<app-menu></app-menu>
 
 <!-- Applied in one go, so setting up a view costs one reload rather than one
      per control, which matters on a slow connection. -->

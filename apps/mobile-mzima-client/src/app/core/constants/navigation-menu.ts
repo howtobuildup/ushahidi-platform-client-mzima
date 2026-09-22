@@ -1,4 +1,18 @@
-export const navigationMenu = [
+import { canViewDashboard } from '../helpers/permission-access';
+
+export interface NavigationMenuItem {
+  label: string;
+  icon: string;
+  route: string;
+  activeRoutes?: string[];
+  /**
+   * Whether the entry is shown at all. An entry nobody can open should not be
+   * offered, rather than offered and refused.
+   */
+  canView?: (permissions: string[] | string | null, role?: string | null) => boolean;
+}
+
+export const navigationMenu: NavigationMenuItem[] = [
   {
     label: 'navigation.map',
     icon: 'location',
@@ -9,6 +23,12 @@ export const navigationMenu = [
     label: 'navigation.activity',
     icon: 'activity',
     route: '/activity',
+  },
+  {
+    label: 'navigation.dashboard',
+    icon: 'dashboard',
+    route: '/dashboard',
+    canView: canViewDashboard,
   },
   {
     label: 'navigation.profile',

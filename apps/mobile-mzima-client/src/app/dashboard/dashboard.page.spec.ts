@@ -46,6 +46,7 @@ describe('DashboardPage', () => {
       // than restating the English.
       { instant: (key: string) => key } as any,
       { get: () => forms$ } as any,
+      { back: jest.fn() } as any,
     );
   };
 

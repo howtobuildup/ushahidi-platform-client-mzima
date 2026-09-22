@@ -2753,6 +2753,7 @@
     "save": "Save"
   },
   "navigation": {
+    "dashboard": "Dashboard",
     "activity": "Activity",
     "map": "Map",
     "profile": "Profile"

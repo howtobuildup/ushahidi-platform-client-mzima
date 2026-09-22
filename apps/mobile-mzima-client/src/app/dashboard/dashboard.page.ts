@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { Location } from '@angular/common';
 import { EwerDashboardResult, FormsService, PostsService } from '@mzima-client/sdk';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
@@ -169,7 +170,12 @@ export class DashboardPage implements OnInit {
     private networkService: NetworkService,
     private translate: TranslateService,
     private formsService: FormsService,
+    private location: Location,
   ) {}
+
+  public back(): void {
+    this.location.back();
+  }
 
   async ngOnInit(): Promise<void> {
     this.networkService.networkStatus$.pipe(untilDestroyed(this)).subscribe((connected) => {

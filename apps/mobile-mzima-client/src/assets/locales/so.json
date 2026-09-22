@@ -45,6 +45,37 @@
     }
   },
   "dashboard": {
+    "charts": {
+      "by_district": "Dhacdooyinka degmo ahaan",
+      "by_district_detail": "Warbixinno leh goobo la calaamadiyay oo ka socda aagagga la kormeerayo",
+      "type_mix": "Isku-darka noocyada dhacdooyinka",
+      "district_by_type": "Dhacdooyinka degmo iyo nooc ahaan",
+      "reports_total": "{{count}} warbixin"
+    },
+    "title": "Dashboodhka",
+    "kpi": {
+      "total_reports": "Wadarta warbixinnada",
+      "stored_submissions": "{{count}} warbixin oo la kaydiyay",
+      "response_rate": "Heerka jawaabta",
+      "responded_to": "Kiisaska la calaamadiyay in laga jawaabay",
+      "escalation_signals": "Calaamadaha sii-kordhinta",
+      "with_escalation": "Kiisaska leh calaamado sii-kordhin",
+      "gbv": "Rabshadaha ku saleysan jinsiga",
+      "conflicts": "Khilaafyada",
+      "social": "Rabshadaha bulshada",
+      "early_warning": "Digniin hore",
+      "environmental_climate": "Deegaanka iyo cimilada",
+      "share_of_incidents": "{{percent}}% dhacdooyinka"
+    },
+    "offline": {
+      "title": "Xiriir ma jiro",
+      "detail": "Dashboodhku wuxuu u baahan yahay xiriir. Warbixinta ayaa weli shaqaynaysa adigoo offline ah, tanina way buuxsami doontaa marka aad dib u soo noqoto."
+    },
+    "error": {
+      "title": "Dashboodhka lama soo qaadi karin",
+      "detail": "Wax baa qaldamay markii la soo qaadayay tirooyinka.",
+      "retry": "Isku day mar kale"
+    },
     "categories": {
       "conflict": "Khilaaf",
       "gbv": "GBV",

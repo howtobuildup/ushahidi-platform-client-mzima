@@ -1,6 +1,12 @@
 import { NgModule } from '@angular/core';
 import { PreloadAllModules, RouterModule, Routes } from '@angular/router';
-import { AuthorizedGuard, LanguageGuard, NotAuthorizedGuard, SubmitPostsGuard } from '@guards';
+import {
+  AuthorizedGuard,
+  DashboardGuard,
+  LanguageGuard,
+  NotAuthorizedGuard,
+  SubmitPostsGuard,
+} from '@guards';
 import { PageNotFoundComponent } from '@components';
 
 const routes: Routes = [
@@ -27,6 +33,11 @@ const routes: Routes = [
     path: 'profile',
     loadChildren: () => import('./profile/profile.module').then((m) => m.ProfilePageModule),
     canActivate: [LanguageGuard, AuthorizedGuard, SubmitPostsGuard],
+  },
+  {
+    path: 'dashboard',
+    loadChildren: () => import('./dashboard/dashboard.module').then((m) => m.DashboardPageModule),
+    canActivate: [LanguageGuard, AuthorizedGuard, DashboardGuard],
   },
   // The Saferworld app uses the backend configured in env.json, so the generic
   // Ushahidi walkthrough and deployment picker are intentionally disabled.

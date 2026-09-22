@@ -723,6 +723,37 @@
     "share_on_facebook": "Share on Facebook"
   },
   "dashboard": {
+    "charts": {
+      "by_district": "Incidents by district",
+      "by_district_detail": "Geo-tagged reports across monitored areas",
+      "type_mix": "Incident type mix",
+      "district_by_type": "Incidents by district and type",
+      "reports_total": "{{count}} reports"
+    },
+    "title": "Dashboard",
+    "kpi": {
+      "total_reports": "Total reports",
+      "stored_submissions": "{{count}} stored submissions",
+      "response_rate": "Response rate",
+      "responded_to": "Cases marked as responded to",
+      "escalation_signals": "Escalation signals",
+      "with_escalation": "Cases with escalation indicators",
+      "gbv": "Gender-based violence",
+      "conflicts": "Conflicts",
+      "social": "Social violence",
+      "early_warning": "Early warning",
+      "environmental_climate": "Environmental and climate",
+      "share_of_incidents": "{{percent}}% of incidents"
+    },
+    "offline": {
+      "title": "No connection",
+      "detail": "The dashboard needs a connection. Reporting still works offline, and this will fill in once you are back online."
+    },
+    "error": {
+      "title": "Could not load the dashboard",
+      "detail": "Something went wrong fetching the numbers.",
+      "retry": "Try again"
+    },
     "categories": {
       "conflict": "Conflict",
       "gbv": "GBV",

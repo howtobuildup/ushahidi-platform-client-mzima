@@ -1,4 +1,5 @@
 import {
+  canViewDashboard,
   isFieldMonitor,
   isSaferworldPartner,
   isSubmitOnlyUser,
@@ -28,5 +29,21 @@ describe('permission access helpers', () => {
   it('allows staff and administrators to view all submissions', () => {
     expect(shouldScopePostsToCurrentUser(['Submit Posts'], 'saferworld_staff')).toBe(false);
     expect(shouldScopePostsToCurrentUser(['Submit Posts'], 'admin')).toBe(false);
+  });
+
+  describe('canViewDashboard', () => {
+    it('keeps field monitors out, so reporting is not turned into a score', () => {
+      expect(canViewDashboard(['Submit Posts', 'Manage Posts'], 'field_monitor')).toBe(false);
+    });
+
+    it('lets staff and partners in', () => {
+      expect(canViewDashboard(['Manage Posts'], 'saferworld_staff')).toBe(true);
+      expect(canViewDashboard(['Manage Posts'], 'saferworld_partner')).toBe(true);
+      expect(canViewDashboard(['Manage Posts'], 'admin')).toBe(true);
+    });
+
+    it('keeps submit-only accounts out as well', () => {
+      expect(canViewDashboard(['Submit Posts'], 'user')).toBe(false);
+    });
   });
 });

@@ -68,3 +68,22 @@ export function shouldScopePostsToCurrentUser(
 
   return isFieldMonitor(role) || isSaferworldPartner(role) || isSubmitOnlyUser(permissions, role);
 }
+
+/**
+ * Who may open the dashboard.
+ *
+ * Everyone whose role the dashboard endpoint admits, which is everyone except
+ * field monitors and submit-only accounts. Field monitors are excluded
+ * deliberately rather than incidentally: reporting is the job, and a
+ * scoreboard turns it into a number to move.
+ */
+export function canViewDashboard(
+  permissions: string[] | string | null | undefined,
+  role?: string | null,
+): boolean {
+  if (isFieldMonitor(role)) {
+    return false;
+  }
+
+  return !isSubmitOnlyUser(permissions, role);
+}

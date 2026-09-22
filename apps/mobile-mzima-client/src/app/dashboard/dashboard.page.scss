@@ -1,0 +1,172 @@
+.page {
+  --padding-bottom: 32px;
+}
+
+// Two across on a phone, which keeps a number and its caption readable
+// without the caption wrapping to four lines.
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px 14px 14px 16px;
+  border: 1px solid var(--ion-color-step-200);
+  // The coloured edge is what tells the cards apart at a glance, and it is
+  // the only thing carrying the category, so it is not decoration.
+  border-left: 4px solid var(--kpi-accent, var(--ion-color-primary));
+  border-radius: 10px;
+  background: var(--ion-background-color);
+
+  &__label {
+    color: var(--ion-color-medium);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    line-height: 1.3;
+  }
+
+  &__value {
+    color: var(--ion-text-color);
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1.1;
+  }
+
+  &__caption {
+    color: var(--ion-color-medium);
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  &--total {
+    --kpi-accent: var(--ion-color-primary);
+  }
+  &--response {
+    --kpi-accent: #3f8f7a;
+  }
+  &--escalation {
+    --kpi-accent: #d9a441;
+  }
+  &--gbv {
+    --kpi-accent: #b5443a;
+  }
+  &--conflict {
+    --kpi-accent: #5a5e8a;
+  }
+  &--social {
+    --kpi-accent: #c98b3a;
+  }
+  &--warning {
+    --kpi-accent: #6aa89a;
+  }
+  &--climate {
+    --kpi-accent: #4f7a9c;
+  }
+}
+
+.skeleton {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+
+  &__card {
+    padding: 14px;
+    border: 1px solid var(--ion-color-step-200);
+    border-radius: 10px;
+  }
+}
+
+.state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 48px 24px;
+  text-align: center;
+
+  &__icon {
+    font-size: 40px;
+    color: var(--ion-color-medium);
+  }
+
+  &__title {
+    margin: 0;
+    color: var(--ion-text-color);
+    font-size: 17px;
+    font-weight: 600;
+  }
+
+  &__detail {
+    margin: 0 0 8px;
+    color: var(--ion-color-medium);
+    font-size: 14px;
+    line-height: 1.45;
+    max-width: 40ch;
+  }
+}
+
+.chart {
+  margin-top: 24px;
+
+  &__title {
+    margin: 0;
+    color: var(--ion-text-color);
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  &__subtitle {
+    margin: 2px 0 0;
+    color: var(--ion-color-medium);
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  // ngx-charts measures its parent, so the canvas needs a definite height.
+  &__canvas {
+    margin-top: 12px;
+    height: 260px;
+
+    &--tall {
+      height: 300px;
+    }
+
+    &--donut {
+      height: 320px;
+    }
+  }
+
+  &__total {
+    margin: 4px 0 0;
+    color: var(--ion-color-medium);
+    font-size: 13px;
+    text-align: center;
+  }
+
+  // The chart library ships light-mode defaults, so axis text and the legend
+  // are restated against the app's own colours rather than left grey on grey.
+  &::ng-deep {
+    .ngx-charts text,
+    .chart-legend .legend-labels,
+    .chart-legend .legend-label-text {
+      fill: var(--ion-color-medium);
+      color: var(--ion-color-medium);
+      font-size: 12px;
+    }
+
+    .chart-legend .legend-labels {
+      background: transparent;
+    }
+
+    .gridline-path {
+      stroke: var(--ion-color-step-150);
+    }
+  }
+}

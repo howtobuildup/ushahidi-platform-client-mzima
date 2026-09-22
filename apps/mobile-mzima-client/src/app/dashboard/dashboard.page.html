@@ -1,0 +1,91 @@
+<app-header [title]="'dashboard.title' | translate"></app-header>
+
+<ion-content class="ion-padding-horizontal ion-padding-top page">
+  <ion-refresher slot="fixed" (ionRefresh)="load($event)" [disabled]="offline">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <!-- The rest of the app works offline; this cannot, so it says so rather
+       than showing an empty dashboard that looks like no incidents. -->
+  <div class="state" *ngIf="offline">
+    <app-icon class="state__icon" name="cloud"></app-icon>
+    <p class="state__title">{{ 'dashboard.offline.title' | translate }}</p>
+    <p class="state__detail">{{ 'dashboard.offline.detail' | translate }}</p>
+  </div>
+
+  <div class="state" *ngIf="!offline && loadError">
+    <p class="state__title">{{ 'dashboard.error.title' | translate }}</p>
+    <p class="state__detail">{{ 'dashboard.error.detail' | translate }}</p>
+    <app-button fill="outline" (buttonClick)="load()">
+      {{ 'dashboard.error.retry' | translate }}
+    </app-button>
+  </div>
+
+  <div class="skeleton" *ngIf="!offline && loading && !loadError">
+    <div class="skeleton__card" *ngFor="let placeholder of [1, 2, 3, 4, 5, 6, 7, 8]">
+      <ion-skeleton-text animated style="width: 60%"></ion-skeleton-text>
+      <ion-skeleton-text animated style="width: 40%; height: 28px"></ion-skeleton-text>
+    </div>
+  </div>
+
+  <ng-container *ngIf="!offline && !loading && !loadError && result">
+    <div class="kpis">
+      <div class="kpi" *ngFor="let kpi of kpis" [ngClass]="'kpi--' + kpi.tone">
+        <span class="kpi__label">{{ kpi.labelKey | translate }}</span>
+        <strong class="kpi__value">{{ kpi.value }}</strong>
+        <span class="kpi__caption"> {{ kpi.captionKey | translate : kpi.captionParams }} </span>
+      </div>
+    </div>
+
+    <!-- Both district charts are meaningless once a single district is
+         selected: each collapses to one bar. They are dropped rather than
+         shown degenerate. -->
+    <section class="chart" *ngIf="showDistrictCharts && districtChart.length">
+      <h2 class="chart__title">{{ 'dashboard.charts.by_district' | translate }}</h2>
+      <p class="chart__subtitle">{{ 'dashboard.charts.by_district_detail' | translate }}</p>
+      <div class="chart__canvas chart__canvas--tall">
+        <ngx-charts-bar-horizontal
+          [results]="districtChart"
+          [scheme]="districtScheme"
+          [xAxis]="true"
+          [yAxis]="true"
+          [roundEdges]="false"
+        ></ngx-charts-bar-horizontal>
+      </div>
+    </section>
+
+    <section class="chart" *ngIf="typeMixChart.length">
+      <h2 class="chart__title">{{ 'dashboard.charts.type_mix' | translate }}</h2>
+      <div class="chart__canvas chart__canvas--donut">
+        <ngx-charts-pie-chart
+          [results]="typeMixChart"
+          [scheme]="categoryScheme"
+          [doughnut]="true"
+          [labels]="false"
+          [legend]="true"
+          [legendPosition]="legendBelow"
+        ></ngx-charts-pie-chart>
+      </div>
+      <p class="chart__total">
+        {{ 'dashboard.charts.reports_total' | translate : { count: typeMixTotal } }}
+      </p>
+    </section>
+
+    <section class="chart" *ngIf="showDistrictCharts && districtTypeChart.length">
+      <h2 class="chart__title">{{ 'dashboard.charts.district_by_type' | translate }}</h2>
+      <!-- Stacked horizontally rather than vertically as on the web: district
+           names sit on the left and read straight, where vertical bars would
+           put five of them on their side under a phone-width axis. -->
+      <div class="chart__canvas chart__canvas--tall">
+        <ngx-charts-bar-horizontal-stacked
+          [results]="districtTypeChart"
+          [scheme]="categoryScheme"
+          [xAxis]="true"
+          [yAxis]="true"
+          [legend]="true"
+          [legendPosition]="legendBelow"
+        ></ngx-charts-bar-horizontal-stacked>
+      </div>
+    </section>
+  </ng-container>
+</ion-content>

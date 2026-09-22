@@ -6,3 +6,4 @@ export * from './language.guard';
 export * from './not-deployment.guard';
 export * from './deployment-exists.guard';
 export * from './is-signup-enabled.guard';
+export * from './dashboard.guard';

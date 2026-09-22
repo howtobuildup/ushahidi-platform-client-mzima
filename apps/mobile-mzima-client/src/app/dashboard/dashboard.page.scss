@@ -111,8 +111,19 @@
   }
 }
 
+// The first chart clears the card grid above it.
+.kpis + .chart {
+  margin-top: 22px;
+}
+
+// Each chart is a card of its own. Stacked without one, a chart's legend sits
+// close enough to the next chart's title to read as part of it.
 .chart {
-  margin-top: 24px;
+  margin-top: 16px;
+  padding: 16px 14px;
+  border: 1px solid var(--ion-color-step-150);
+  border-radius: 12px;
+  background: var(--ion-background-color);
 
   &__title {
     margin: 0;
@@ -131,7 +142,7 @@
 
   // ngx-charts measures its parent, so the canvas needs a definite height.
   &__canvas {
-    margin-top: 12px;
+    margin-top: 14px;
     height: 260px;
 
     &--tall {
@@ -273,5 +284,36 @@
     app-button {
       flex: 1 1 0;
     }
+  }
+}
+
+// Drawn by the page rather than the chart library, which renders its own
+// legend inside the fixed box and so runs past the bottom of the card.
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+
+  &__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  &__swatch {
+    flex: 0 0 auto;
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+  }
+
+  &__label {
+    color: var(--ion-color-medium);
+    font-size: 12px;
+    line-height: 1.3;
   }
 }

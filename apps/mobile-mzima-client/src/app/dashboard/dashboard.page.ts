@@ -4,9 +4,9 @@ import { EwerDashboardResult, FormsService, PostsService } from '@mzima-client/s
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 // Types only. Importing the module for its enums would pull d3 into every
-// test that touches this page, and d3 ships ESM that Jest will not parse. The
-// two values needed are string enums, so the literals stand in for them.
-import type { Color, LegendPosition, ScaleType } from '@swimlane/ngx-charts';
+// test that touches this page, and d3 ships ESM that Jest will not parse, so
+// the one value needed stands in as its string literal.
+import type { Color, ScaleType } from '@swimlane/ngx-charts';
 import { NetworkService } from '@services';
 
 export interface FilterOption {
@@ -107,6 +107,14 @@ export class DashboardPage implements OnInit {
   public typeMixChart: ChartDatum[] = [];
   public districtTypeChart: StackedDatum[] = [];
   public typeMixTotal = 0;
+  /**
+   * Drawn by the page rather than by the chart library.
+   *
+   * ngx-charts renders its legend inside the box it was given, so on a narrow
+   * screen it runs past the bottom of the card. This one sits in the card's
+   * flow and wraps.
+   */
+  public categoryLegend: Array<{ label: string; colour: string }> = [];
   public filters: DashboardFilters = this.defaultFilters();
   public projectOptions: FilterOption[] = [];
   public incidentOptions: FilterOption[] = [];
@@ -151,7 +159,6 @@ export class DashboardPage implements OnInit {
     return chips;
   }
 
-  public readonly legendBelow = 'below' as LegendPosition;
   public categoryScheme: Color = {
     name: 'categories',
     selectable: true,
@@ -353,6 +360,7 @@ export class DashboardPage implements OnInit {
       }
     }
     this.categoryScheme = { ...this.categoryScheme, domain: [...seen.values()] };
+    this.categoryLegend = [...seen.entries()].map(([label, colour]) => ({ label, colour }));
   }
 
   /**

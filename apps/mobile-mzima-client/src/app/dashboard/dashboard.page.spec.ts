@@ -225,6 +225,17 @@ describe('DashboardPage', () => {
       expect(page.categoryScheme.domain).toEqual(['#b5443a', '#5a5e8a']);
     });
 
+    it('builds its own legend, matching those colours', async () => {
+      posts.getEwerDashboard.mockReturnValue(of(withCharts()));
+
+      await page.ngOnInit();
+
+      expect(page.categoryLegend).toEqual([
+        { label: 'dashboard.categories.gbv', colour: '#b5443a' },
+        { label: 'dashboard.categories.conflict', colour: '#5a5e8a' },
+      ]);
+    });
+
     it('copes with a dashboard that has no districts yet', async () => {
       await page.ngOnInit();
 

@@ -20,15 +20,15 @@ export const navigationMenu: NavigationMenuItem[] = [
     activeRoutes: ['/map/search/', '/map/collection/'],
   },
   {
-    label: 'navigation.activity',
-    icon: 'activity',
-    route: '/activity',
-  },
-  {
     label: 'navigation.dashboard',
     icon: 'dashboard',
     route: '/dashboard',
     canView: canViewDashboard,
+  },
+  {
+    label: 'navigation.activity',
+    icon: 'activity',
+    route: '/activity',
   },
   {
     label: 'navigation.profile',

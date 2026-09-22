@@ -99,13 +99,18 @@
           [scheme]="categoryScheme"
           [doughnut]="true"
           [labels]="false"
-          [legend]="true"
-          [legendPosition]="legendBelow"
+          [legend]="false"
         ></ngx-charts-pie-chart>
       </div>
       <p class="chart__total">
         {{ 'dashboard.charts.reports_total' | translate : { count: typeMixTotal } }}
       </p>
+      <ul class="legend">
+        <li class="legend__item" *ngFor="let entry of categoryLegend">
+          <span class="legend__swatch" [style.background]="entry.colour"></span>
+          <span class="legend__label">{{ entry.label }}</span>
+        </li>
+      </ul>
     </section>
 
     <section class="chart" *ngIf="showDistrictCharts && districtTypeChart.length">
@@ -119,10 +124,15 @@
           [scheme]="categoryScheme"
           [xAxis]="true"
           [yAxis]="true"
-          [legend]="true"
-          [legendPosition]="legendBelow"
+          [legend]="false"
         ></ngx-charts-bar-horizontal-stacked>
       </div>
+      <ul class="legend">
+        <li class="legend__item" *ngFor="let entry of categoryLegend">
+          <span class="legend__swatch" [style.background]="entry.colour"></span>
+          <span class="legend__label">{{ entry.label }}</span>
+        </li>
+      </ul>
     </section>
   </ng-container>
 </app-main-layout>

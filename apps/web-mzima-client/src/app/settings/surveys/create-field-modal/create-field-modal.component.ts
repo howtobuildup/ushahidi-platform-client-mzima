@@ -26,6 +26,8 @@ export class CreateFieldModalComponent implements OnInit {
   public fields = _.cloneDeep(surveyHelper.surveyFields);
   public selectedFieldType: any;
   public editMode = false;
+  /** The input this question had when the dialog opened. */
+  public originalFieldInput = '';
   public availableCategories?: MultilevelSelectOption[];
   public categories: any = [];
   public availableSurveys: SurveyItem[] = [];
@@ -69,6 +71,7 @@ export class CreateFieldModalComponent implements OnInit {
       );
     }
     this.editMode = true;
+    this.originalFieldInput = this.selectedFieldType.input;
     this.setHasOptionValidate();
     if (this.hasOptions) {
       this.setTempSelectedFieldType();
@@ -288,6 +291,86 @@ export class CreateFieldModalComponent implements OnInit {
         }
       },
     });
+  }
+
+  /**
+   * The types this question could become without stranding its answers.
+   *
+   * An answer lives in the table its field's `type` names: post_varchar,
+   * post_int, post_datetime and so on. Changing `type` would leave every
+   * answer already given behind in the old table, so only changes that keep
+   * `type` are offered. Between a select, a radio and a checkbox that is the
+   * whole difference, which is why a survey imported from a spreadsheet can be
+   * corrected here rather than rebuilt.
+   */
+  public get convertibleFieldTypes(): any[] {
+    if (!this.editMode || !this.selectedFieldType) return [];
+
+    return this.fields.filter(
+      (field: any) =>
+        field.type === this.selectedFieldType.type &&
+        // Categories are drawn from the deployment's own taxonomy rather than
+        // from options typed here, so they are not interchangeable.
+        field.input !== 'tags' &&
+        this.selectedFieldType.input !== 'tags',
+    );
+  }
+
+  public get canChangeFieldType(): boolean {
+    return this.convertibleFieldTypes.length > 1;
+  }
+
+  /**
+   * True where the new type holds fewer answers than the old one, so a post
+   * that ticked several boxes would keep only one of them.
+   */
+  public get fieldTypeChangeLosesAnswers(): boolean {
+    return (
+      this.originalFieldInput === 'checkbox' &&
+      ['select', 'radio'].includes(this.selectedFieldType?.input)
+    );
+  }
+
+  /** True where the question now needs options it does not have. */
+  public get fieldTypeChangeNeedsOptions(): boolean {
+    return this.hasOptions && !this.selectedFieldType?.options?.length;
+  }
+
+  public changeFieldType(input: string): void {
+    const target = this.convertibleFieldTypes.find((field: any) => field.input === input);
+    if (!target || target.input === this.selectedFieldType.input) return;
+
+    const couldHaveOptions = surveyHelper.fieldCanHaveOptions(this.selectedFieldType);
+    const existingOptions = couldHaveOptions ? this.selectedFieldType.options ?? [] : [];
+
+    this.selectedFieldType.input = target.input;
+    this.selectedFieldType.type = target.type;
+
+    // Only a checkbox holds more than one answer, so the marker follows the
+    // type rather than lingering from whatever the field used to be.
+    if (target.cardinality === undefined) {
+      delete this.selectedFieldType.cardinality;
+    } else {
+      this.selectedFieldType.cardinality = target.cardinality;
+    }
+
+    this.setHasOptionValidate();
+
+    if (this.hasOptions) {
+      // Carried across untouched, so the wording, the stored names the answers
+      // reference and any choice filter all survive the change.
+      this.selectedFieldType.options = existingOptions;
+      this.setTempSelectedFieldType();
+    } else {
+      delete this.selectedFieldType.options;
+      this.fieldOptions = [];
+      this.emptyTitleOption = false;
+      if (this.selectedFieldType.config) {
+        delete this.selectedFieldType.config.randomize_options;
+      }
+    }
+
+    this.checkLoadAvailableData(this.selectedFieldType.input);
   }
 
   public selectField(field: Partial<FormAttributeInterface>) {

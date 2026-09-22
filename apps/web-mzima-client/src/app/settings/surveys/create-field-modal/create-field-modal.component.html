@@ -12,7 +12,11 @@
 </mzima-client-button>
 
 <strong mat-dialog-title>{{
-  isTranslateMode ? ('form.translate_field' | translate) : ('form.add_field' | translate)
+  isTranslateMode
+    ? ('form.translate_field' | translate)
+    : editMode
+    ? ('form.edit_field' | translate)
+    : ('form.add_field' | translate)
 }}</strong>
 <mat-dialog-content>
   <ng-container *ngIf="selectedFieldType; else allFields">
@@ -28,6 +32,32 @@
             [data-qa]="'selected-field-name'"
           />
         </mat-form-field>
+      </div>
+
+      <!-- Offered only where the answers already given would survive the
+           change, which in practice means swapping between a select, a radio
+           and a checkbox. A survey imported from a spreadsheet arrives with
+           whatever types the spreadsheet named, and this is the only way to
+           correct one without rebuilding the question. -->
+      <div class="form-row" *ngIf="canChangeFieldType">
+        <mat-label>{{ 'survey.field_type' | translate }}</mat-label>
+        <mat-form-field appearance="outline">
+          <mat-select
+            [ngModel]="selectedFieldType.input"
+            (ngModelChange)="changeFieldType($event)"
+            [data-qa]="'selected-field-type'"
+          >
+            <mat-option *ngFor="let field of convertibleFieldTypes" [value]="field.input">
+              {{ field.label | translate }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <p class="field-type-note" *ngIf="fieldTypeChangeLosesAnswers">
+          {{ 'survey.field_type_single_answer_warning' | translate }}
+        </p>
+        <p class="field-type-note" *ngIf="fieldTypeChangeNeedsOptions">
+          {{ 'survey.field_type_needs_options' | translate }}
+        </p>
       </div>
 
       <div class="form-row">

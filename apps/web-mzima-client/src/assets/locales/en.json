@@ -210,6 +210,7 @@
   },
   "form": {
     "add_field": "Add Field",
+    "edit_field": "Edit Field",
     "add_field_instructions": "Add instructions to this field",
     "add_field_instructions_info": "These instructions will be presented as a tooltip to a user when filling in this field.",
     "add_field_instructions_placeholder": "Explain this field...",
@@ -327,6 +328,9 @@
     "date_desc": "A date with year, month, day",
     "datetime_desc": "A date with time in hours and minutes",
     "select_desc": "A drop down list of items",
+    "field_type": "Question type",
+    "field_type_single_answer_warning": "This type keeps one answer. Any post that ticked more than one option will keep only the first.",
+    "field_type_needs_options": "Add the options people can choose from before saving.",
     "radio_desc": "Allows the user to choose only one of a predefined set of options.",
     "checkbox_desc": "Allows the user to choose one or more of a predefined set of options.",
     "relation_desc": "Create a relation between different surveys",

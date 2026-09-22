@@ -121,3 +121,12 @@ quill-editor {
     min-width: 0;
   }
 }
+
+// Sits under the type control, where a change needs explaining before it is
+// saved rather than after.
+.field-type-note {
+  margin: 4px 0 0;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--color-neutral-70, #6c7074);
+}

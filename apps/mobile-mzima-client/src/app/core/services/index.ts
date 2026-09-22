@@ -16,3 +16,4 @@ export * from './listener.service';
 export * from './language.service';
 export * from './landing-route.service';
 export * from './device-location.service';
+export * from './app-update.service';

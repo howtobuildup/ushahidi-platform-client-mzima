@@ -1,0 +1,20 @@
+{
+  "_readme": [
+    "The mobile apps read this file to decide whether to tell a reporter an update is waiting.",
+    "Raise latest_build for a platform once that build is LIVE in the store, not when it is submitted:",
+    "reporters who are told to update before the store has the build will find nothing there.",
+    "latest_build must match the Android versionCode, or the iOS CFBundleVersion, of the released build.",
+    "latest_version is only shown to the reporter, so it should read the way the store shows it.",
+    "Leave store_url empty to keep a platform quiet; the apps skip the prompt when they have nowhere to send anyone."
+  ],
+  "android": {
+    "latest_build": 13,
+    "latest_version": "1.10",
+    "store_url": "https://play.google.com/store/apps/details?id=org.saferworld.ogaal"
+  },
+  "ios": {
+    "latest_build": 1,
+    "latest_version": "1.10",
+    "store_url": ""
+  }
+}

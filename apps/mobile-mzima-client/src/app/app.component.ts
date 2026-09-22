@@ -11,6 +11,7 @@ import {
   ToastService,
   LanguageService,
   DeviceLocationService,
+  AppUpdateService,
 } from '@services';
 import {
   Subject,
@@ -58,6 +59,7 @@ export class AppComponent extends BaseComponent {
     private listenerService: ListenerService,
     private languageService: LanguageService,
     private deviceLocationService: DeviceLocationService,
+    private appUpdateService: AppUpdateService,
     @Optional() override routerOutlet?: IonRouterOutlet,
   ) {
     super(router, platform, toastService, alertCtrl, networkService, routerOutlet, location);
@@ -67,11 +69,28 @@ export class AppComponent extends BaseComponent {
     this.listenerService.changeDeploymentListener();
     this.loadInitialData();
     this.initLocationPermissionGate();
+    this.initUpdateCheck();
     if (this.showWebSplash) {
       window.setTimeout(() => {
         this.showWebSplash = false;
       }, 1000);
     }
+  }
+
+  private async initUpdateCheck(): Promise<void> {
+    if (!Capacitor.isNativePlatform()) return;
+
+    await this.platform.ready();
+    // Give the splash, the first data load and Android's location prompt the
+    // screen first; an update can wait a few seconds.
+    window.setTimeout(() => this.appUpdateService.checkForUpdate(), 8000);
+
+    // A phone that keeps the app backgrounded for weeks would otherwise only
+    // ever check on a cold start. The service throttles itself, so this costs
+    // nothing on an ordinary resume.
+    await App.addListener('appStateChange', ({ isActive }) => {
+      if (isActive) this.appUpdateService.checkForUpdate();
+    });
   }
 
   private async initLocationPermissionGate(): Promise<void> {

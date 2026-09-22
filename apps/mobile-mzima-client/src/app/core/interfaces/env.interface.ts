@@ -12,4 +12,6 @@ export interface EnvConfigInterface {
   sentry_dsn: string;
   sentry_environment?: string;
   sentry_debug_mode: boolean;
+  /** Where the mobile apps read the current released build from. */
+  app_version_url?: string;
 }

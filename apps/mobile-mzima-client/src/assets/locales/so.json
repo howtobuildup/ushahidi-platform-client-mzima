@@ -24,6 +24,13 @@
     "or_pick_on_map": "Ama raadi khariidadda, ama taabo meesha ay dhacday.",
     "my_location_error": "Waan ka xumahay, goobtaada lama helin"
   },
+  "app_update": {
+    "title": "Cusbooneysiin ayaa diyaar ah",
+    "message": "Nooc cusub oo OGAAL ah ayaa diyaar ah. Cusbooneysiintu waxay hubinaysaa in warbixinnadaadu ay la shaqeeyaan isbeddellada ugu dambeeyay.",
+    "message_with_version": "OGAAL {{version}} ayaa diyaar ah. Cusbooneysiintu waxay hubinaysaa in warbixinnadaadu ay la shaqeeyaan isbeddellada ugu dambeeyay.",
+    "update": "Cusbooneysii",
+    "later": "Mar kale"
+  },
   "post_form": {
     "create_post": "Ka jawaab sahanka",
     "edit_post": "Wax ka beddel qoraalka",

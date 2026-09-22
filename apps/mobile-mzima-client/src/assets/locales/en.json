@@ -2737,6 +2737,13 @@
     "subtitle": "Select the language you want to use in the app.",
     "title": "Choose your language"
   },
+  "app_update": {
+    "title": "Update available",
+    "message": "A newer version of OGAAL is ready. Updating keeps your reports working with the latest changes.",
+    "message_with_version": "OGAAL {{version}} is ready. Updating keeps your reports working with the latest changes.",
+    "update": "Update",
+    "later": "Later"
+  },
   "post_form": {
     "create_post": "Respond to Survey",
     "edit_post": "Edit post",

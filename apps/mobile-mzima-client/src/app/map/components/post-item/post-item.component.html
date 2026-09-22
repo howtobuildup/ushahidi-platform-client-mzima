@@ -100,7 +100,7 @@
 
         <div class="post__ewer-footer">
           <span>
-            {{ post.post_date | dateAgo }} &middot;
+            {{ post.post_date | date : 'mediumDate' }} &middot;
             {{ 'post.tile.via' | translate : { source: post.source || 'Web' } }}
           </span>
           <span class="post__pill post__pill--code" *ngIf="tile.monitorCode">

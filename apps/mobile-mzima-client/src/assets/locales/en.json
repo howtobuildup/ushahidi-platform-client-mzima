@@ -723,6 +723,24 @@
     "share_on_facebook": "Share on Facebook"
   },
   "dashboard": {
+    "filters": {
+      "title": "Filters",
+      "project": "Project",
+      "all_projects": "All projects",
+      "incident_type": "Incident type",
+      "all_types": "All types",
+      "district": "District",
+      "all_districts": "All districts",
+      "apply": "Apply",
+      "clear": "Clear",
+      "close": "Close",
+      "period": {
+        "week": "7 days",
+        "month": "30 days",
+        "quarter": "90 days",
+        "all": "All time"
+      }
+    },
     "charts": {
       "by_district": "Incidents by district",
       "by_district_detail": "Geo-tagged reports across monitored areas",

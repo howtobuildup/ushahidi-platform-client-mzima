@@ -45,6 +45,24 @@
     }
   },
   "dashboard": {
+    "filters": {
+      "title": "Shaandhaynta",
+      "project": "Mashruuca",
+      "all_projects": "Dhammaan mashruucyada",
+      "incident_type": "Nooca dhacdada",
+      "all_types": "Dhammaan noocyada",
+      "district": "Degmada",
+      "all_districts": "Dhammaan degmooyinka",
+      "apply": "Codso",
+      "clear": "Nadiifi",
+      "close": "Xir",
+      "period": {
+        "week": "7 maalmood",
+        "month": "30 maalmood",
+        "quarter": "90 maalmood",
+        "all": "Waqti kasta"
+      }
+    },
     "charts": {
       "by_district": "Dhacdooyinka degmo ahaan",
       "by_district_detail": "Warbixinno leh goobo la calaamadiyay oo ka socda aagagga la kormeerayo",

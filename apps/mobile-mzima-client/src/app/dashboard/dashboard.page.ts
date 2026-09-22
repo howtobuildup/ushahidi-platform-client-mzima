@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { EwerDashboardResult, PostsService } from '@mzima-client/sdk';
+import { EwerDashboardResult, FormsService, PostsService } from '@mzima-client/sdk';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 // Types only. Importing the module for its enums would pull d3 into every
@@ -7,6 +7,23 @@ import { TranslateService } from '@ngx-translate/core';
 // two values needed are string enums, so the literals stand in for them.
 import type { Color, LegendPosition, ScaleType } from '@swimlane/ngx-charts';
 import { NetworkService } from '@services';
+
+export interface FilterOption {
+  value: string;
+  /** Translated where the app knows the term, raw survey wording otherwise. */
+  label: string;
+}
+
+export interface DashboardFilters {
+  /** Empty means every project. */
+  formId: string;
+  incidentType: string;
+  district: string;
+  /** One of the presets, or 'custom' when explicit dates are set. */
+  period: string;
+  dateFrom: string;
+  dateTo: string;
+}
 
 interface ChartDatum {
   name: string;
@@ -34,6 +51,23 @@ const CATEGORY_COLOURS: Record<string, string> = {
   climate: '#4f7a9c',
   uncategorized: '#8d9199',
 };
+
+/**
+ * Periods offered as a segment, in days back from today.
+ *
+ * A date range is the filter people actually reach for, and two free-form date
+ * inputs are the worst of the web dashboard's controls to use on a phone.
+ * 'all' and 'custom' carry no day count.
+ */
+export const PERIOD_PRESETS: Array<{ value: string; days: number | null }> = [
+  { value: 'week', days: 7 },
+  { value: 'month', days: 30 },
+  { value: 'quarter', days: 90 },
+  { value: 'all', days: null },
+];
+
+/** Incident types the dashboard can filter by, as the API names them. */
+const INCIDENT_TYPES = ['conflict', 'gbv', 'social', 'warning', 'climate'];
 
 /** The category keys the API returns, mapped to what the app calls them. */
 const CATEGORY_LABEL_KEYS: Record<string, string> = {
@@ -72,8 +106,49 @@ export class DashboardPage implements OnInit {
   public typeMixChart: ChartDatum[] = [];
   public districtTypeChart: StackedDatum[] = [];
   public typeMixTotal = 0;
-  /** False once a single district is selected, when both district charts say nothing. */
-  public showDistrictCharts = true;
+  public filters: DashboardFilters = this.defaultFilters();
+  public projectOptions: FilterOption[] = [];
+  public incidentOptions: FilterOption[] = [];
+  public districtOptions: FilterOption[] = [];
+  public filterSheetOpen = false;
+  /** The sheet edits a copy, so cancelling leaves the dashboard alone. */
+  public draft: DashboardFilters = this.defaultFilters();
+
+  public readonly periods = PERIOD_PRESETS;
+
+  /**
+   * False once a single district is selected: both district charts collapse to
+   * one bar, which says less than the KPI cards already do.
+   */
+  public get showDistrictCharts(): boolean {
+    return !this.filters.district;
+  }
+
+  /** What the gear badge counts: the filters that are not the period. */
+  public get activeFilterCount(): number {
+    return [this.filters.formId, this.filters.incidentType, this.filters.district].filter(Boolean)
+      .length;
+  }
+
+  public get activeChips(): Array<{ key: keyof DashboardFilters; label: string }> {
+    const chips: Array<{ key: keyof DashboardFilters; label: string }> = [];
+    const named = (options: FilterOption[], value: string) =>
+      options.find((option) => option.value === value)?.label || value;
+
+    if (this.filters.formId) {
+      chips.push({ key: 'formId', label: named(this.projectOptions, this.filters.formId) });
+    }
+    if (this.filters.incidentType) {
+      chips.push({
+        key: 'incidentType',
+        label: named(this.incidentOptions, this.filters.incidentType),
+      });
+    }
+    if (this.filters.district) {
+      chips.push({ key: 'district', label: this.filters.district });
+    }
+    return chips;
+  }
 
   public readonly legendBelow = 'below' as LegendPosition;
   public categoryScheme: Color = {
@@ -93,6 +168,7 @@ export class DashboardPage implements OnInit {
     private postsService: PostsService,
     private networkService: NetworkService,
     private translate: TranslateService,
+    private formsService: FormsService,
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -103,6 +179,25 @@ export class DashboardPage implements OnInit {
       // nothing to show.
       if (wasOffline && connected && !this.result) this.load();
     });
+
+    this.incidentOptions = INCIDENT_TYPES.map((value) => ({
+      value,
+      label: this.categoryLabel(value),
+    }));
+
+    this.formsService
+      .get()
+      .pipe(untilDestroyed(this))
+      .subscribe({
+        next: (response: any) => {
+          this.projectOptions = (response?.results || []).map((form: any) => ({
+            value: String(form.id),
+            label: form.name,
+          }));
+        },
+        // A dashboard without a project filter is still a dashboard.
+        error: () => (this.projectOptions = []),
+      });
 
     await this.load();
   }
@@ -121,13 +216,17 @@ export class DashboardPage implements OnInit {
     this.loadError = false;
 
     this.postsService
-      .getEwerDashboard()
+      .getEwerDashboard(this.requestParams())
       .pipe(untilDestroyed(this))
       .subscribe({
         next: (response: { result: EwerDashboardResult }) => {
           this.result = response.result;
           this.kpis = this.buildKpis(response.result);
           this.buildCharts(response.result);
+          this.districtOptions = (response.result.district_options || []).map((district) => ({
+            value: district.name,
+            label: district.name,
+          }));
           this.loading = false;
           event?.target?.complete();
         },
@@ -137,6 +236,79 @@ export class DashboardPage implements OnInit {
           event?.target?.complete();
         },
       });
+  }
+
+  private defaultFilters(): DashboardFilters {
+    return { formId: '', incidentType: '', district: '', period: 'all', dateFrom: '', dateTo: '' };
+  }
+
+  /** Only the filters that are set; the API treats an empty value as absent. */
+  private requestParams(): Record<string, string> {
+    const { from, to } = this.periodRange();
+    return {
+      form_id: this.filters.formId,
+      incident_type: this.filters.incidentType,
+      district: this.filters.district,
+      date_from: from,
+      date_to: to,
+    };
+  }
+
+  /**
+   * The chosen preset as a pair of dates, or the explicit pair when the period
+   * is custom. 'all' sends nothing, which the API reads as no date filter.
+   */
+  private periodRange(): { from: string; to: string } {
+    if (this.filters.period === 'custom') {
+      return { from: this.filters.dateFrom, to: this.filters.dateTo };
+    }
+
+    const preset = PERIOD_PRESETS.find((option) => option.value === this.filters.period);
+    if (!preset?.days) {
+      return { from: '', to: '' };
+    }
+
+    const from = new Date();
+    from.setDate(from.getDate() - preset.days);
+    return { from: from.toISOString().slice(0, 10), to: new Date().toISOString().slice(0, 10) };
+  }
+
+  public selectPeriod(period: string): void {
+    if (period === this.filters.period) return;
+    this.filters = { ...this.filters, period };
+    this.load();
+  }
+
+  public openFilterSheet(): void {
+    // Edited as a copy so that closing without applying changes nothing.
+    this.draft = { ...this.filters };
+    this.filterSheetOpen = true;
+  }
+
+  public applyFilterSheet(): void {
+    this.filterSheetOpen = false;
+    this.filters = { ...this.draft };
+    this.load();
+  }
+
+  public clearFilterSheet(): void {
+    this.draft = { ...this.draft, formId: '', incidentType: '', district: '' };
+  }
+
+  public removeFilter(key: keyof DashboardFilters): void {
+    this.filters = { ...this.filters, [key]: '' };
+    this.load();
+  }
+
+  /**
+   * Tapping a district in the ranking chart filters by it, which is the
+   * drill-down a phone can do better than a mouse and a select.
+   */
+  public onDistrictSelected(event: any): void {
+    const name = typeof event === 'string' ? event : event?.name;
+    if (!name || name === this.filters.district) return;
+    this.filters = { ...this.filters, district: String(name) };
+    this.load();
   }
 
   /**

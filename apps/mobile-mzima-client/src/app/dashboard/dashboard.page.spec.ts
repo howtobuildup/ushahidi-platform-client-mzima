@@ -10,6 +10,7 @@ describe('DashboardPage', () => {
   let posts: { getEwerDashboard: jest.Mock };
   let connected: boolean;
   let networkStatus$: Subject<boolean>;
+  let forms$: any;
 
   const result = (kpis: Partial<Record<string, number>> = {}) => ({
     result: {
@@ -36,6 +37,7 @@ describe('DashboardPage', () => {
   const build = () => {
     connected = true;
     networkStatus$ = new Subject<boolean>();
+    forms$ = of({ results: [{ id: 2, name: 'NAGAASHO EWER' }] });
     posts = { getEwerDashboard: jest.fn().mockReturnValue(of(result())) };
     return new DashboardPage(
       posts as unknown as PostsService,
@@ -43,6 +45,7 @@ describe('DashboardPage', () => {
       // Returns the key, so the tests assert which label was chosen rather
       // than restating the English.
       { instant: (key: string) => key } as any,
+      { get: () => forms$ } as any,
     );
   };
 
@@ -227,6 +230,190 @@ describe('DashboardPage', () => {
       expect(page.districtChart).toEqual([]);
       expect(page.districtTypeChart).toEqual([]);
       expect(page.typeMixTotal).toBe(0);
+    });
+  });
+
+  describe('filtering', () => {
+    const paramsOf = (call = 0) => posts.getEwerDashboard.mock.calls[call][0];
+
+    it('asks for everything until a filter is set', async () => {
+      await page.ngOnInit();
+
+      expect(paramsOf()).toEqual({
+        form_id: '',
+        incident_type: '',
+        district: '',
+        date_from: '',
+        date_to: '',
+      });
+    });
+
+    it('turns a period into a pair of dates', async () => {
+      await page.ngOnInit();
+
+      page.selectPeriod('week');
+      await flush();
+
+      const params = paramsOf(1);
+      expect(params['date_to']).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      const days = (Date.parse(params['date_to']) - Date.parse(params['date_from'])) / 86_400_000;
+      expect(Math.round(days)).toBe(7);
+    });
+
+    it('sends no dates for all time', async () => {
+      await page.ngOnInit();
+      page.selectPeriod('month');
+      await flush();
+
+      page.selectPeriod('all');
+      await flush();
+
+      expect(paramsOf(2)['date_from']).toBe('');
+      expect(paramsOf(2)['date_to']).toBe('');
+    });
+
+    it('does not reload when the period has not changed', async () => {
+      await page.ngOnInit();
+
+      page.selectPeriod('all');
+
+      expect(posts.getEwerDashboard).toHaveBeenCalledTimes(1);
+    });
+
+    it('applies the sheet in one go rather than one reload per control', async () => {
+      await page.ngOnInit();
+      page.openFilterSheet();
+
+      page.draft.formId = '2';
+      page.draft.incidentType = 'gbv';
+      page.draft.district = 'Erigavo';
+      page.applyFilterSheet();
+      await flush();
+
+      expect(posts.getEwerDashboard).toHaveBeenCalledTimes(2);
+      expect(paramsOf(1)).toMatchObject({
+        form_id: '2',
+        incident_type: 'gbv',
+        district: 'Erigavo',
+      });
+    });
+
+    it('leaves the dashboard alone when the sheet is closed without applying', async () => {
+      await page.ngOnInit();
+      page.openFilterSheet();
+
+      page.draft.district = 'Erigavo';
+      page.filterSheetOpen = false;
+
+      expect(page.filters.district).toBe('');
+      expect(posts.getEwerDashboard).toHaveBeenCalledTimes(1);
+    });
+
+    it('hides the district charts once a district is chosen', async () => {
+      await page.ngOnInit();
+      expect(page.showDistrictCharts).toBe(true);
+
+      page.openFilterSheet();
+      page.draft.district = 'Erigavo';
+      page.applyFilterSheet();
+      await flush();
+
+      expect(page.showDistrictCharts).toBe(false);
+    });
+
+    it('filters by a district tapped in the chart', async () => {
+      await page.ngOnInit();
+
+      page.onDistrictSelected({ name: 'Bardere', value: 29 });
+      await flush();
+
+      expect(page.filters.district).toBe('Bardere');
+      expect(paramsOf(1)['district']).toBe('Bardere');
+    });
+
+    it('ignores a tap on the district already filtered by', async () => {
+      await page.ngOnInit();
+      page.onDistrictSelected('Bardere');
+      await flush();
+
+      page.onDistrictSelected('Bardere');
+      await flush();
+
+      expect(posts.getEwerDashboard).toHaveBeenCalledTimes(2);
+    });
+
+    it('counts only the sheet filters on the badge, not the period', async () => {
+      await page.ngOnInit();
+      page.selectPeriod('week');
+      await flush();
+      expect(page.activeFilterCount).toBe(0);
+
+      page.onDistrictSelected('Bardere');
+      await flush();
+
+      expect(page.activeFilterCount).toBe(1);
+    });
+
+    it('shows a chip per active filter, named the way it was chosen', async () => {
+      await page.ngOnInit();
+      page.openFilterSheet();
+      page.draft.formId = '2';
+      page.draft.incidentType = 'gbv';
+      page.applyFilterSheet();
+      await flush();
+
+      expect(page.activeChips).toEqual([
+        { key: 'formId', label: 'NAGAASHO EWER' },
+        { key: 'incidentType', label: 'dashboard.categories.gbv' },
+      ]);
+    });
+
+    it('clears one filter from its chip, leaving the others', async () => {
+      await page.ngOnInit();
+      page.openFilterSheet();
+      page.draft.incidentType = 'gbv';
+      page.draft.district = 'Erigavo';
+      page.applyFilterSheet();
+      await flush();
+
+      page.removeFilter('district');
+      await flush();
+
+      expect(page.filters.district).toBe('');
+      expect(page.filters.incidentType).toBe('gbv');
+      expect(page.showDistrictCharts).toBe(true);
+    });
+
+    it('offers the projects the deployment has, for when there is more than one', async () => {
+      await page.ngOnInit();
+
+      expect(page.projectOptions).toEqual([{ value: '2', label: 'NAGAASHO EWER' }]);
+    });
+
+    it('still shows a dashboard when the project list cannot be fetched', async () => {
+      // Set after build(), which seeds the working list; the service reads the
+      // variable when called, not when constructed.
+      forms$ = throwError(() => new Error('boom'));
+
+      await page.ngOnInit();
+
+      expect(page.projectOptions).toEqual([]);
+      expect(page.kpis.length).toBe(8);
+    });
+
+    it('takes its district options from the dashboard it just loaded', async () => {
+      posts.getEwerDashboard.mockReturnValue(
+        of({
+          result: {
+            ...result().result,
+            district_options: [{ name: 'Erigavo', value: 43 }],
+          },
+        }),
+      );
+
+      await page.ngOnInit();
+
+      expect(page.districtOptions).toEqual([{ value: 'Erigavo', label: 'Erigavo' }]);
     });
   });
 });

@@ -7,6 +7,44 @@
 
   <!-- The rest of the app works offline; this cannot, so it says so rather
        than showing an empty dashboard that looks like no incidents. -->
+  <!-- Period first, because it is the filter people actually reach for, and
+       two free-form date inputs are the worst of the web controls on a phone. -->
+  <div class="filters" *ngIf="!offline">
+    <ion-segment
+      class="filters__period"
+      scrollable
+      [value]="filters.period"
+      (ionChange)="selectPeriod($any($event).detail.value)"
+    >
+      <ion-segment-button *ngFor="let period of periods" [value]="period.value">
+        <ion-label>{{ 'dashboard.filters.period.' + period.value | translate }}</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+
+    <button
+      class="filters__more"
+      type="button"
+      (click)="openFilterSheet()"
+      [attr.aria-label]="'dashboard.filters.title' | translate"
+    >
+      <app-icon name="filters"></app-icon>
+      <span class="filters__badge" *ngIf="activeFilterCount">{{ activeFilterCount }}</span>
+    </button>
+  </div>
+
+  <!-- What is filtering, without opening anything. -->
+  <div class="chips" *ngIf="!offline && activeChips.length">
+    <button
+      class="chip"
+      type="button"
+      *ngFor="let chip of activeChips"
+      (click)="removeFilter(chip.key)"
+    >
+      <span>{{ chip.label }}</span>
+      <app-icon name="close"></app-icon>
+    </button>
+  </div>
+
   <div class="state" *ngIf="offline">
     <app-icon class="state__icon" name="cloud"></app-icon>
     <p class="state__title">{{ 'dashboard.offline.title' | translate }}</p>
@@ -50,6 +88,7 @@
           [xAxis]="true"
           [yAxis]="true"
           [roundEdges]="false"
+          (select)="onDistrictSelected($event)"
         ></ngx-charts-bar-horizontal>
       </div>
     </section>
@@ -89,3 +128,63 @@
     </section>
   </ng-container>
 </ion-content>
+
+<!-- Applied in one go, so setting up a view costs one reload rather than one
+     per control, which matters on a slow connection. -->
+<ion-modal
+  [isOpen]="filterSheetOpen"
+  [initialBreakpoint]="0.75"
+  [breakpoints]="[0, 0.75, 1]"
+  (ionModalDidDismiss)="filterSheetOpen = false"
+>
+  <ng-template>
+    <ion-header class="sheet__header">
+      <ion-toolbar>
+        <ion-title>{{ 'dashboard.filters.title' | translate }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="filterSheetOpen = false">
+            {{ 'dashboard.filters.close' | translate }}
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content class="ion-padding">
+      <div class="sheet__field">
+        <span class="sheet__label">{{ 'dashboard.filters.project' | translate }}</span>
+        <app-option-select
+          [options]="projectOptions"
+          [(ngModel)]="draft.formId"
+          [placeholder]="'dashboard.filters.all_projects'"
+        ></app-option-select>
+      </div>
+
+      <div class="sheet__field">
+        <span class="sheet__label">{{ 'dashboard.filters.incident_type' | translate }}</span>
+        <app-option-select
+          [options]="incidentOptions"
+          [(ngModel)]="draft.incidentType"
+          [placeholder]="'dashboard.filters.all_types'"
+        ></app-option-select>
+      </div>
+
+      <div class="sheet__field">
+        <span class="sheet__label">{{ 'dashboard.filters.district' | translate }}</span>
+        <app-option-select
+          [options]="districtOptions"
+          [(ngModel)]="draft.district"
+          [placeholder]="'dashboard.filters.all_districts'"
+        ></app-option-select>
+      </div>
+
+      <div class="sheet__actions">
+        <app-button fill="outline" (buttonClick)="clearFilterSheet()">
+          {{ 'dashboard.filters.clear' | translate }}
+        </app-button>
+        <app-button (buttonClick)="applyFilterSheet()">
+          {{ 'dashboard.filters.apply' | translate }}
+        </app-button>
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>

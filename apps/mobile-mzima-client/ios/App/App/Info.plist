@@ -22,10 +22,16 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>To take photos, to post content</string>
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>Allow us always to access your location</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Allow us to access your location while using the app</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Store photos to your device</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>To work with media files on your device</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen.storyboard</string>
 	<key>UIMainStoryboardFile</key>
@@ -51,11 +57,26 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
-    <key>NSCameraUsageDescription</key>
-    <string>To take photos, to post content</string>
-    <key>NSPhotoLibraryAddUsageDescription</key>
-    <string>Store photos to your device</string>
-    <key>NSPhotoLibraryUsageDescription</key>
-    <string>To work with media files on your device</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+		<key>UISceneConfigurations</key>
+		<dict>
+			<key>UIWindowSceneSessionRoleApplication</key>
+			<array>
+				<dict>
+					<key>UISceneConfigurationName</key>
+					<string>Default Configuration</string>
+					<key>UISceneDelegateClassName</key>
+					<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
+					<key>UISceneStoryboardFile</key>
+					<string>Main</string>
+				</dict>
+			</array>
+		</dict>
+	</dict>
 </dict>
 </plist>

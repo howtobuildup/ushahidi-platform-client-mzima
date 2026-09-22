@@ -36,15 +36,18 @@ import { CollectionsModalComponent } from '../../../shared/components';
 import { Router } from '@angular/router';
 
 interface EwerTileSummary {
+  // Survey data, shown as it came when no translation matches it.
   incidentType: string;
-  escalationLabel: string;
+  incidentTypeKey: string;
+  escalationLabelKey: string;
   escalationRisk: boolean;
   location: string;
+  locationKey: string;
   site?: string;
   status?: string;
-  sourcesLabel?: string;
+  sourcesCount: number;
   actors?: string;
-  responseLabel: string;
+  responseLabelKey: string;
   responseActive: boolean;
   monitorCode?: string;
   hasMedia: boolean;
@@ -298,17 +301,21 @@ export class PostItemComponent implements OnInit, OnChanges {
     const responseActive = this.isAffirmative(response);
 
     return {
-      incidentType: incidentType || this.post?.title || 'Incident',
-      escalationLabel: escalationRisk ? 'Escalation risk' : 'No escalation',
+      // Held as keys so the tile follows a language change. The incident type
+      // is survey data, so it resolves against the same keys the dashboard
+      // uses and falls back to the label the survey gave.
+      incidentType: incidentType || this.post?.title || '',
+      incidentTypeKey: this.incidentTypeKey(incidentType),
+      escalationLabelKey: escalationRisk ? 'post.tile.escalation_risk' : 'post.tile.no_escalation',
       escalationRisk,
-      location: [city, state].filter(Boolean).join(', ') || city || state || 'Location unavailable',
+      location: [city, state].filter(Boolean).join(', ') || city || state || '',
+      locationKey:
+        [city, state].filter(Boolean).length || city || state ? '' : 'post.tile.no_location',
       site,
       status,
-      sourcesLabel: sourceCount
-        ? `${sourceCount} ${sourceCount === 1 ? 'source' : 'sources'}`
-        : undefined,
+      sourcesCount: sourceCount || 0,
       actors,
-      responseLabel: responseActive ? 'Response active' : 'No response yet',
+      responseLabelKey: responseActive ? 'post.tile.response_active' : 'post.tile.no_response',
       responseActive,
       monitorCode,
       hasMedia: !!fields.find(
@@ -317,6 +324,31 @@ export class PostItemComponent implements OnInit, OnChanges {
           (field.value?.photoUrl || this.getRawValue(field)),
       ),
     };
+  }
+
+  /**
+   * Translation key for an incident type, or empty when there is none.
+   *
+   * The value is whatever the survey recorded, so anything unrecognised keeps
+   * that label rather than being guessed at.
+   */
+  private incidentTypeKey(value: string): string {
+    const keys: Record<string, string> = {
+      conflicts: 'dashboard.categories.conflict',
+      clan_community_instigated: 'dashboard.categories.conflict',
+      gender_based_violence: 'dashboard.categories.gbv',
+      gbv: 'dashboard.categories.gbv',
+      social_violence: 'dashboard.categories.social',
+      social_other_violence: 'dashboard.categories.social',
+      early_warning: 'dashboard.categories.early_warning',
+      environmental_and_climate_early_warning: 'dashboard.categories.environmental_climate',
+      environmental_climate_change_related: 'dashboard.categories.environmental_climate',
+    };
+    const normalized = (value || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '');
+    return keys[normalized] || '';
   }
 
   private getFields(): PostContentField[] {

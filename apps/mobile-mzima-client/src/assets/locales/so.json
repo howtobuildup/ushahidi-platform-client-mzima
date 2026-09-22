@@ -31,6 +31,31 @@
     "update": "Cusbooneysii",
     "later": "Mar kale"
   },
+  "post": {
+    "tile": {
+      "id": "ID",
+      "no_escalation": "Sii-kordhin ma jirto",
+      "escalation_risk": "Khatar sii-kordhin",
+      "response_active": "Jawaab socota",
+      "no_response": "Weli jawaab ma jirto",
+      "attached_media": "Warbaahin lifaaqan",
+      "no_location": "Goobta lama hayo",
+      "via": "{{source}} ahaan",
+      "sources": "{{count}} il"
+    }
+  },
+  "dashboard": {
+    "categories": {
+      "conflict": "Khilaaf",
+      "gbv": "GBV",
+      "social": "Bulsho",
+      "early_warning": "Digniin hore",
+      "early_warning_short": "Digniin hore",
+      "environmental_climate": "Digniinta Deegaanka iyo Cimilada",
+      "environmental_climate_short": "Digniin cimilo",
+      "uncategorized": "Aan la kala saarin"
+    }
+  },
   "post_form": {
     "create_post": "Ka jawaab sahanka",
     "edit_post": "Wax ka beddel qoraalka",

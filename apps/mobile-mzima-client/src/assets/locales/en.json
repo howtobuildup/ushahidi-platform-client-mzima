@@ -722,7 +722,30 @@
     "share_on_twitter": "Share on Twitter",
     "share_on_facebook": "Share on Facebook"
   },
+  "dashboard": {
+    "categories": {
+      "conflict": "Conflict",
+      "gbv": "GBV",
+      "social": "Social",
+      "early_warning": "Early warning",
+      "early_warning_short": "Early warn.",
+      "environmental_climate": "Environmental and Climate Early Warning",
+      "environmental_climate_short": "Climate warning",
+      "uncategorized": "Uncategorized"
+    }
+  },
   "post": {
+    "tile": {
+      "id": "ID",
+      "no_escalation": "No escalation",
+      "escalation_risk": "Escalation risk",
+      "response_active": "Response active",
+      "no_response": "No response yet",
+      "attached_media": "Attached media",
+      "no_location": "Location unavailable",
+      "via": "via {{source}}",
+      "sources": "{{count}} sources"
+    },
     "post_count": "{{count}} posts",
     "see_more_plural": "See {{newPostsCount}} new posts",
     "see_more_singular": "See {{newPostsCount}} new post",

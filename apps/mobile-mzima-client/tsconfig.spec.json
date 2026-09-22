@@ -3,6 +3,10 @@
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
     "module": "commonjs",
+    // Specs compile to CommonJS, where a default import of a CommonJS module
+    // such as dayjs otherwise emits `dayjs_1.default` and reads as undefined.
+    // Without this, every suite that reaches the date helpers fails to load.
+    "esModuleInterop": true,
     "types": ["jest", "node"]
   },
   "files": ["src/test-setup.ts"],

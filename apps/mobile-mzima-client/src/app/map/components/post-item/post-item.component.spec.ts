@@ -129,4 +129,52 @@ describe('PostItemComponent', () => {
       expect(tile.sourcesCount).toBe(0);
     });
   });
+
+  describe('a post from a survey other than EWER', () => {
+    const field = (label: string, input: string, value: any, extra: any = {}) => ({
+      label,
+      input,
+      value,
+      type: 'varchar',
+      config: {},
+      ...extra,
+    });
+
+    const placeOf = (fields: any[]) => {
+      component.post = { id: 7, title: 'Training Post test', post_content: [{ fields }] } as any;
+      component.ngOnInit();
+      return component.placeName;
+    };
+
+    it('names where it happened by option label, most specific place first', () => {
+      const place = placeOf([
+        field('Magaca Mashruuca', 'select', 'nagaansho'),
+        field('Gobal ka', 'select', 'sanaag', { options: [{ name: 'sanaag', label: 'Sanaag' }] }),
+        field('Degmada', 'select', 'Erigavo'),
+        field('Xafada/ Tuulada', 'select', 'goob', { options: [{ name: 'goob', label: 'Goob' }] }),
+      ]);
+
+      expect(component.ewerTile).toBeUndefined();
+      expect(place).toBe('Goob, Erigavo, Sanaag');
+    });
+
+    it('ignores a yes or no answer to a question about a place', () => {
+      expect(
+        placeOf([
+          field('Site visited by the monitor?', 'select', 'yes'),
+          field('Region', 'select', 'Bari'),
+        ]),
+      ).toBe('Bari');
+    });
+
+    it('falls back to the GPS point', () => {
+      expect(placeOf([field('Goobta', 'location', { lat: 10.4, lon: 47.36 })])).toBe(
+        '10.4000, 47.3600',
+      );
+    });
+
+    it('is left empty when the survey asks for no location', () => {
+      expect(placeOf([field('Magaca Mashruuca', 'select', 'nagaansho')])).toBe('');
+    });
+  });
 });

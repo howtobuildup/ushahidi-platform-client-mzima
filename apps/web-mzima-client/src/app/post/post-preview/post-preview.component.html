@@ -101,12 +101,18 @@
   </ng-container>
 
   <ng-template #defaultPreview>
+    <div class="post__topline" *ngIf="feedView && post.id">
+      <span class="post__pill post__pill--id">{{ 'post.tile.id' | translate }} {{ post.id }}</span>
+    </div>
     <div class="post__main">
       <div class="post__visual" *ngIf="media && post.source !== 'Twitter'">
         <img [src]="media.original_file_url" [alt]="post.title" />
       </div>
       <div class="post__content">
         <h3 *ngIf="post.title?.length || post.content?.length">{{ post.title || post.content }}</h3>
+        <p class="post__location" *ngIf="feedView">
+          {{ placeName || ('post.tile.no_location' | translate) }}
+        </p>
         <p *ngIf="post.title?.length && post.content?.length">{{ post.content }}</p>
       </div>
     </div>

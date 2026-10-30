@@ -111,7 +111,13 @@
     </ng-container>
 
     <ng-template #defaultPostBody>
+      <div class="post__topline" *ngIf="post.id">
+        <span class="post__pill post__pill--id"
+          >{{ 'post.tile.id' | translate }} {{ post.id }}</span
+        >
+      </div>
       <ion-card-title class="post__title">{{ post.title }}</ion-card-title>
+      <p class="post__location">{{ placeName || ('post.tile.no_location' | translate) }}</p>
       <p *ngIf="post.content">{{ post.content }}</p>
     </ng-template>
   </ion-card-content>

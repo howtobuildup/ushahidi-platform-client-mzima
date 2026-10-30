@@ -16,6 +16,12 @@ import {
 import { postFieldChoiceLabel } from '@helpers';
 import { Subject } from 'rxjs';
 
+// The words a location question starts with, in English and in Somali: gobol
+// is a region, degmo a district, tuulo a village, xaafad a neighbourhood,
+// magaalo a town and deegaan a locality.
+const PLACE_WORD =
+  /^(region|district|village|ward|site|location|state|city|county|subcounty|zone|area|settlement|town|locality|neighbou?rhood|gob[ao]l\w*|degm\w*|tuul\w*|xaa?fad\w*|magaal\w*|deegaan\w*)$/;
+
 interface EwerTileSummary {
   // Survey data, shown as it came when no translation matches it.
   incidentType: string;
@@ -57,17 +63,24 @@ export class PostPreviewComponent implements OnInit, OnChanges {
   public deleted$ = this.onDeleted.asObservable();
   public allowed_privileges: string | string[];
   public ewerTile?: EwerTileSummary;
+  // Where a post from any other survey happened, empty when it does not say.
+  public placeName = '';
 
   ngOnInit() {
     this.allowed_privileges = this.post?.allowed_privileges ?? '';
-    this.ewerTile = this.buildEwerTile();
+    this.buildTile();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['post']) {
       this.allowed_privileges = this.post?.allowed_privileges ?? '';
-      this.ewerTile = this.buildEwerTile();
+      this.buildTile();
     }
+  }
+
+  private buildTile(): void {
+    this.ewerTile = this.buildEwerTile();
+    this.placeName = this.ewerTile ? '' : this.buildPlaceName();
   }
 
   public showDetails(): void {
@@ -169,6 +182,43 @@ export class PostPreviewComponent implements OnInit, OnChanges {
       monitorCode,
       hasMedia: !!fields.find((field) => field.type === 'media' && this.getRawValue(field)),
     };
+  }
+
+  /**
+   * Where a post from a survey other than EWER happened.
+   *
+   * Other surveys name their location questions as they like, so this takes
+   * the questions whose label or XLSForm name starts with a word for a place
+   * and reads up to three of them most specific first: "Village, District,
+   * Region". A survey that only asks for a GPS point gives its coordinates.
+   */
+  private buildPlaceName(): string {
+    const fields = this.getFields();
+
+    const places = fields
+      .filter((field) => this.isPlaceField(field))
+      .map((field) => this.formatFieldValue(field, this.getRawValue(field)))
+      .filter((value) => value && value.length <= 60 && !/^(yes|no)$/i.test(value));
+    if (places.length) return places.slice(0, 3).reverse().join(', ');
+
+    const point = fields
+      .filter((field) => field.input === 'location')
+      .map((field) => this.getRawValue(field))
+      .find((value) => value?.lat !== undefined && value?.lon !== undefined);
+    return point ? `${(+point.lat).toFixed(4)}, ${(+point.lon).toFixed(4)}` : '';
+  }
+
+  private isPlaceField(field: PostContentField): boolean {
+    if (!['select', 'radio', 'text'].includes(field.input)) return false;
+    const config = field.config as any;
+    return [field.label, config?.xlsform_name].some((name) => {
+      // The first word that is not a question number: "_2a_City_where..." is a city.
+      const firstWord = String(name ?? '')
+        .toLowerCase()
+        .split(/[^a-z0-9']+/)
+        .find((word) => /^[a-z]/.test(word));
+      return !!firstWord && PLACE_WORD.test(firstWord);
+    });
   }
 
   /**

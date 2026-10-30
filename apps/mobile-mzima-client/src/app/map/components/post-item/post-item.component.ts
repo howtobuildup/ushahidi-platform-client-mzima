@@ -13,6 +13,7 @@ import {
   PostResult,
   PostStatus,
   PostsService,
+  xlsFormRules,
 } from '@mzima-client/sdk';
 import {
   getPostItemActions,
@@ -34,6 +35,12 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { cloneDeep } from 'lodash';
 import { CollectionsModalComponent } from '../../../shared/components';
 import { Router } from '@angular/router';
+
+// The words a location question starts with, in English and in Somali: gobol
+// is a region, degmo a district, tuulo a village, xaafad a neighbourhood,
+// magaalo a town and deegaan a locality.
+const PLACE_WORD =
+  /^(region|district|village|ward|site|location|state|city|county|subcounty|zone|area|settlement|town|locality|neighbou?rhood|gob[ao]l\w*|degm\w*|tuul\w*|xaa?fad\w*|magaal\w*|deegaan\w*)$/;
 
 interface EwerTileSummary {
   // Survey data, shown as it came when no translation matches it.
@@ -74,6 +81,8 @@ export class PostItemComponent implements OnInit, OnChanges {
   public actionSheetButtons?: ActionSheetButton[] = getPostItemActions();
   public isConnection = true;
   public ewerTile?: EwerTileSummary;
+  // Where a post from any other survey happened, empty when it does not say.
+  public placeName = '';
 
   constructor(
     private networkService: NetworkService,
@@ -94,12 +103,12 @@ export class PostItemComponent implements OnInit, OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['post']) {
-      this.ewerTile = this.buildEwerTile();
+      this.buildTile();
     }
   }
 
   ngOnInit(): void {
-    this.ewerTile = this.buildEwerTile();
+    this.buildTile();
 
     this.sessionService.currentUserData$.pipe(untilDestroyed(this)).subscribe({
       next: ({ role, userId }) => {
@@ -195,7 +204,7 @@ export class PostItemComponent implements OnInit, OnChanges {
   private setPostStatus(status: PostStatus): void {
     this.postsService.updateStatus(this.post.id, status).subscribe((res) => {
       this.post = res.result;
-      this.ewerTile = this.buildEwerTile();
+      this.buildTile();
       this.postUpdated.emit({ post: this.post });
       this.toastService.presentToast({
         header: postStatusChangedHeader[status],
@@ -243,6 +252,11 @@ export class PostItemComponent implements OnInit, OnChanges {
 
   public preventClick(ev: Event): void {
     ev.stopPropagation();
+  }
+
+  private buildTile(): void {
+    this.ewerTile = this.buildEwerTile();
+    this.placeName = this.ewerTile ? '' : this.buildPlaceName();
   }
 
   private buildEwerTile(): EwerTileSummary | undefined {
@@ -324,6 +338,64 @@ export class PostItemComponent implements OnInit, OnChanges {
           (field.value?.photoUrl || this.getRawValue(field)),
       ),
     };
+  }
+
+  /**
+   * Where a post from a survey other than EWER happened.
+   *
+   * Other surveys name their location questions as they like, so this takes
+   * the questions whose label or XLSForm name starts with a word for a place
+   * and reads up to three of them most specific first: "Village, District,
+   * Region". A survey that only asks for a GPS point gives its coordinates.
+   */
+  private buildPlaceName(): string {
+    const fields = this.getFields();
+
+    const places = fields
+      .filter((field) => this.isPlaceField(field))
+      .map((field) => this.choiceLabel(field, this.getRawValue(field)))
+      .filter((value) => value && value.length <= 60 && !/^(yes|no)$/i.test(value));
+    if (places.length) return places.slice(0, 3).reverse().join(', ');
+
+    const point = fields
+      .filter((field) => field.input === 'location')
+      .map((field) => this.getRawValue(field))
+      .find((value) => value?.lat !== undefined && value?.lon !== undefined);
+    return point ? `${(+point.lat).toFixed(4)}, ${(+point.lon).toFixed(4)}` : '';
+  }
+
+  private isPlaceField(field: PostContentField): boolean {
+    if (!['select', 'radio', 'text'].includes(field.input)) return false;
+    const config = field.config as any;
+    return [field.label, config?.xlsform_name].some((name) => {
+      // The first word that is not a question number: "_2a_City_where..." is a city.
+      const firstWord = String(name ?? '')
+        .toLowerCase()
+        .split(/[^a-z0-9']+/)
+        .find((word) => /^[a-z]/.test(word));
+      return !!firstWord && PLACE_WORD.test(firstWord);
+    });
+  }
+
+  /**
+   * The label of the option a choice answer names. Answers from the app hold
+   * the option's name, "goob", where the survey shows "Goob".
+   */
+  private choiceLabel(field: PostContentField, value: any): string {
+    let options = (field as any).options;
+    if (typeof options === 'string') {
+      try {
+        options = JSON.parse(options);
+      } catch {
+        options = [];
+      }
+    }
+    const option = Array.isArray(options)
+      ? options.find(
+          (candidate) => String(xlsFormRules.getOptionValue(candidate)) === String(value),
+        )
+      : undefined;
+    return option !== undefined ? xlsFormRules.getOptionLabel(option) : this.formatValue(value);
   }
 
   /**

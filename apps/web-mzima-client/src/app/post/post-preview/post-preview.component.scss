@@ -155,6 +155,7 @@
   }
 
   &__ewer-topline,
+  &__topline,
   &__ewer-tags,
   &__ewer-footer {
     display: flex;
@@ -164,7 +165,8 @@
     justify-content: space-between;
   }
 
-  &__ewer-topline {
+  &__ewer-topline,
+  &__topline {
     margin-bottom: 12px;
   }
 
@@ -183,7 +185,8 @@
   }
 
   &__ewer-site,
-  &__ewer-actors {
+  &__ewer-actors,
+  &__location {
     margin: 0 0 12px;
     color: var(--color-neutral-80);
     font-size: 14px;

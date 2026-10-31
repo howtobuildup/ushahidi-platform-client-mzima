@@ -84,34 +84,8 @@
     box-shadow: inset 0 0 0 1px var(--ion-color-step-200);
   }
 
-  &__media {
-    margin-left: 1px;
-    margin-right: 1px;
-    object-fit: cover;
-
-    &__loader {
-      height: 200px;
-      display: flex;
-      align-items: center;
-      flex-direction: column;
-      justify-content: center;
-    }
-  }
-
   &__body {
     padding: 16px;
-  }
-
-  &__title {
-    font-size: 16px;
-    font-weight: 700;
-    line-height: 1.5;
-    letter-spacing: 0.15px;
-    color: var(--ion-text-color);
-
-    + p {
-      margin-top: 8px;
-    }
   }
 
   &__checkbox {
@@ -119,7 +93,7 @@
     --padding-bottom: 0;
   }
 
-  &__ewer {
+  &__tile {
     display: flex;
     min-height: 220px;
     flex-direction: column;
@@ -132,10 +106,9 @@
     }
   }
 
-  &__ewer-topline,
-  &__topline,
-  &__ewer-tags,
-  &__ewer-footer {
+  &__tile-topline,
+  &__tile-tags,
+  &__tile-footer {
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
@@ -143,12 +116,14 @@
     justify-content: space-between;
   }
 
-  &__ewer-topline,
-  &__topline {
+  // The ID and what the post is about sit together on the left on every tile,
+  // whatever else the survey gives it to show.
+  &__tile-topline {
     margin-bottom: 12px;
+    justify-content: flex-start;
   }
 
-  &__ewer-location {
+  &__tile-location {
     margin: 0 0 6px;
     color: var(--ion-text-color);
     font-size: 17px;
@@ -162,9 +137,8 @@
     -webkit-box-orient: vertical;
   }
 
-  &__ewer-site,
-  &__ewer-actors,
-  &__location {
+  &__tile-site,
+  &__tile-actors {
     margin: 0 0 12px;
     color: var(--ion-color-medium);
     font-size: 14px;
@@ -177,7 +151,7 @@
     -webkit-box-orient: vertical;
   }
 
-  &__ewer-media {
+  &__tile-media {
     height: 132px;
     overflow: hidden;
     position: relative;
@@ -231,12 +205,12 @@
     }
   }
 
-  &__ewer-tags {
+  &__tile-tags {
     justify-content: flex-start;
     margin-bottom: 10px;
   }
 
-  &__ewer-footer {
+  &__tile-footer {
     color: var(--ion-color-medium);
     font-size: 12px;
     line-height: 1.3;
@@ -261,6 +235,10 @@
     &--incident {
       color: #a16115;
       background: #fff0d8;
+    }
+
+    &--escalation {
+      margin-left: auto;
     }
 
     &--safe,

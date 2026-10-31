@@ -139,7 +139,7 @@
     }
   }
 
-  &__ewer {
+  &__tile {
     display: flex;
     min-height: 260px;
     flex-direction: column;
@@ -154,10 +154,9 @@
     }
   }
 
-  &__ewer-topline,
-  &__topline,
-  &__ewer-tags,
-  &__ewer-footer {
+  &__tile-topline,
+  &__tile-tags,
+  &__tile-footer {
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
@@ -165,12 +164,14 @@
     justify-content: space-between;
   }
 
-  &__ewer-topline,
-  &__topline {
+  // The ID and what the post is about sit together on the left on every tile,
+  // whatever else the survey gives it to show.
+  &__tile-topline {
     margin-bottom: 12px;
+    justify-content: flex-start;
   }
 
-  &__ewer-location {
+  &__tile-location {
     margin: 0 0 6px;
     color: #1f2933;
     font-size: 18px;
@@ -184,9 +185,8 @@
     -webkit-box-orient: vertical;
   }
 
-  &__ewer-site,
-  &__ewer-actors,
-  &__location {
+  &__tile-site,
+  &__tile-actors {
     margin: 0 0 12px;
     color: var(--color-neutral-80);
     font-size: 14px;
@@ -199,7 +199,7 @@
     -webkit-box-orient: vertical;
   }
 
-  &__ewer-media {
+  &__tile-media {
     height: 138px;
     overflow: hidden;
     position: relative;
@@ -254,16 +254,16 @@
     }
   }
 
-  &__ewer-tags {
+  &__tile-tags {
     justify-content: flex-start;
     margin-bottom: 10px;
   }
 
-  &__ewer-actors {
+  &__tile-actors {
     color: #53616d;
   }
 
-  &__ewer-footer {
+  &__tile-footer {
     color: var(--color-neutral-70);
     font-size: 13px;
     line-height: 1.3;
@@ -288,6 +288,10 @@
     &--incident {
       color: #a16115;
       background: #fff0d8;
+    }
+
+    &--escalation {
+      margin-left: auto;
     }
 
     &--safe,

@@ -33,43 +33,52 @@
     <app-twitter-widget [id]="post.data_source_message_id"></app-twitter-widget>
   </div>
 
-  <ng-container *ngIf="feedView && ewerTile as tile; else defaultPreview">
+  <ng-container *ngIf="feedView && tile; else defaultPreview">
     <div
-      class="post__ewer"
+      class="post__tile"
       [ngClass]="{
-        'post__ewer--escalation': tile.escalationRisk
+        'post__tile--escalation': tile.escalationRisk
       }"
     >
-      <div class="post__ewer-topline">
+      <div class="post__tile-topline">
         <span class="post__pill post__pill--id" *ngIf="post.id">
           {{ 'post.tile.id' | translate }} {{ post.id }}
         </span>
-        <span class="post__pill post__pill--incident">
-          {{ tile.incidentTypeKey ? (tile.incidentTypeKey | translate) : tile.incidentType }}
+        <span
+          class="post__pill post__pill--incident"
+          *ngIf="tile.incidentTypeKey || tile.incidentType || surveyName"
+        >
+          {{
+            tile.incidentTypeKey
+              ? (tile.incidentTypeKey | translate)
+              : tile.incidentType || surveyName
+          }}
         </span>
         <span
-          class="post__pill"
+          class="post__pill post__pill--escalation"
+          *ngIf="tile.escalationLabelKey"
           [ngClass]="tile.escalationRisk ? 'post__pill--risk' : 'post__pill--safe'"
         >
           {{ tile.escalationLabelKey | translate }}
         </span>
       </div>
 
-      <h3 class="post__ewer-location">
+      <h3 class="post__tile-location">
         {{ tile.locationKey ? (tile.locationKey | translate) : tile.location }}
       </h3>
-      <p class="post__ewer-site" *ngIf="tile.site">{{ tile.site }}</p>
+      <p class="post__tile-site" *ngIf="tile.site">{{ tile.site }}</p>
+      <p class="post__tile-site" *ngIf="tileTitle">{{ tileTitle }}</p>
 
       <div
-        class="post__ewer-media"
+        class="post__tile-media"
         *ngIf="media?.original_file_url || tile.hasMedia"
-        [ngClass]="{ 'post__ewer-media--placeholder': !media?.original_file_url }"
+        [ngClass]="{ 'post__tile-media--placeholder': !media?.original_file_url }"
       >
         <img *ngIf="media?.original_file_url" [src]="media.original_file_url" [alt]="post.title" />
         <span>{{ 'post.tile.attached_media' | translate }}</span>
       </div>
 
-      <div class="post__ewer-tags">
+      <div class="post__tile-tags">
         <span class="post__pill post__pill--status" *ngIf="tile.status">
           {{ tile.status }}
         </span>
@@ -78,19 +87,22 @@
         </span>
       </div>
 
-      <p class="post__ewer-actors" *ngIf="tile.actors">{{ tile.actors }}</p>
+      <p class="post__tile-actors" *ngIf="tile.actors">{{ tile.actors }}</p>
 
       <span
         class="post__pill post__pill--response"
-        *ngIf="media?.original_file_url || tile.hasMedia"
+        *ngIf="tile.responseLabelKey && (media?.original_file_url || tile.hasMedia)"
         [ngClass]="tile.responseActive ? 'post__pill--response-active' : 'post__pill--muted'"
       >
         {{ tile.responseLabelKey | translate }}
       </span>
 
-      <div class="post__ewer-footer">
+      <div class="post__tile-footer">
         <span>
           {{ post.post_date | date : 'mediumDate' }} &middot;
+          <ng-container *ngIf="reviewStatusKey">
+            {{ reviewStatusKey | translate }} &middot;
+          </ng-container>
           {{ 'post.tile.via' | translate : { source: post.source || 'Web' } }}
         </span>
         <span class="post__pill post__pill--code" *ngIf="tile.monitorCode">
@@ -101,18 +113,12 @@
   </ng-container>
 
   <ng-template #defaultPreview>
-    <div class="post__topline" *ngIf="feedView && post.id">
-      <span class="post__pill post__pill--id">{{ 'post.tile.id' | translate }} {{ post.id }}</span>
-    </div>
     <div class="post__main">
       <div class="post__visual" *ngIf="media && post.source !== 'Twitter'">
         <img [src]="media.original_file_url" [alt]="post.title" />
       </div>
       <div class="post__content">
         <h3 *ngIf="post.title?.length || post.content?.length">{{ post.title || post.content }}</h3>
-        <p class="post__location" *ngIf="feedView">
-          {{ placeName || ('post.tile.no_location' | translate) }}
-        </p>
         <p *ngIf="post.title?.length && post.content?.length">{{ post.content }}</p>
       </div>
     </div>
@@ -123,5 +129,5 @@
     </mzima-client-button>
   </div>
 
-  <app-post-metadata *ngIf="!(feedView && ewerTile)" [post]="post"></app-post-metadata>
+  <app-post-metadata *ngIf="!feedView" [post]="post"></app-post-metadata>
 </div>

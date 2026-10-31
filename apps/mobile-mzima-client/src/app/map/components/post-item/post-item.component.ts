@@ -13,6 +13,8 @@ import {
   PostResult,
   PostStatus,
   PostsService,
+  SurveyItem,
+  SurveysService,
   xlsFormRules,
 } from '@mzima-client/sdk';
 import {
@@ -21,10 +23,12 @@ import {
   PostItemActionTypeUserRole,
   postStatusChangedHeader,
   postStatusChangedMessage,
+  STORAGE_KEYS,
 } from '@constants';
 import { ActionSheetButton, ModalController } from '@ionic/angular';
 import {
   AlertService,
+  DatabaseService,
   DeploymentService,
   NetworkService,
   SessionService,
@@ -33,6 +37,7 @@ import {
 } from '@services';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { cloneDeep } from 'lodash';
+import { Subscription } from 'rxjs';
 import { CollectionsModalComponent } from '../../../shared/components';
 import { Router } from '@angular/router';
 
@@ -42,10 +47,12 @@ import { Router } from '@angular/router';
 const PLACE_WORD =
   /^(region|district|village|ward|site|location|state|city|county|subcounty|zone|area|settlement|town|locality|neighbou?rhood|gob[ao]l\w*|degm\w*|tuul\w*|xaa?fad\w*|magaal\w*|deegaan\w*)$/;
 
-interface EwerTileSummary {
+interface PostTileSummary {
   // Survey data, shown as it came when no translation matches it.
   incidentType: string;
   incidentTypeKey: string;
+  // The keys are empty when the survey does not ask, so the tile leaves the
+  // pill off rather than claiming there is no escalation or response.
   escalationLabelKey: string;
   escalationRisk: boolean;
   location: string;
@@ -75,14 +82,14 @@ export class PostItemComponent implements OnInit, OnChanges {
   @Output() selected = new EventEmitter<boolean>();
   public mediaUrl: string;
   public media: any;
-  public mediaId?: number;
   public isMediaLoading: boolean;
   public isActionsOpen = false;
   public actionSheetButtons?: ActionSheetButton[] = getPostItemActions();
   public isConnection = true;
-  public ewerTile?: EwerTileSummary;
-  // Where a post from any other survey happened, empty when it does not say.
-  public placeName = '';
+  // Every post gets this tile, whichever survey it is from.
+  public tile?: PostTileSummary;
+  public surveyName = '';
+  private surveyNameSubscription?: Subscription;
 
   constructor(
     private networkService: NetworkService,
@@ -95,6 +102,8 @@ export class PostItemComponent implements OnInit, OnChanges {
     private deploymentService: DeploymentService,
     private modalController: ModalController,
     private router: Router,
+    private surveysService: SurveysService,
+    private databaseService: DatabaseService,
   ) {}
 
   async ionViewWillEnter() {
@@ -130,10 +139,6 @@ export class PostItemComponent implements OnInit, OnChanges {
   }
 
   private getMedia() {
-    this.mediaId = this.post.post_content
-      ?.flatMap((c) => c.fields)
-      .find((f) => f.input === 'upload')?.value?.value;
-
     this.mediaUrl = this.post.post_content
       ?.flatMap((c) => c.fields)
       .find((f) => f.input === 'upload')?.value?.photoUrl;
@@ -254,43 +259,59 @@ export class PostItemComponent implements OnInit, OnChanges {
     ev.stopPropagation();
   }
 
-  private buildTile(): void {
-    this.ewerTile = this.buildEwerTile();
-    this.placeName = this.ewerTile ? '' : this.buildPlaceName();
+  /** The post's title, when it says more than its survey's name. */
+  public get tileTitle(): string {
+    const title = (this.post?.title ?? '').trim();
+    return title.toLowerCase() === this.surveyName.trim().toLowerCase() ? '' : title;
   }
 
-  private buildEwerTile(): EwerTileSummary | undefined {
+  /** Translation key for a post under review or archived; empty once published. */
+  public get reviewStatusKey(): string {
+    const keys: Record<string, string> = { draft: 'post.draft', archived: 'post.archived' };
+    return keys[this.post?.status ?? ''] ?? '';
+  }
+
+  private buildTile(): void {
+    this.tile = this.post ? this.buildTileSummary() : undefined;
+    this.loadSurveyName();
+  }
+
+  /**
+   * The survey's name from the server or, offline, from the copy of the
+   * survey list the app keeps.
+   */
+  private loadSurveyName(): void {
+    const formId = this.post?.form_id;
+    this.surveyNameSubscription?.unsubscribe();
+    this.surveyName = '';
+    if (!formId) return;
+
+    this.surveyNameSubscription = this.surveysService
+      .getSurveyName(formId)
+      .pipe(untilDestroyed(this))
+      .subscribe(async (name) => {
+        if (!name) {
+          const surveys: SurveyItem[] =
+            (await this.databaseService.get(STORAGE_KEYS.SURVEYS)) ?? [];
+          name = surveys.find((survey) => survey.id === formId)?.name ?? '';
+        }
+        if (this.post?.form_id === formId) this.surveyName = name;
+      });
+  }
+
+  private buildTileSummary(): PostTileSummary {
     const fields = this.getFields();
-    if (!fields.length) return undefined;
 
     const incidentType = this.getFieldDisplay(fields, ['Incidence_type', 'Incidence type']);
-    const state = this.getFieldDisplay(fields, [
-      '_2_State_where_incidence_occurred',
-      'State where incidence occurred',
-      'Region where incidence occurred',
-    ]);
-    const city = this.getFieldDisplay(fields, [
-      '_2a_City_where_incidence_occurred',
-      'City where incidence occurred',
-      'District where incidence occurred',
-    ]);
-    const site = this.getFieldDisplay(fields, [
-      '_2b_Ward_Site_where_e_area_or_zone_etc',
-      'Ward/Site where the Incidence Occurred? Specific description of the incident/conflict site like ward name, area or zone, etc',
-      'Village where incidence occurred',
-    ]);
     const monitorCode = this.getFieldDisplay(fields, [
       '_1_Field_Monitor_Code',
       'Field Monitor Code',
     ]);
-
-    if (!incidentType && !state && !city && !site && !monitorCode) return undefined;
-
-    const escalation = this.getFieldDisplay(fields, [
+    const escalation = this.findField(fields, [
       '_12_Are_there_escalation_indic',
       'Are there escalation indicators',
     ]);
-    const response = this.getFieldDisplay(fields, [
+    const response = this.findField(fields, [
       '_10_Has_any_response_happened',
       'Has any response happened?',
       'Has the victim/survivor been reached and supported/referred?',
@@ -311,25 +332,33 @@ export class PostItemComponent implements OnInit, OnChanges {
       'What are the sources of information?',
     ]);
 
-    const escalationRisk = this.isAffirmative(escalation);
-    const responseActive = this.isAffirmative(response);
+    const escalationRisk = this.isAffirmative(this.formatValue(this.getRawValue(escalation)));
+    const responseActive = this.isAffirmative(this.formatValue(this.getRawValue(response)));
+    const { location, site } = this.buildPlace(fields);
 
     return {
       // Held as keys so the tile follows a language change. The incident type
       // is survey data, so it resolves against the same keys the dashboard
       // uses and falls back to the label the survey gave.
-      incidentType: incidentType || this.post?.title || '',
+      incidentType,
       incidentTypeKey: this.incidentTypeKey(incidentType),
-      escalationLabelKey: escalationRisk ? 'post.tile.escalation_risk' : 'post.tile.no_escalation',
+      escalationLabelKey: !escalation
+        ? ''
+        : escalationRisk
+        ? 'post.tile.escalation_risk'
+        : 'post.tile.no_escalation',
       escalationRisk,
-      location: [city, state].filter(Boolean).join(', ') || city || state || '',
-      locationKey:
-        [city, state].filter(Boolean).length || city || state ? '' : 'post.tile.no_location',
+      location,
+      locationKey: location ? '' : 'post.tile.no_location',
       site,
       status,
       sourcesCount: sourceCount || 0,
       actors,
-      responseLabelKey: responseActive ? 'post.tile.response_active' : 'post.tile.no_response',
+      responseLabelKey: !response
+        ? ''
+        : responseActive
+        ? 'post.tile.response_active'
+        : 'post.tile.no_response',
       responseActive,
       monitorCode,
       hasMedia: !!fields.find(
@@ -341,27 +370,51 @@ export class PostItemComponent implements OnInit, OnChanges {
   }
 
   /**
-   * Where a post from a survey other than EWER happened.
+   * Where the post happened: the district and region as the heading, and the
+   * village or site under it.
    *
-   * Other surveys name their location questions as they like, so this takes
-   * the questions whose label or XLSForm name starts with a word for a place
-   * and reads up to three of them most specific first: "Village, District,
-   * Region". A survey that only asks for a GPS point gives its coordinates.
+   * EWER names its location questions. Other surveys name theirs as they
+   * like, so for those this takes the questions whose label or XLSForm name
+   * starts with a word for a place, in the order the survey asks them (region,
+   * district, village). A survey that only asks for a GPS point gives its
+   * coordinates.
    */
-  private buildPlaceName(): string {
-    const fields = this.getFields();
+  private buildPlace(fields: PostContentField[]): { location: string; site: string } {
+    const state = this.getFieldDisplay(fields, [
+      '_2_State_where_incidence_occurred',
+      'State where incidence occurred',
+      'Region where incidence occurred',
+    ]);
+    const city = this.getFieldDisplay(fields, [
+      '_2a_City_where_incidence_occurred',
+      'City where incidence occurred',
+      'District where incidence occurred',
+    ]);
+    const site = this.getFieldDisplay(fields, [
+      '_2b_Ward_Site_where_e_area_or_zone_etc',
+      'Ward/Site where the Incidence Occurred? Specific description of the incident/conflict site like ward name, area or zone, etc',
+      'Village where incidence occurred',
+    ]);
+    if (state || city || site) {
+      return { location: [city, state].filter(Boolean).join(', '), site };
+    }
 
-    const places = fields
+    const [region, district, village] = fields
       .filter((field) => this.isPlaceField(field))
       .map((field) => this.choiceLabel(field, this.getRawValue(field)))
       .filter((value) => value && value.length <= 60 && !/^(yes|no)$/i.test(value));
-    if (places.length) return places.slice(0, 3).reverse().join(', ');
+    if (region) {
+      return { location: [district, region].filter(Boolean).join(', '), site: village ?? '' };
+    }
 
     const point = fields
       .filter((field) => field.input === 'location')
       .map((field) => this.getRawValue(field))
       .find((value) => value?.lat !== undefined && value?.lon !== undefined);
-    return point ? `${(+point.lat).toFixed(4)}, ${(+point.lon).toFixed(4)}` : '';
+    return {
+      location: point ? `${(+point.lat).toFixed(4)}, ${(+point.lon).toFixed(4)}` : '',
+      site: '',
+    };
   }
 
   private isPlaceField(field: PostContentField): boolean {

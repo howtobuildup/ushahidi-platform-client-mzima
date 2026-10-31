@@ -1,10 +1,11 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { IonicModule } from '@ionic/angular';
-import { MediaService, PostsService } from '@mzima-client/sdk';
+import { MediaService, PostsService, SurveysService } from '@mzima-client/sdk';
 import { TranslateModule } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import {
   AlertService,
+  DatabaseService,
   DeploymentService,
   NetworkService,
   SessionService,
@@ -18,6 +19,11 @@ import { PostItemComponent } from './post-item.component';
 describe('PostItemComponent', () => {
   let component: PostItemComponent;
   let fixture: ComponentFixture<PostItemComponent>;
+
+  // What the server returns, and the copy of the survey list the app keeps
+  // for when it is offline.
+  const surveyNames: Record<number, string> = { 11: 'Training Post test' };
+  const storedSurveys = [{ id: 12, name: 'Kept on the phone' }];
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
@@ -35,6 +41,11 @@ describe('PostItemComponent', () => {
         { provide: ShareService, useValue: {} },
         { provide: DeploymentService, useValue: { getDeployment: () => null } },
         { provide: Router, useValue: { navigate: () => Promise.resolve(true) } },
+        {
+          provide: SurveysService,
+          useValue: { getSurveyName: (id: number) => of(surveyNames[id] ?? '') },
+        },
+        { provide: DatabaseService, useValue: { get: async () => storedSurveys } },
       ],
     }).compileComponents();
 
@@ -52,7 +63,7 @@ describe('PostItemComponent', () => {
 
   // The tile is built from the survey's own field names and values, so these
   // cover the mapping rather than the rendering.
-  describe('the EWER tile', () => {
+  describe('an EWER post', () => {
     const postWith = (fields: any[]) =>
       ({ id: 4321, title: 'Untitled', post_content: [{ fields }] } as any);
 
@@ -61,7 +72,7 @@ describe('PostItemComponent', () => {
     const build = (fields: any[]) => {
       component.post = postWith(fields);
       component.ngOnInit();
-      return component.ewerTile!;
+      return component.tile!;
     };
 
     it('resolves a known incident type to the key the dashboard uses', () => {
@@ -94,6 +105,15 @@ describe('PostItemComponent', () => {
       expect(tile.escalationRisk).toBe(true);
       expect(tile.responseLabelKey).toBe('post.tile.no_response');
       expect(tile.responseActive).toBe(false);
+    });
+
+    it('says there is no escalation when the question is there but unanswered', () => {
+      const tile = build([
+        field('Incidence type', 'Conflicts'),
+        field('Are there escalation indicators', null),
+      ]);
+
+      expect(tile.escalationLabelKey).toBe('post.tile.no_escalation');
     });
 
     it('falls back to a key when there is no location to show', () => {
@@ -140,41 +160,85 @@ describe('PostItemComponent', () => {
       ...extra,
     });
 
-    const placeOf = (fields: any[]) => {
-      component.post = { id: 7, title: 'Training Post test', post_content: [{ fields }] } as any;
+    const build = (fields: any[], post: any = {}) => {
+      component.post = {
+        id: 7,
+        form_id: 11,
+        title: 'Training Post test',
+        post_content: [{ fields }],
+        ...post,
+      } as any;
       component.ngOnInit();
-      return component.placeName;
+      return component.tile!;
     };
 
-    it('names where it happened by option label, most specific place first', () => {
-      const place = placeOf([
+    it('puts the district and region in the heading and the village under it', () => {
+      const tile = build([
         field('Magaca Mashruuca', 'select', 'nagaansho'),
         field('Gobal ka', 'select', 'sanaag', { options: [{ name: 'sanaag', label: 'Sanaag' }] }),
         field('Degmada', 'select', 'Erigavo'),
         field('Xafada/ Tuulada', 'select', 'goob', { options: [{ name: 'goob', label: 'Goob' }] }),
       ]);
 
-      expect(component.ewerTile).toBeUndefined();
-      expect(place).toBe('Goob, Erigavo, Sanaag');
+      expect(tile.location).toBe('Erigavo, Sanaag');
+      expect(tile.site).toBe('Goob');
     });
 
     it('ignores a yes or no answer to a question about a place', () => {
-      expect(
-        placeOf([
-          field('Site visited by the monitor?', 'select', 'yes'),
-          field('Region', 'select', 'Bari'),
-        ]),
-      ).toBe('Bari');
+      const tile = build([
+        field('Site visited by the monitor?', 'select', 'yes'),
+        field('Region', 'select', 'Bari'),
+      ]);
+
+      expect(tile.location).toBe('Bari');
     });
 
     it('falls back to the GPS point', () => {
-      expect(placeOf([field('Goobta', 'location', { lat: 10.4, lon: 47.36 })])).toBe(
-        '10.4000, 47.3600',
-      );
+      const tile = build([field('Goobta', 'location', { lat: 10.4, lon: 47.36 })]);
+
+      expect(tile.location).toBe('10.4000, 47.3600');
     });
 
-    it('is left empty when the survey asks for no location', () => {
-      expect(placeOf([field('Magaca Mashruuca', 'select', 'nagaansho')])).toBe('');
+    it('says the location is unavailable when the survey asks for none', () => {
+      const tile = build([field('Magaca Mashruuca', 'select', 'nagaansho')]);
+
+      expect(tile.location).toBe('');
+      expect(tile.locationKey).toBe('post.tile.no_location');
+    });
+
+    it('leaves off the escalation and response pills it has no answers for', () => {
+      const tile = build([field('Region', 'select', 'Bari')]);
+
+      expect(tile.escalationLabelKey).toBe('');
+      expect(tile.responseLabelKey).toBe('');
+    });
+
+    it('shows its survey name, and drops a title that only repeats it', () => {
+      build([]);
+
+      expect(component.surveyName).toBe('Training Post test');
+      expect(component.tileTitle).toBe('');
+    });
+
+    it('keeps a title of its own', () => {
+      build([], { title: 'Market fire in Bosaso' });
+
+      expect(component.tileTitle).toBe('Market fire in Bosaso');
+    });
+
+    it('finds the survey name in the stored list when offline', async () => {
+      build([], { form_id: 12 });
+      await new Promise((resolve) => setTimeout(resolve));
+
+      expect(component.surveyName).toBe('Kept on the phone');
+    });
+
+    it('marks a post under review, and says nothing once it is published', () => {
+      build([], { status: 'draft' });
+      expect(component.reviewStatusKey).toBe('post.draft');
+
+      build([], { status: 'published' });
+      expect(component.reviewStatusKey).toBe('');
     });
   });
 });
